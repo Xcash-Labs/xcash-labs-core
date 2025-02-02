@@ -188,20 +188,12 @@
 
 #define BLOCKCHAIN_DEFAULT_MIXIN                20
 
-
-
 // Seed Nodes
-#define SEED_NODE_1 "us1.xcash.foundation:18280"
-#define SEED_NODE_2 "europe1.xcash.foundation:18280"
-#define SEED_NODE_3 "europe2.xcash.foundation:18280"
-#define SEED_NODE_4 "europe3.xcash.foundation:18280"
-#define SEED_NODE_5 "oceania1.xcash.foundation:18280"
-
-/*#define SEED_NODE_1 "192.168.1.201:18280"
-#define SEED_NODE_2 "192.168.1.202:18280"
-#define SEED_NODE_3 "192.168.1.203:18280"
-#define SEED_NODE_4 "192.168.1.204:18280"
-#define SEED_NODE_5 "192.168.1.205:18280"*/
+#define SEED_NODE_1 "xcashseeds.us:18280"
+#define SEED_NODE_2 "xcashseeds.uk:18280"
+#define SEED_NODE_3 "xcashseeds.cc:18280"
+#define SEED_NODE_4 "xcashseeds.com:18280"
+#define SEED_NODE_5 "xcashseeds.net:18280"
 
 #define SEED_NODES_LIST_1 const std::vector<std::string> m_seed_nodes_list = {SEED_NODE_1,SEED_NODE_2,SEED_NODE_3,SEED_NODE_4,SEED_NODE_5};
 #define SEED_NODES_LIST_2 \
@@ -211,13 +203,11 @@ full_addrs.insert(SEED_NODE_3); \
 full_addrs.insert(SEED_NODE_4); \
 full_addrs.insert(SEED_NODE_5);
 
-
-
 // XCASH DPOPS
 
 // Blockchain
 #define HF_VERSION_PROOF_OF_STAKE 13
-#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 800000 // The first block of the X-CASH proof of stake
+#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 2 // The first block of the X-CASH proof of stake
 #define BLOCK_TIME 5 // the block time in minutes
 #define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
@@ -260,27 +250,16 @@ full_addrs.insert(SEED_NODE_5);
 // Network data nodes
 #define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
 
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1a9usG2UKajV1Dqzp8fL1BbN3hzuaaJMYjCo7qDoC4C3Vvc5owiLAqKbVw2cRbwRqx3mgrau1Z7LkX6cxR2NC4ZmFBLe2Mf"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1YhckQgqGQvMsS2xi4n3cHBPo39WYFC1AXskqaFB87Q6EX5LheKK6E3ZqQmD9CDFX8br8Mfvff7RqT6UcuUja46qKC1vEJb"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1c2ahjRvBsp35ynTknNYczj9y42hN9ht1vNyns2FCTU4qbLqahtsTw2E7JTKLd3ecSGLe2zWJgCiwrMhecsbT38i3Smy9vW"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1jN7CNCKEN1kDuqxiuUPyKWiVp68RsYxshdohaQ1k8NN11ZWX9dSJv3hx6qxfPaKVAnet4LTda9fsK81c9wRN5Aj78KyZEg"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_5 "XCA1hKDayQXECEA5Yja4a8CU6Suoo9XT9jET7Ng2Rx2z3fLsGy5iVQCL9hWWTi3TroJxihWY4j84n9WMJvpFvagW5hMNpq1jh9"
-#define NETWORK_DATA_NODE_IP_ADDRESS_1 "us1.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_2 "europe1.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_3 "europe2.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_4 "europe3.xcash.foundation"
-#define NETWORK_DATA_NODE_IP_ADDRESS_5 "oceania1.xcash.foundation"
-
-/*#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1pEWxj2q7gn7TJjae7JfsDhtnhydxsHhtADhDm4LbdE11rHVZqbX5MPGZ9tM7jQbDF4VKK89jSAqgL9Nxxjdh8RM5JEpZZP"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1VSDHKCc4Qhvqb3fquebSYxfMeyGteQeAYtDSpaTcgquBY1bkKWtQ42tZG2w7Ak7GyqnaiTgWL4bMHE9Lwd2A3g2Recxz7B"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1f8ngVg6fW5pJ49TC3DK4axYDMu5teUKUf7aP5rLCRvsL1ZCnf2LjAFtSYF6xfVWygSMMvn1hCEeupgGTX5n82GDZvcapbj"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1skiymYUHN5Vjg5kXhriGi25ZDKpgdLMZks3DKCwy9sxzyqY7uEr6hxRPnAvkYwLoT6peBi4aVT1g4t4vgtFj96eE1JF1L4"
-#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_5 "XCA1c8vbHxUiFfgnp7P5pPaAWEJac1W8vjiNHSLRB1k7G6XrWQkWXy85RfefFiCzB8V43jopp5AwmcezSoUVbXcp8Z4Eki8Gmt"
-#define NETWORK_DATA_NODE_IP_ADDRESS_1 "192.168.1.201"
-#define NETWORK_DATA_NODE_IP_ADDRESS_2 "192.168.1.202"
-#define NETWORK_DATA_NODE_IP_ADDRESS_3 "192.168.1.203"
-#define NETWORK_DATA_NODE_IP_ADDRESS_4 "192.168.1.204"
-#define NETWORK_DATA_NODE_IP_ADDRESS_5 "192.168.1.205"*/
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1dd7JaWhiuBavUM2ZTJG3GdgPkT1Yd5Q6VvNvnxbEfb6JhUhziTF6w5mMPVeoSv3aa1zGyhedpaa2QQtGEjBo7N6av9nhaU"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1b6Sg5QVBX4jrctQ9SVUcHFqpaGST6bqtFpyoQadTX8SaDs92xR8iec3VfaXKzhYijFiMfwoM4TuYRgy6NXzn5titJnWbra"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1UNwXyshf1cuN4LRWxgX84rkoM1fo12AbG7CiuTi27PEuxPicaTfNSA5WtsHHTkZ1GAy4bsd6CXy6ag6YEM9H7oNuBihrzM"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1WDfJTzqLJjn9YgXubf4RnxzUqMrWJaMWQKH8V3tZ9tgtWs5RoXfcHo7vQnZndj7PeyfcUcgkGX6cQNfVrWfC1g2iN84K1w"
+#define NETWORK_DATA_NODE_PUBLIC_ADDRESS_5 "XCA1fjt6X5k9CR13Pq1BKpJKLUjmcBCd3NDyhAfVnDvUirv16tmv4gQ4L3MtK1TfBoUdM1d48HN6kZS7NyYWJLmQ8xQiGXsS3z" 
+#define NETWORK_DATA_NODE_IP_ADDRESS_1 "xcashseeds.us"
+#define NETWORK_DATA_NODE_IP_ADDRESS_2 "xcashseeds.uk"
+#define NETWORK_DATA_NODE_IP_ADDRESS_3 "xcashseeds.cc"
+#define NETWORK_DATA_NODE_IP_ADDRESS_4 "xcashseeds.com"
+#define NETWORK_DATA_NODE_IP_ADDRESS_5 "xcashseeds.net"
 
 #define INITIALIZE_NETWORK_DATA_NODES_LIST const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4,NETWORK_DATA_NODE_IP_ADDRESS_5}
 #define INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT \
@@ -320,10 +299,8 @@ namespace config
   uint16_t const P2P_DEFAULT_PORT = 18280;
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
-  boost::uuids::uuid const NETWORK_ID = { {
-      0x10 ,0x10, 0x41, 0x53 , 0x48, 0x62 , 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x16, 0xA1, 0xA1, 0x10
-    } };
-  std::string const GENESIS_TX = "013c01ff0001b197bcc5c605029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd0880712101f1dde8d8d6c53e9d2e920d6e66432eaff6a85b2d25043fc29ef477b075b143df";
+  boost::uuids::uuid const NETWORK_ID = {{0x07, 0x10, 0x41, 0x57, 0x48, 0x62, 0x41, 0x65, 0x17, 0x31, 0x00, 0x82, 0x12, 0xA1, 0xA1, 0x11}};
+  std::string const GENESIS_TX = "013c01ff0001c0843d02ba9cc057e6e15a5c8e0399d405954253c60a50c5725a3afc256ab8ed5f6386e3210129dc99b9b322e0abb3e59e3eb5a8fd8376b30bd43c9ef5a867f6024049edf57a";
   uint32_t const GENESIS_NONCE = 10000;
 
   namespace testnet
