@@ -239,13 +239,13 @@ full_addrs.insert(SEED_NODE_5);
 // XCASH DPOPS
 #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
 #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
-#define BLOCK_VERIFIERS_VALID_AMOUNT 27 // The amount of block verifiers that need to vote true for the part of the round to be valid.
-#define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.55 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
-
+// #define BLOCK_VERIFIERS_VALID_AMOUNT 27 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+// #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.55 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_VALID_AMOUNT 2 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+#define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.04 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
 
 // Updates data
-#define BLOCK_HEIGHT_SF_V_2_2_0 910000 // stealth address verification Tuesday, March 23, 2022 03:00:00 UTC
-
+#define BLOCK_HEIGHT_SF_V_2_2_0 2 // stealth address verification
 
 // Network data nodes
 #define NETWORK_DATA_NODES_AMOUNT 5 // The amount of network data nodes
@@ -401,5 +401,3 @@ namespace cryptonote
     }
   };
 }
-
-
