@@ -82,10 +82,9 @@
 #define DIFFICULTY_CUT                                  60  // timestamps to cut after sorting
 #define DIFFICULTY_BLOCKS_COUNT                         DIFFICULTY_WINDOW + DIFFICULTY_LAG
 
-// Premine code
-// You can read more about the premine structure at https://x-cash.org/
+// Premine the current outstand supply for swap 
 #define PREMINE_BLOCK_HEIGHT								1
-#define PREMINE_BLOCK_REWARD							((uint64_t)(40000000000000000))
+#define PREMINE_BLOCK_REWARD							((uint64_t)(62000000000000000))
 
 // LWMA difficulty V8
 #define HF_VERSION_LWMA_DIFFICULTY 8
@@ -207,7 +206,7 @@ full_addrs.insert(SEED_NODE_5);
 
 // Blockchain
 #define HF_VERSION_PROOF_OF_STAKE 13
-#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 2 // The first block of the X-CASH proof of stake
+#define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 3 // The first block of the X-CASH proof of stake
 #define BLOCK_TIME 5 // the block time in minutes
 #define BLOCKS_PER_DAY_FIVE_MINUTE_BLOCK_TIME 288 // The blocks per day with a 5 minute block time
 #define MAXIMUM_RESERVE_BYTES_LEGNTH 4096 // The maximum size in bytes for the reserve bytes in the block header
