@@ -5784,8 +5784,8 @@ WARNING: Do not reuse your Monero keys on another fork, UNLESS this fork has key
     </message>
     <message>
         <location filename="../src/wallet/wallet2.cpp" line="260"/>
-        <source>Use daemon instance at port &lt;arg&gt; instead of 18081</source>
-        <translation>Usa istanza daemon alla porta &lt;arg&gt; invece che alla 18081</translation>
+        <source>Use daemon instance at port &lt;arg&gt; instead of 18281</source>
+        <translation>Usa istanza daemon alla porta &lt;arg&gt; invece che alla 18281</translation>
     </message>
     <message>
         <location filename="../src/wallet/wallet2.cpp" line="269"/>

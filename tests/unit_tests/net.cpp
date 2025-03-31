@@ -863,7 +863,7 @@ namespace
 TEST(get_network_address_host_and_port, ipv4)
 {
     na_host_and_port_test("9.9.9.9", "9.9.9.9", "xxxxx");
-    na_host_and_port_test("9.9.9.9:18081", "9.9.9.9", "18081");
+    na_host_and_port_test("9.9.9.9:18281", "9.9.9.9", "18081");
 }
 
 TEST(get_network_address_host_and_port, ipv6)
@@ -880,7 +880,7 @@ TEST(get_network_address_host_and_port, hostname)
 {
     na_host_and_port_test("localhost", "localhost", "xxxxx");
     na_host_and_port_test("bar:29080", "bar", "29080"); // Issue https://github.com/monero-project/monero/issues/8633
-    na_host_and_port_test("xmrchain.net:18081", "xmrchain.net", "18081");
+    na_host_and_port_test("xmrchain.net:18281", "xmrchain.net", "18081");
 }
 
 namespace

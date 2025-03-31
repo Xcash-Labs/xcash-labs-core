@@ -55,8 +55,8 @@ VOLUME /home/monero/.bitmonero
 # monero-wallet-cli
 VOLUME /wallet
 
-EXPOSE 18080
-EXPOSE 18081
+EXPOSE 18280
+EXPOSE 18281
 
 # switch to user monero
 USER monero
