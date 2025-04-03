@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024, The Monero Project
+// Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
 // 
 // All rights reserved.
 // 
@@ -181,7 +181,7 @@ namespace
   const command_line::arg_descriptor<bool> arg_non_deterministic = {"non-deterministic", sw::tr("Generate non-deterministic view and spend keys"), false};
   const command_line::arg_descriptor<uint64_t> arg_restore_height = {"restore-height", sw::tr("Restore from specific blockchain height"), 0};
   const command_line::arg_descriptor<std::string> arg_restore_date = {"restore-date", sw::tr("Restore from estimated blockchain height on specified date"), ""};
-  const command_line::arg_descriptor<bool> arg_do_not_relay = {"do-not-relay", sw::tr("The newly created transaction will not be relayed to the monero network"), false};
+  const command_line::arg_descriptor<bool> arg_do_not_relay = {"do-not-relay", sw::tr("The newly created transaction will not be relayed to the xcash network"), false};
   const command_line::arg_descriptor<bool> arg_create_address_file = {"create-address-file", sw::tr("Create an address file for new wallets"), false};
   const command_line::arg_descriptor<std::string> arg_subaddress_lookahead = {"subaddress-lookahead", tools::wallet2::tr("Set subaddress lookahead sizes to <major>:<minor>"), ""};
   const command_line::arg_descriptor<bool> arg_use_english_language_names = {"use-english-language-names", sw::tr("Display English language names"), false};
@@ -194,7 +194,7 @@ namespace
   const char* USAGE_INCOMING_TRANSFERS("incoming_transfers [available|unavailable] [verbose] [uses] [index=<N1>[,<N2>[,...]]]");
   const char* USAGE_PAYMENTS("payments <PID_1> [<PID_2> ... <PID_N>]");
   const char* USAGE_PAYMENT_ID("payment_id");
-  const char* USAGE_TRANSFER("transfer [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] (<URI> | <address> <amount>) [subtractfeefrom=<D0>[,<D1>,all,...]] [<payment_id>]");
+  const char* USAGE_TRANSFER("transfer [<tx_privacy_settings>] [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] (<URI> | <address> <amount>) [subtractfeefrom=<D0>[,<D1>,all,...]] [<payment_id>]");
   const char* USAGE_SWEEP_ALL("sweep_all [index=<N1>[,<N2>,...] | index=all] [<priority>] [<ring_size>] [outputs=<N>] <address> [<payment_id (obsolete)>]");
   const char* USAGE_SWEEP_ACCOUNT("sweep_account <account> [index=<N1>[,<N2>,...] | index=all] [<priority>] [<ring_size>] [outputs=<N>] <address> [<payment_id (obsolete)>]");
   const char* USAGE_SWEEP_BELOW("sweep_below <amount_threshold> [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] <address> [<payment_id (obsolete)>]");
@@ -248,7 +248,7 @@ namespace
   const char* USAGE_MMS("mms [<subcommand> [<subcommand_parameters>]]");
   const char* USAGE_MMS_INIT("mms init <required_signers>/<authorized_signers> <own_label> <own_transport_address>");
   const char* USAGE_MMS_INFO("mms info");
-  const char* USAGE_MMS_SIGNER("mms signer [<number> <label> [<transport_address> [<monero_address>]]]");
+  const char* USAGE_MMS_SIGNER("mms signer [<number> <label> [<transport_address> [<xcash_address>]]]");
   const char* USAGE_MMS_LIST("mms list");
   const char* USAGE_MMS_NEXT("mms next [sync]");
   const char* USAGE_MMS_SYNC("mms sync");
@@ -515,7 +515,7 @@ namespace
     std::stringstream prompt;
     prompt << sw::tr("For URL: ") << url
            << ", " << dnssec_str << std::endl
-           << sw::tr(" Monero Address = ") << addresses[0]
+           << sw::tr(" xCash Address = ") << addresses[0]
            << std::endl
            << sw::tr("Is this OK?")
     ;
@@ -2275,22 +2275,22 @@ bool simple_wallet::welcome(const std::vector<std::string> &args)
   message_writer() << tr("Welcome to Monero, the private cryptocurrency.");
   message_writer() << "";
   message_writer() << tr("Monero, like Bitcoin, is a cryptocurrency. That is, it is digital money.");
-  message_writer() << tr("Unlike Bitcoin, your Monero transactions and balance stay private and are not visible to the world by default.");
+  message_writer() << tr("Unlike Bitcoin, your XCash transactions and balance stay private and are not visible to the world by default.");
   message_writer() << tr("However, you have the option of making those available to select parties if you choose to.");
   message_writer() << "";
-  message_writer() << tr("Monero protects your privacy on the blockchain, and while Monero strives to improve all the time,");
-  message_writer() << tr("no privacy technology can be 100% perfect, Monero included.");
+  message_writer() << tr("Monero protects your privacy on the blockchain, and while XCash strives to improve all the time,");
+  message_writer() << tr("no privacy technology can be 100% perfect, XCash included.");
   message_writer() << tr("Monero cannot protect you from malware, and it may not be as effective as we hope against powerful adversaries.");
-  message_writer() << tr("Flaws in Monero may be discovered in the future, and attacks may be developed to peek under some");
-  message_writer() << tr("of the layers of privacy Monero provides. Be safe and practice defense in depth.");
+  message_writer() << tr("Flaws in XCash may be discovered in the future, and attacks may be developed to peek under some");
+  message_writer() << tr("of the layers of privacy XCash provides. Be safe and practice defense in depth.");
   message_writer() << "";
-  message_writer() << tr("Welcome to Monero and financial privacy. For more information see https://GetMonero.org");
+  message_writer() << tr("Welcome to XCash and financial privacy. For more information see https://GetMonero.org");
   return true;
 }
 
 bool simple_wallet::version(const std::vector<std::string> &args)
 {
-  message_writer() << "Monero '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")";
+  message_writer() << "XCash '" << XCASH_RELEASE_NAME << "' (v" << XCASH_VERSION_FULL << ")";
   return true;
 }
 
@@ -2364,7 +2364,7 @@ bool simple_wallet::show_qr_code(const std::vector<std::string> &args)
   WTEXTON();
   try
   {
-    const std::string address = "monero:" + m_wallet->get_subaddress_as_str({m_current_subaddress_account, subaddress_index});
+    const std::string address = "xcash:" + m_wallet->get_subaddress_as_str({m_current_subaddress_account, subaddress_index});
     const qrcodegen::QrCode qr = qrcodegen::QrCode::encodeText(address.c_str(), qrcodegen::QrCode::Ecc::LOW);
     for (int y = -2; y < qr.getSize() + 2; y+=2)
     {
@@ -3080,7 +3080,7 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
     message_writer() << tr("\"show_transfers [in|out|pending|failed|pool]\" - Show transactions.");
     message_writer() << tr("\"sweep_all <address>\" - Send whole balance to another wallet.");
     message_writer() << tr("\"seed\" - Show secret 25 words that can be used to recover this wallet.");
-    message_writer() << tr("\"refresh\" - Synchronize wallet with the Monero network.");
+    message_writer() << tr("\"refresh\" - Synchronize wallet with the XCash network.");
     message_writer() << tr("\"status\" - Check current status of wallet.");
     message_writer() << tr("\"version\" - Check software version.");
     message_writer() << tr("\"exit\" - Exit wallet.");
@@ -3220,8 +3220,8 @@ simple_wallet::simple_wallet()
                            tr("Show the blockchain height."));
   m_cmd_binder.set_handler("transfer", boost::bind(&simple_wallet::on_command, this, &simple_wallet::transfer, _1),
                            tr(USAGE_TRANSFER),
-                           tr("Transfer <amount> to <address>. If the parameter \"index=<N1>[,<N2>,...]\" is specified, the wallet uses outputs received by addresses of those indices. If omitted, the wallet randomly chooses address indices to be used. In any case, it tries its best not to combine outputs across multiple addresses. <priority> is the priority of the transaction. The higher the priority, the higher the transaction fee. Valid values in priority order (from lowest to highest) are: unimportant, normal, elevated, priority. If omitted, the default value (see the command \"set priority\") is used. <ring_size> is the number of inputs to include for untraceability. Multiple payments can be made at once by adding URI_2 or <address_2> <amount_2> etcetera (before the payment ID, if it's included). The \"subtractfeefrom=\" list allows you to choose which destinations to fund the tx fee from instead of the change output. The fee will be split across the chosen destinations proportionally equally. For example, to make 3 transfers where the fee is taken from the first and third destinations, one could do: \"transfer <addr1> 3 <addr2> 0.5 <addr3> 1 subtractfeefrom=0,2\". Let's say the tx fee is 0.1. The balance would drop by exactly 4.5 XMR including fees, and addr1 & addr3 would receive 2.925 & 0.975 XMR, respectively. Use \"subtractfeefrom=all\" to spread the fee across all destinations."));
-  m_cmd_binder.set_handler("sweep_unmixable",
+                           tr("Transfer <amount> to <address>. [<tx_privacy_settings>] determines if the the transaction is public or private. Valid parameters are public or private. If this parameter is empty, then a private tx is sent. If the parameter \"index=<N1>[,<N2>,...]\" is specified, the wallet uses outputs received by addresses of those indices. If omitted, the wallet randomly chooses address indices to be used. In any case, it tries its best not to combine outputs across multiple addresses. <priority> is the priority of the transaction. The higher the priority, the higher the transaction fee. Valid values in priority order (from lowest to highest) are: unimportant, normal, elevated, priority. If omitted, the default value (see the command \"set priority\") is used. <ring_size> is the number of inputs to include for untraceability. Multiple payments can be made at once by adding URI_2 or <address_2> <amount_2> etcetera (before the payment ID, if it's included). The \"subtractfeefrom=\" list allows you to choose which destinations to fund the tx fee from instead of the change output. The fee will be split across the chosen destinations proportionally equally. For example, to make 3 transfers where the fee is taken from the first and third destinations, one could do: \"transfer <addr1> 3 <addr2> 0.5 <addr3> 1 subtractfeefrom=0,2\". Let's say the tx fee is 0.1. The balance would drop by exactly 4.5 XCASH including fees, and addr1 & addr3 would receive 2.925 & 0.975 XCASH, respectively. Use \"subtractfeefrom=all\" to spread the fee across all destinations."));
+                           m_cmd_binder.set_handler("sweep_unmixable",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_unmixable, _1),
                            tr("Send all unmixable outputs to yourself with ring_size 1"));
   m_cmd_binder.set_handler("sweep_all", boost::bind(&simple_wallet::on_command, this, &simple_wallet::sweep_all, _1),
@@ -3241,7 +3241,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("donate",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::donate, _1),
                            tr(USAGE_DONATE),
-                           tr("Donate <amount> to the development team (donate.getmonero.org)."));
+                           tr("Donate <amount> to the development team (xcash donate address)."));
   m_cmd_binder.set_handler("sign_transfer",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::sign_transfer, _1),
                            tr(USAGE_SIGN_TRANSFER),
@@ -3316,8 +3316,8 @@ simple_wallet::simple_wallet()
                                   "ask-password <0|1|2   (or never|action|decrypt)>\n "
                                   "  action: ask the password before many actions such as transfer, etc\n "
                                   "  decrypt: same as action, but keeps the spend key encrypted in memory when not needed\n "
-                                  "unit <monero|millinero|micronero|nanonero|piconero>\n "
-                                  "  Set the default monero (sub-)unit.\n "
+                                  "unit <xcash|millinero|micronero|nanonero|piconero>\n "
+                                  "  Set the default xcash (sub-)unit.\n "
                                   "max-reorg-depth <unsigned int>\n "
                                   "  Set the maximum amount of blocks to accept in a reorg.\n "
                                   "min-outputs-count [n]\n "
@@ -3337,9 +3337,9 @@ simple_wallet::simple_wallet()
                                   "auto-low-priority <1|0>\n "
                                   "  Whether to automatically use the low priority fee level when it's safe to do so.\n "
                                   "segregate-pre-fork-outputs <1|0>\n "
-                                  "  Set this if you intend to spend outputs on both Monero AND a key reusing fork.\n "
+                                  "  Set this if you intend to spend outputs on both XCash AND a key reusing fork.\n "
                                   "key-reuse-mitigation2 <1|0>\n "
-                                  "  Set this if you are not sure whether you will spend on a key reusing Monero fork later.\n "
+                                  "  Set this if you are not sure whether you will spend on a key reusing XCash fork later.\n "
                                   "subaddress-lookahead <major>:<minor>\n "
                                   "  Set the lookahead sizes for the subaddress hash table.\n "
                                   "segregation-height <n>\n "
@@ -3355,7 +3355,7 @@ simple_wallet::simple_wallet()
                                   "background-sync <off|reuse-wallet-password|custom-background-password>\n "
                                   "  Set this to enable scanning in the background with just the view key while the wallet is locked.\n "
                                   "setup-background-mining <1|0>\n "
-                                  "  Whether to enable background mining. Set this to support the network and to get a chance to receive new monero.\n "
+                                  "  Whether to enable background mining. Set this to support the network and to get a chance to receive new xcash.\n "
                                   "device-name <device_name[:device_spec]>\n "
                                   "  Device name for hardware wallet.\n "
                                   "export-format <\"binary\"|\"ascii\">\n "
@@ -3552,7 +3552,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("mms signer",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_SIGNER),
-                           tr("Set or modify authorized signer info (single-word label, transport address, Monero address), or list all signers"));
+                           tr("Set or modify authorized signer info (single-word label, transport address, XCash address), or list all signers"));
   m_cmd_binder.set_handler("mms list",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::mms, _1),
                            tr(USAGE_MMS_LIST),
@@ -3677,7 +3677,7 @@ simple_wallet::simple_wallet()
   m_cmd_binder.set_handler("welcome",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::welcome, _1),
                            tr(USAGE_WELCOME),
-                           tr("Prints basic info about Monero for first time users"));
+                           tr("Prints basic info about XCash for first time users"));
   m_cmd_binder.set_handler("version",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::version, _1),
                            tr(USAGE_VERSION),
@@ -4610,7 +4610,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     bool ssl = false;
     if (m_wallet->check_connection(NULL, &ssl) && !ssl)
       message_writer(console_color_red, true) << boost::format(tr("Using your own without SSL exposes your RPC traffic to monitoring"));
-    message_writer(console_color_red, true) << boost::format(tr("You are strongly encouraged to connect to the Monero network using your own daemon"));
+    message_writer(console_color_red, true) << boost::format(tr("You are strongly encouraged to connect to the XCash network using your own daemon"));
     message_writer(console_color_red, true) << boost::format(tr("If you or someone you trust are operating this daemon, you can use --trusted-daemon"));
 
     COMMAND_RPC_GET_INFO::request req;
@@ -4865,7 +4865,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
     "Use the \"help\" command to see a simplified list of available commands.\n"
     "Use \"help all\" command to see the list of all available commands.\n"
     "Use \"help <command>\" to see a command's documentation.\n"
-    "Always use the \"exit\" command when closing monero-wallet-cli to save \n"
+    "Always use the \"exit\" command when closing xcash-wallet-cli to save \n"
     "your current session's state. Otherwise, you might need to synchronize \n"
     "your wallet again (your wallet keys are NOT at risk in any case).\n")
   ;
@@ -5249,7 +5249,7 @@ void simple_wallet::start_background_mining()
       return;
     }
   }
-  success_msg_writer() << tr("Background mining enabled. Thank you for supporting the Monero network.");
+  success_msg_writer() << tr("Background mining enabled. Thank you for supporting the XCash network.");
 }
 //----------------------------------------------------------------------------------------------------
 void simple_wallet::stop_background_mining()
@@ -5325,7 +5325,7 @@ void simple_wallet::check_background_mining(const epee::wipeable_string &passwor
   {
     message_writer() << tr("The daemon is not set up to background mine.");
     message_writer() << tr("With background mining enabled, the daemon will mine when idle and not on battery.");
-    message_writer() << tr("Enabling this supports the network you are using, and makes you eligible for receiving new monero");
+    message_writer() << tr("Enabling this supports the network you are using, and makes you eligible for receiving new xcash");
     std::string accepted = input_line(tr("Do you want to do it now? (Y/Yes/N/No): "));
     if (std::cin.eof() || !command_line::is_yes(accepted)) {
       m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningNo);
@@ -6339,7 +6339,7 @@ void simple_wallet::check_for_inactivity_lock(bool user)
     m_in_command = true;
     if (!user)
     {
-      const std::string speech = tr("I locked your Monero wallet to protect you while you were away\nsee \"help set\" to configure/disable");
+      const std::string speech = tr("I locked your XCash wallet to protect you while you were away\nsee \"help set\" to configure/disable");
       std::vector<std::pair<std::string, size_t>> lines = tools::split_string_by_width(speech, 45);
 
       size_t max_len = 0;
@@ -6349,13 +6349,7 @@ void simple_wallet::check_for_inactivity_lock(bool user)
       tools::msg_writer() << " " << std::string(n_u, '_');
       for (size_t i = 0; i < lines.size(); ++i)
         tools::msg_writer() << (i == 0 ? "/" : i == lines.size() - 1 ? "\\" : "|") << " " << lines[i].first << std::string(max_len - lines[i].second, ' ') << " " << (i == 0 ? "\\" : i == lines.size() - 1 ? "/" : "|");
-      tools::msg_writer() << " " << std::string(n_u, '-') << std::endl <<
-          "        \\   (__)" << std::endl <<
-          "         \\  (oo)\\_______" << std::endl <<
-          "            (__)\\       )\\/\\" << std::endl <<
-          "                ||----w |" << std::endl <<
-          "                ||     ||" << std::endl <<
-          "" << std::endl;
+        tools::msg_writer() << " " << std::string(n_u, '-') << std::endl;
     }
 
     bool started_background_sync = false;
@@ -6425,7 +6419,7 @@ bool simple_wallet::on_command(bool (simple_wallet::*cmd)(const std::vector<std:
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool called_by_mms)
 {
-//  "transfer [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] <address> <amount> [<payment_id>]"
+//  "transfer [<tx_privacy_settings>] [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] <address> <amount> [<payment_id>]"
   CHECK_IF_BACKGROUND_SYNCING("cannot transfer");
   if (!try_connect_to_daemon())
     return false;
@@ -6567,7 +6561,7 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
     }
     else
     {
-      if (boost::starts_with(local_args[i], "monero:"))
+      if (boost::starts_with(local_args[i], "xcash:"))
         fail_msg_writer() << tr("Invalid last argument: ") << local_args.back() << ": " << error;
       else
         fail_msg_writer() << tr("Invalid last argument: ") << local_args.back();
@@ -6630,9 +6624,8 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
   try
   {
     // figure out what tx will be necessary
-    auto ptx_vector = m_wallet->create_transactions_2(dsts, fake_outs_count, priority, extra,
-      m_current_subaddress_account, subaddr_indices, subtract_fee_from_outputs);
-
+    auto ptx_vector = m_wallet->create_transactions_2(dsts, fake_outs_count, tx_privacy_settings, priority, extra,
+         m_current_subaddress_account, subaddr_indices, subtract_fee_from_outputs);
     if (ptx_vector.empty())
     {
       fail_msg_writer() << tr("No outputs found, or daemon is not ready");
@@ -6988,6 +6981,17 @@ bool simple_wallet::sweep_main(uint32_t account, uint64_t below, const std::vect
     return true;
 
   std::vector<std::string> local_args = args_;
+
+
+  std::string tx_privacy_settings = local_args[0];
+  if (tx_privacy_settings != "private" && tx_privacy_settings != "public")
+  {
+    tx_privacy_settings = "private";
+  }
+  else
+  {
+    local_args.erase(local_args.begin() + 0);
+  }
 
   std::set<uint32_t> subaddr_indices;
   if (local_args.size() > 0 && local_args[0].substr(0, 6) == "index=")
@@ -7582,7 +7586,7 @@ bool simple_wallet::donate(const std::vector<std::string> &args_)
   if (!payment_id_str.empty())
     local_args.push_back(payment_id_str);
   if (m_wallet->nettype() == cryptonote::MAINNET)
-    message_writer() << (boost::format(tr("Donating %s %s to The Monero Project (donate.getmonero.org or %s).")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % MONERO_DONATION_ADDR).str();
+    message_writer() << (boost::format(tr("Donating %s %s to The XCash Project (donate.getmonero.org or %s).")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % MONERO_DONATION_ADDR).str();
   else
     message_writer() << (boost::format(tr("Donating %s %s to %s.")) % amount_str % cryptonote::get_unit(cryptonote::get_default_decimal_point()) % address_str).str();
   transfer(local_args);
@@ -10452,12 +10456,12 @@ int main(int argc, char* argv[])
   bool should_terminate = false;
   std::tie(vm, should_terminate) = wallet_args::main(
    argc, argv,
-   "monero-wallet-cli [--wallet-file=<filename>|--generate-new-wallet=<filename>] [<COMMAND>]",
-    sw::tr("This is the command line monero wallet. It needs to connect to a monero\ndaemon to work correctly.\nWARNING: Do not reuse your Monero keys on another fork, UNLESS this fork has key reuse mitigations built in. Doing so will harm your privacy."),
+   "xcash-wallet-cli [--wallet-file=<filename>|--generate-new-wallet=<filename>] [<COMMAND>]",
+    sw::tr("This is the command line xcash wallet. It needs to connect to a xcash\ndaemon to work correctly.\nWARNING: Do not reuse your XCash keys on another fork, UNLESS this fork has key reuse mitigations built in. Doing so will harm your privacy."),
     desc_params,
     positional_options,
     [](const std::string &s, bool emphasis){ tools::scoped_message_writer(emphasis ? epee::console_color_white : epee::console_color_default, true) << s; },
-    "monero-wallet-cli.log"
+    "xcash-wallet-cli.log"
   );
 
   if (!vm)
@@ -10869,14 +10873,14 @@ void simple_wallet::mms_signer(const std::vector<std::string> &args)
     bool ok = cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), args[3], oa_prompter);
     if (!ok)
     {
-      fail_msg_writer() << tr("Invalid Monero address");
+      fail_msg_writer() << tr("Invalid XCash address");
       return;
     }
     monero_address = info.address;
     const std::vector<mms::message> &messages = ms.get_all_messages();
     if ((messages.size() > 0) || state.multisig)
     {
-      fail_msg_writer() << tr("Wallet state does not allow changing Monero addresses anymore");
+      fail_msg_writer() << tr("Wallet state does not allow changing XCash addresses anymore");
       return;
     }
   }

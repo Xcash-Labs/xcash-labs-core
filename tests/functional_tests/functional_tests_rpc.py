@@ -39,7 +39,7 @@ except:
   tests = DEFAULT_TESTS
 
 # a main offline monerod, does most of the tests
-# a restricted RPC monerod setup with RPC payment
+# a restricted RPC xcashd setup with RPC payment
 # two local online monerods connected to each other
 N_MONERODS = 5
 
@@ -60,7 +60,7 @@ monerod_extra = [
   ["--add-exclusive-node", "127.0.0.1:18282"],
   ["--rpc-login", "md5_lover:Z1ON0101", "--offline"],
 ]
-wallet_base = [builddir + "/bin/monero-wallet-rpc", "--wallet-dir", WALLET_DIRECTORY, "--rpc-bind-port", "wallet_port", "--rpc-ssl", "disabled", "--daemon-ssl", "disabled", "--log-level", "1", "--allow-mismatched-daemon-version"]
+wallet_base = [builddir + "/bin/xcash-wallet-rpc", "--wallet-dir", WALLET_DIRECTORY, "--rpc-bind-port", "wallet_port", "--rpc-ssl", "disabled", "--daemon-ssl", "disabled", "--log-level", "1", "--allow-mismatched-daemon-version"]
 wallet_extra = [
   ["--daemon-port", "18180", "--disable-rpc-login"],
   ["--daemon-port", "18180", "--disable-rpc-login"],

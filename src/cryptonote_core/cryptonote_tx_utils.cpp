@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024, The Monero Project
+// Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
 // 
 // All rights reserved.
 // 
@@ -32,6 +32,7 @@
 #include <random>
 #include "include_base_utils.h"
 #include "string_tools.h"
+#include "common/base58.h"
 using namespace epee;
 
 #include "common/apply_permutation.h"
@@ -203,7 +204,7 @@ namespace cryptonote
     return addr.m_view_public_key;
   }
   //---------------------------------------------------------------
-  bool construct_tx_with_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, std::vector<tx_source_entry>& sources, std::vector<tx_destination_entry>& destinations, const boost::optional<cryptonote::account_public_address>& change_addr, const std::vector<uint8_t> &extra, transaction& tx, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, bool rct, const rct::RCTConfig &rct_config, bool shuffle_outs, bool use_view_tags)
+  bool construct_tx_with_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, std::vector<tx_source_entry>& sources, std::vector<tx_destination_entry>& destinations, const boost::optional<cryptonote::account_public_address>& change_addr, const std::vector<uint8_t> &extra, transaction& tx, std::string tx_privacy_settings, uint8_t network_type_settings, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, bool rct, const rct::RCTConfig &rct_config, bool shuffle_outs, bool use_view_tags)
   {
     hw::device &hwdev = sender_account_keys.get_device();
 
@@ -389,6 +390,29 @@ namespace cryptonote
       txkey_pub = rct::rct2pk(hwdev.scalarmultBase(rct::sk2rct(tx_key)));
     }
     remove_field_from_tx_extra(tx.extra, typeid(tx_extra_pub_key));
+
+    // Public transactions
+    std::string tx_key_str = string_tools::pod_to_hex(tx_key);
+    crypto::hash hash;
+    crypto::cn_fast_hash(tx_key_str.data(), tx_key_str.size(), hash);
+    crypto::signature signature;
+    crypto::generate_signature(hash, sender_account_keys.m_account_address.m_spend_public_key, sender_account_keys.m_spend_secret_key, signature);
+    std::string tx_key_data = std::string(XCASH_SIGN_DATA_PREFIX) + tools::base58::encode(std::string((const char*)&signature, sizeof(signature)));
+    // add the data to the transaction if the user has chosen a public transaction
+    if (tx_privacy_settings == "public") {
+      // check if this is a valid public transaction with only the from address and one to address
+      if (destinations.size() != 2) {
+        LOG_ERROR("Invalid public transaction. Public transactions can only be sent to one address.");
+        return false;
+      }
+      add_extra_nonce_to_tx_extra(tx.extra, "|" + t_serializable_object_to_blob(tx_key) + "|");
+      add_extra_nonce_to_tx_extra(tx.extra, "|" + tx_key_data + "|");
+      for (const auto& addresses : destinations) {
+        add_extra_nonce_to_tx_extra(tx.extra, "|" + get_account_address_as_str((cryptonote::network_type)network_type_settings, addresses.is_subaddress, addresses.addr) + "|");
+      }
+    }
+    // End Public transcations
+
     add_tx_pub_key_to_extra(tx, txkey_pub);
 
     std::vector<crypto::public_key> additional_tx_public_keys;
@@ -606,7 +630,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool construct_tx_and_get_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, std::vector<tx_source_entry>& sources, std::vector<tx_destination_entry>& destinations, const boost::optional<cryptonote::account_public_address>& change_addr, const std::vector<uint8_t> &extra, transaction& tx, crypto::secret_key &tx_key, std::vector<crypto::secret_key> &additional_tx_keys, bool rct, const rct::RCTConfig &rct_config, bool use_view_tags)
+  bool construct_tx_and_get_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, std::vector<tx_source_entry>& sources, std::vector<tx_destination_entry>& destinations, const boost::optional<cryptonote::account_public_address>& change_addr, const std::vector<uint8_t> &extra, transaction& tx, std::string tx_privacy_settings, uint8_t network_type_settings, crypto::secret_key &tx_key, std::vector<crypto::secret_key> &additional_tx_keys, bool rct, const rct::RCTConfig &rct_config, bool use_view_tags)
   {
     hw::device &hwdev = sender_account_keys.get_device();
     hwdev.open_tx(tx_key);
@@ -627,7 +651,7 @@ namespace cryptonote
       }
 
       bool shuffle_outs = true;
-      bool r = construct_tx_with_tx_key(sender_account_keys, subaddresses, sources, destinations, change_addr, extra, tx, tx_key, additional_tx_keys, rct, rct_config, shuffle_outs, use_view_tags);
+      bool r = construct_tx_with_tx_key(sender_account_keys, subaddresses, sources, destinations, change_addr, extra, tx, unlock_time, tx_privacy_settings, network_type_settings, tx_key, additional_tx_keys, rct, rct_config, shuffle_outs, use_view_tags);
       hwdev.close_tx();
       return r;
     } catch(...) {
@@ -643,7 +667,7 @@ namespace cryptonote
      crypto::secret_key tx_key;
      std::vector<crypto::secret_key> additional_tx_keys;
      std::vector<tx_destination_entry> destinations_copy = destinations;
-     return construct_tx_and_get_tx_key(sender_account_keys, subaddresses, sources, destinations_copy, change_addr, extra, tx, tx_key, additional_tx_keys, false, { rct::RangeProofBorromean, 0});
+     return construct_tx_and_get_tx_key(sender_account_keys, subaddresses, sources, destinations_copy, change_addr, extra, tx, unlock_time, "private", 0, tx_key, additional_tx_keys, false, { rct::RangeProofBorromean, 0});
   }
   //---------------------------------------------------------------
   bool generate_genesis_block(

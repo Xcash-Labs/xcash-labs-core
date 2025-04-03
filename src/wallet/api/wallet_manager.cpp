@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024, The Monero Project
+// Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
 //
 // All rights reserved.
 //
@@ -370,7 +370,7 @@ std::tuple<bool, std::string, std::string, std::string, std::string> WalletManag
     if (!tools::check_updates(software, buildtag, version, hash))
       return std::make_tuple(false, "", "", "", "");
 
-    if (tools::vercmp(version.c_str(), current_version != nullptr ? current_version : MONERO_VERSION) > 0)
+    if (tools::vercmp(version.c_str(), current_version != nullptr ? current_version : XCASH_VERSION) > 0)
     {
       std::string user_url = tools::get_update_url(software, subdir, buildtag, version, true);
       std::string auto_url = tools::get_update_url(software, subdir, buildtag, version, false);

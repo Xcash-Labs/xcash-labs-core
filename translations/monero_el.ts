@@ -2441,7 +2441,7 @@ Key Image, &quot;absolute&quot;, list of rings</source>
 To start synchronizing with the daemon, use the &quot;refresh&quot; command.
 Use the &quot;help&quot; command to see the list of available commands.
 Use &quot;help &lt;command&gt;&quot; to see a command&apos;s documentation.
-Always use the &quot;exit&quot; command when closing monero-wallet-cli to save 
+Always use the &quot;exit&quot; command when closing xcash-wallet-cli to save 
 your current session&apos;s state. Otherwise, you might need to synchronize 
 your wallet again (your wallet keys are NOT at risk in any case).
 </source>
@@ -5750,7 +5750,7 @@ WARNING: Do not reuse your Monero keys on another fork, UNLESS this fork has key
     </message>
     <message>
         <location filename="../src/wallet/wallet2.cpp" line="260"/>
-        <source>Use daemon instance at port &lt;arg&gt; instead of 18081</source>
+        <source>Use daemon instance at port &lt;arg&gt; instead of 18281</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

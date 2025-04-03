@@ -23,7 +23,7 @@ do
 done
 if test -z "$monerod"
 then
-  echo "monerod not found"
+  echo "xcashd not found"
   exit 1
 fi
 echo "Found: $monerod"

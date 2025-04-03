@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024, The Monero Project
+// Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
 //
 // All rights reserved.
 //
@@ -267,7 +267,7 @@ DNSResolver::DNSResolver() : m_data(new DNSResolverData())
     // should be a valid DNSSEC record, and switch to known good
     // DNSSEC resolvers if verification fails
     bool available, valid;
-    static const char *probe_hostname = "updates.moneropulse.org";
+    static const char *probe_hostname = "updates.xcashpulse.org";
     auto records = get_txt_record(probe_hostname, available, valid);
     if (!valid)
     {
@@ -318,7 +318,7 @@ std::vector<std::string> DNSResolver::get_record(const std::string& url, int rec
     if (dnssec_available && !dnssec_valid)
     {
       MWARNING("Invalid DNSSEC " << get_record_name(record_type) << " record signature for " << url << ": " << result->why_bogus);
-      MWARNING("Possibly your DNS service is problematic. You can have monerod use an alternate via env variable DNS_PUBLIC. Example: DNS_PUBLIC=tcp://9.9.9.9");
+      MWARNING("Possibly your DNS service is problematic. You can have xcashd use an alternate via env variable DNS_PUBLIC. Example: DNS_PUBLIC=tcp://9.9.9.9");
     }
     if (result->havedata)
     {

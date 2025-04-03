@@ -52,15 +52,15 @@ VOLUME /home/monero/.bitmonero
 
 # Generate your wallet via accessing the container and run:
 # cd /wallet
-# monero-wallet-cli
+# xcash-wallet-cli
 VOLUME /wallet
 
-EXPOSE 18080
-EXPOSE 18081
+EXPOSE 18280
+EXPOSE 18281
 
 # switch to user monero
 USER monero
 
-ENTRYPOINT ["monerod"]
+ENTRYPOINT ["xcashd"]
 CMD ["--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=18080", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=18081", "--non-interactive", "--confirm-external-bind"]
 

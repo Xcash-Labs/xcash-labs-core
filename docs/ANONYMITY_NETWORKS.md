@@ -19,8 +19,8 @@ network. The transaction will not be broadcast unless an anonymity connection
 is made or until `monerod` is shutdown and restarted with only public
 connections enabled.
 
-Anonymity networks can also be used with `monero-wallet-cli` and
-`monero-wallet-rpc` - the wallets will connect to a daemon through a proxy. The
+Anonymity networks can also be used with `xcash-wallet-cli` and
+`xcash-wallet-rpc` - the wallets will connect to a daemon through a proxy. The
 daemon must provide a hidden service for the RPC itself, which is separate from
 the hidden service for P2P connections.
 
@@ -88,11 +88,11 @@ An anonymity network can be configured to forward incoming connections to a
 `monerod` RPC port - which is independent from the configuration for incoming
 P2P anonymity connections. The anonymity network (Tor/I2P) is
 [configured in the same manner](#configuration), except the localhost port
-must be the RPC port (typically 18081 for mainnet) instead of the P2P port:
+must be the RPC port (typically 18281 for mainnet) instead of the P2P port:
 
 ```
 HiddenServiceDir /var/lib/tor/data/monero
-HiddenServicePort 18081 127.0.0.1:18081
+HiddenServicePort 18281 127.0.0.1:18281
 ```
 
 Then the wallet will be configured to use a Tor/I2P address:
