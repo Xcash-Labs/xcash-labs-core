@@ -578,6 +578,7 @@ namespace wallet_rpc
       uint32_t account_index;
       std::set<uint32_t> subaddr_indices;
       std::set<uint32_t> subtract_fee_from_outputs;
+      std::string tx_privacy_settings;
       uint32_t priority;
       uint64_t ring_size;
       uint64_t unlock_time;
@@ -592,6 +593,7 @@ namespace wallet_rpc
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
         KV_SERIALIZE_OPT(subtract_fee_from_outputs, decltype(subtract_fee_from_outputs)())
+        KV_SERIALIZE(tx_privacy_settings)
         KV_SERIALIZE(priority)
         KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
         KV_SERIALIZE(unlock_time)
@@ -644,6 +646,7 @@ namespace wallet_rpc
       std::list<transfer_destination> destinations;
       uint32_t account_index;
       std::set<uint32_t> subaddr_indices;
+      std::string tx_privacy_settings;
       uint32_t priority;
       uint64_t ring_size;
       uint64_t unlock_time;
@@ -657,6 +660,7 @@ namespace wallet_rpc
         KV_SERIALIZE(destinations)
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
+        KV_SERIALIZE(tx_privacy_settings)
         KV_SERIALIZE(priority)
         KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
         KV_SERIALIZE(unlock_time)

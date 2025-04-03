@@ -9920,7 +9920,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
 }
 
 void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t fake_outputs_count,
-  std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, std::unordered_set<crypto::public_key> &valid_public_keys_cache,
+  std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, std::unordered_set<crypto::public_key> &valid_public_keys_cache, std::string tx_privacy_settings, 
   uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, const rct::RCTConfig &rct_config, bool use_view_tags)
 {
   using namespace cryptonote;
@@ -10943,7 +10943,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
         tx.selected_transfers.size() << " inputs");
       auto tx_dsts = tx.get_adjusted_dsts(needed_fee);
       if (use_rct)
-        transfer_selected_rct(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, needed_fee, extra,
+        transfer_selected_rct(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, tx_privacy_settings, needed_fee, extra,
           test_tx, test_ptx, rct_config, use_view_tags);
       else
         transfer_selected(tx_dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, tx_privacy_settings, needed_fee, extra,
