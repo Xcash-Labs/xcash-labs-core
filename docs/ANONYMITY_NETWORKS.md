@@ -20,7 +20,7 @@ is made or until `monerod` is shutdown and restarted with only public
 connections enabled.
 
 Anonymity networks can also be used with `xcash-wallet-cli` and
-`monero-wallet-rpc` - the wallets will connect to a daemon through a proxy. The
+`xcash-wallet-rpc` - the wallets will connect to a daemon through a proxy. The
 daemon must provide a hidden service for the RPC itself, which is separate from
 the hidden service for P2P connections.
 
