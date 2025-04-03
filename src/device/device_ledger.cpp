@@ -443,10 +443,10 @@ namespace hw {
     bool device_ledger::reset() {
       reset_buffer();
       int offset = set_command_header_noopt(INS_RESET);
-      const size_t verlen = strlen(MONERO_VERSION);
-      ASSERT_X(offset + verlen <= BUFFER_SEND_SIZE, "MONERO_VERSION is too long")
-      memmove(this->buffer_send+offset, MONERO_VERSION, verlen);
-      offset += strlen(MONERO_VERSION);
+      const size_t verlen = strlen(XCASH_VERSION);
+      ASSERT_X(offset + verlen <= BUFFER_SEND_SIZE, "XCASH_VERSION is too long")
+      memmove(this->buffer_send+offset, XCASH_VERSION, verlen);
+      offset += strlen(XCASH_VERSION);
       this->buffer_send[4] = offset-5;
       this->length_send = offset;
       this->exchange();

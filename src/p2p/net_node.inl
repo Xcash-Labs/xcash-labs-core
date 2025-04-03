@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024, The Monero Project
+// Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
 //
 // All rights reserved.
 //
@@ -65,7 +65,7 @@
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "net.p2p"
 
-#define MIN_WANTED_SEED_NODES 12
+#define MIN_WANTED_SEED_NODES 2
 
 static inline boost::asio::ip::address_v4 make_address_v4_from_v6(const boost::asio::ip::address_v6& a)
 {
@@ -730,18 +730,12 @@ namespace nodetool
     if (m_nettype == cryptonote::TESTNET)
     {
       full_addrs.insert("176.9.0.187:28280");
-      full_addrs.insert("51.79.173.165:28280");
-      full_addrs.insert("192.99.8.110:28280");
-      full_addrs.insert("37.187.74.171:28280");
-      full_addrs.insert("88.99.195.15:28280");
+
     }
     else if (m_nettype == cryptonote::STAGENET)
     {
       full_addrs.insert("176.9.0.187:38280");
-      full_addrs.insert("51.79.173.165:38280");
-      full_addrs.insert("192.99.8.110:38280");
-      full_addrs.insert("37.187.74.171:38280");
-      full_addrs.insert("88.99.195.15:38280");
+
     }
     else if (m_nettype == cryptonote::FAKECHAIN)
     {
@@ -751,10 +745,6 @@ namespace nodetool
       full_addrs.insert("176.9.0.187:18280");
       full_addrs.insert("88.198.163.90:18280");
       full_addrs.insert("66.85.74.134:18280");
-      full_addrs.insert("51.79.173.165:18280");
-      full_addrs.insert("192.99.8.110:18280");
-      full_addrs.insert("37.187.74.171:18280");
-      full_addrs.insert("88.99.195.15:18280");
     }
     return full_addrs;
   }
@@ -885,12 +875,8 @@ namespace nodetool
       if (m_nettype == cryptonote::MAINNET)
       {
         return {
-          "zbjkbsxc5munw3qusl7j2hpcmikhqocdf4pqhnhtpzw5nt5jrmofptid.onion:18083",
-          "qz43zul2x56jexzoqgkx2trzwcfnr6l3hbtfcfx54g4r3eahy3bssjyd.onion:18083",
-          "plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:18083",
-          "plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:18083",
-          "plowsofe6cleftfmk2raiw5h2x66atrik3nja4bfd3zrfa2hdlgworad.onion:18083",
-          "aclc4e2jhhtr44guufbnwk5bzwhaecinax4yip4wr4tjn27sjsfg6zqd.onion:18083",
+          "zbjkbsxc5munw3qusl7j2hpcmikhqocdf4pqhnhtpzw5nt5jrmofptid.onion:18283",
+          "qz43zul2x56jexzoqgkx2trzwcfnr6l3hbtfcfx54g4r3eahy3bssjyd.onion:18283",
         };
       }
       return {};
@@ -2057,13 +2043,8 @@ namespace nodetool
       return true;
 
     static const std::vector<std::string> dns_urls = {
-      "blocklist.moneropulse.se"
-    , "blocklist.moneropulse.org"
-    , "blocklist.moneropulse.net"
-    , "blocklist.moneropulse.no"
-    , "blocklist.moneropulse.fr"
-    , "blocklist.moneropulse.de"
-    , "blocklist.moneropulse.ch"
+      "blocklist.xcashpulse.se"
+    , "blocklist.xcashpulse.org"
     };
 
     std::vector<std::string> records;

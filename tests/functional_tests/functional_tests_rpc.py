@@ -39,7 +39,7 @@ except:
   tests = DEFAULT_TESTS
 
 # a main offline monerod, does most of the tests
-# a restricted RPC monerod setup with RPC payment
+# a restricted RPC xcashd setup with RPC payment
 # two local online monerods connected to each other
 N_MONERODS = 5
 

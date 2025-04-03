@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024 X-CASH Project, Derived from 2014-2022, The Monero Project
+// Copyright (c) 2018-2024 XCASH Project, Derived from 2014-2022, The Monero Project
 //
 // All rights reserved.
 //
@@ -56,8 +56,8 @@
 // #define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
 #define MONEY_SUPPLY ((uint64_t)(100000000000000000))
 #define EMISSION_SPEED_FACTOR_PER_MINUTE (28)   // was 19
-//#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)2000000000) // 2000 X-CASH per minute, creates 1051200000 X-CASH per year, which is an annual inflation of 1.05%. The start date will be around 16/06/2025
-#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t) 700000) // 7 X-CASH per minute
+//#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)2000000000) // 2000 XCASH per minute, creates 1051200000 XCASH per year, which is an annual inflation of 1.05%. The start date will be around 16/06/2025
+#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t) 700000) // 7 XCASH per minute
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 60000   // size of block (bytes) after which reward for block calculated using block size
@@ -170,7 +170,7 @@
 
 #define RPC_IP_FAILS_BEFORE_BLOCK 3
 
-#define CRYPTONOTE_NAME "X-CASH"
+#define CRYPTONOTE_NAME "XCASH"
 #define CRYPTONOTE_BLOCKCHAINDATA_FILENAME "data.mdb"
 #define CRYPTONOTE_BLOCKCHAINDATA_LOCK_FILENAME "lock.mdb"
 #define P2P_NET_DATA_FILENAME "p2pstate.bin"

@@ -1,6 +1,6 @@
 # Monero
 
-Copyright (c) 2014-2024, The Monero Project
+Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
 
 ## Crypto Ops Builder
 
