@@ -392,7 +392,8 @@ namespace cryptonote
     remove_field_from_tx_extra(tx.extra, typeid(tx_extra_pub_key));
 
     // Public transactions
-    std::string tx_key_str = string_tools::pod_to_hex(tx_key.get().get());
+    const crypto::ec_scalar& raw_tx_key = const_cast<secret_key&>(tx_key).get().get();
+    std::string tx_key_str = string_tools::pod_to_hex(raw_tx_key);
     crypto::hash hash;
     crypto::cn_fast_hash(tx_key_str.data(), tx_key_str.size(), hash);
     crypto::signature signature;
