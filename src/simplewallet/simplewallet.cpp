@@ -6419,12 +6419,21 @@ bool simple_wallet::on_command(bool (simple_wallet::*cmd)(const std::vector<std:
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool called_by_mms)
 {
-//  "transfer [<tx_privacy_settings>] [index=<N1>[,<N2>,...]] [<priority>] [<ring_size>] <address> <amount> [<payment_id>]"
   CHECK_IF_BACKGROUND_SYNCING("cannot transfer");
   if (!try_connect_to_daemon())
     return false;
 
   std::vector<std::string> local_args = args_;
+
+  std::string tx_privacy_settings = local_args[0];
+  if (tx_privacy_settings != "private" && tx_privacy_settings != "public")
+  {
+    tx_privacy_settings = "private";
+  }
+  else
+  {
+    local_args.erase(local_args.begin() + 0);
+  }
 
   std::set<uint32_t> subaddr_indices;
   if (local_args.size() > 0 && local_args[0].substr(0, 6) == "index=")
@@ -6981,17 +6990,6 @@ bool simple_wallet::sweep_main(uint32_t account, uint64_t below, const std::vect
     return true;
 
   std::vector<std::string> local_args = args_;
-
-
-  std::string tx_privacy_settings = local_args[0];
-  if (tx_privacy_settings != "private" && tx_privacy_settings != "public")
-  {
-    tx_privacy_settings = "private";
-  }
-  else
-  {
-    local_args.erase(local_args.begin() + 0);
-  }
 
   std::set<uint32_t> subaddr_indices;
   if (local_args.size() > 0 && local_args[0].substr(0, 6) == "index=")
