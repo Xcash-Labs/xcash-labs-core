@@ -6347,8 +6347,9 @@ void simple_wallet::check_for_inactivity_lock(bool user)
         max_len = std::max(max_len, i.second);
       const size_t n_u = max_len + 2;
       tools::msg_writer() << " " << std::string(n_u, '_');
-      for (size_t i = 0; i < lines.size(); ++i)
+      for (size_t i = 0; i < lines.size(); ++i) {
         tools::msg_writer() << (i == 0 ? "/" : i == lines.size() - 1 ? "\\" : "|") << " " << lines[i].first << std::string(max_len - lines[i].second, ' ') << " " << (i == 0 ? "\\" : i == lines.size() - 1 ? "/" : "|");
+      }
         tools::msg_writer() << " " << std::string(n_u, '-') << std::endl;
     }
 
