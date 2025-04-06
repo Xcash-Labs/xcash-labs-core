@@ -243,16 +243,16 @@ namespace cryptonote
     std::vector<std::string> records;
 
     // All xCashPulse domains have DNSSEC on and valid
-    static const std::vector<std::string> dns_urls = { "checkpoints.moneropulse.se"
-						      , "checkpoints.moneropulse.org"
+    static const std::vector<std::string> dns_urls = { "checkpoints.xcashpulse.uk"
+						      , "checkpoints.xcashpulse.cc"
     };
 
-    static const std::vector<std::string> testnet_dns_urls = { "testpoints.moneropulse.se"
-							    , "testpoints.xcashpulse.org"
+    static const std::vector<std::string> testnet_dns_urls = { "testpoints.xcashpulse.uk"
+							    , "testpoints.xcashpulse.cc"
     };
 
-    static const std::vector<std::string> stagenet_dns_urls = { "stagenetpoints.moneropulse.se"
-                  , "stagenetpoints.moneropulse.org"
+    static const std::vector<std::string> stagenet_dns_urls = { "stagenetpoints.xcashpulse.uk"
+                  , "stagenetpoints.xcashpulse.cc"
     };
 
     if (!tools::dns_utils::load_txt_records_from_dns(records, nettype == TESTNET ? testnet_dns_urls : nettype == STAGENET ? stagenet_dns_urls : dns_urls))

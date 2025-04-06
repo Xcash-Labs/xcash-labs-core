@@ -742,7 +742,7 @@ namespace nodetool
     }
     else
     {
-      full_addrs.insert("000.0.0.000:18280");
+  //    full_addrs.insert("000.0.0.000:18280"); not using for now
     }
     return full_addrs;
   }
@@ -2041,8 +2041,8 @@ namespace nodetool
       return true;
 
     static const std::vector<std::string> dns_urls = {
-      "blocklist.xcashpulse.se"
-    , "blocklist.xcashpulse.org"
+      "blocklist.xcashpulse.uk"
+    , "blocklist.xcashpulse.cc"
     };
 
     std::vector<std::string> records;
