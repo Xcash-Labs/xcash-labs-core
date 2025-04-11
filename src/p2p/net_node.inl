@@ -746,6 +746,24 @@ namespace nodetool
     }
     return full_addrs;
   }
+
+  //-----------------------------------------------------------------------------------
+  inline std::string get_local_ip()
+  {
+    try {
+      boost::asio::io_service io_service;
+      boost::asio::ip::udp::resolver resolver(io_service);
+      boost::asio::ip::udp::resolver::query query(boost::asio::ip::udp::v4(), "8.8.8.8", "53");
+      boost::asio::ip::udp::resolver::iterator endpoints = resolver.resolve(query);
+  
+      boost::asio::ip::udp::socket socket(io_service);
+      socket.connect(*endpoints);
+      return socket.local_endpoint().address().to_string();
+    } catch (...) {
+      return "";
+    }
+  }
+  
   //-----------------------------------------------------------------------------------
   template<class t_payload_net_handler>
   std::set<std::string> node_server<t_payload_net_handler>::get_dns_seed_nodes()
@@ -786,6 +804,7 @@ namespace nodetool
     boost::thread::attributes thread_attributes;
     thread_attributes.set_stack_size(1024*1024);
 
+    std::string local_ip = get_local_ip();
     std::list<boost::thread> dns_threads;
     uint64_t result_index = 0;
     for (const std::string& addr_str : m_seed_nodes_list)
@@ -800,6 +819,8 @@ namespace nodetool
         try
         {
           addr_list = tools::DNSResolver::instance().get_ipv4(addr_str, avail, valid);
+          // Filter out local IP to avoid self-connection
+          addr_list.erase(std::remove(addr_list.begin(), addr_list.end(), local_ip), addr_list.end());
           MDEBUG("dns_threads[" << result_index << "] DNS resolve done");
           boost::this_thread::interruption_point();
         }
