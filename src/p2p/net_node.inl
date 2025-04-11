@@ -807,6 +807,47 @@ namespace nodetool
     std::string local_ip = get_local_ip();
     std::list<boost::thread> dns_threads;
     uint64_t result_index = 0;
+
+    for (const std::string& addr_str : m_seed_nodes_list)
+    {
+      uint64_t thread_index = result_index++;  // Capture a stable index value
+    
+      boost::thread th = boost::thread(thread_attributes, [=, &dns_results] {
+        MDEBUG("dns_threads[" << thread_index << "] created for: " << addr_str);
+    
+        bool avail, valid;
+        std::vector<std::string> addr_list;
+    
+        try
+        {
+          addr_list = tools::DNSResolver::instance().get_ipv4(addr_str, avail, valid);
+    
+          // Filter out local IP to avoid self-connection
+          auto before = addr_list.size();
+          addr_list.erase(std::remove(addr_list.begin(), addr_list.end(), local_ip), addr_list.end());
+          if (before != addr_list.size())
+          {
+            MINFO("*****************************************************dns_threads[" << thread_index << "] filtered out local IP " << local_ip << " for " << addr_str);
+          }
+    
+          MDEBUG("dns_threads[" << thread_index << "] DNS resolve done");
+          boost::this_thread::interruption_point();
+        }
+        catch (const boost::thread_interrupted&)
+        {
+          MWARNING("dns_threads[" << thread_index << "] interrupted");
+          return;
+        }
+    
+        MINFO("dns_threads[" << thread_index << "] addr_str: " << addr_str << "  number of results: " << addr_list.size());
+        dns_results[thread_index] = addr_list;
+      });
+    
+      dns_threads.push_back(std::move(th));
+    }
+
+
+    /*
     for (const std::string& addr_str : m_seed_nodes_list)
     {
       boost::thread th = boost::thread(thread_attributes, [=, &dns_results, &addr_str]
@@ -840,6 +881,7 @@ namespace nodetool
       dns_threads.push_back(std::move(th));
       ++result_index;
     }
+    */
 
     MDEBUG("dns_threads created, now waiting for completion or timeout of " << CRYPTONOTE_DNS_TIMEOUT_MS << "ms");
     boost::chrono::system_clock::time_point deadline = boost::chrono::system_clock::now() + boost::chrono::milliseconds(CRYPTONOTE_DNS_TIMEOUT_MS);
