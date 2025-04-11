@@ -820,7 +820,7 @@ namespace nodetool
         {
           addr_list = tools::DNSResolver::instance().get_ipv4(addr_str, avail, valid);
           // Filter out local IP to avoid self-connection
-          addr_list.erase(std::remove(addr_list.begin(), addr_list.end(), local_ip), addr_list.end());
+//          addr_list.erase(std::remove(addr_list.begin(), addr_list.end(), local_ip), addr_list.end());
           MDEBUG("dns_threads[" << result_index << "] DNS resolve done");
           boost::this_thread::interruption_point();
         }
