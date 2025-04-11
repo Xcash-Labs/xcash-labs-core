@@ -77,7 +77,7 @@ debug-all:
 
 cmake-release:
 	mkdir -p $(builddir)/release
-	cd $(builddir)/release && cmake -D CMAKE_BUILD_TYPE=Release $(topdir)
+	cd $(builddir)/release && cmake -D CMAKE_BUILD_TYPE=Release -DSTACK_TRACE=OFF $(topdir)
 
 release: cmake-release
 	cd $(builddir)/release && cmake --build .
@@ -88,7 +88,7 @@ release-test:
 
 release-all:
 	mkdir -p $(builddir)/release
-	cd $(builddir)/release && cmake -D BUILD_TESTS=OFF -D CMAKE_BUILD_TYPE=Release -DSTACK_TRACE=OFF $(topdir) && $(MAKE)
+	cd $(builddir)/release && cmake -D CMAKE_BUILD_TYPE=Release -DSTACK_TRACE=OFF $(topdir) && $(MAKE)
 
 release-static:
 	mkdir -p $(builddir)/release
