@@ -1133,16 +1133,12 @@ namespace cryptonote
       decimal_point = default_decimal_point;
     switch (decimal_point)
     {
-      case 12:
-        return "monero";
-      case 9:
-        return "millinero";
       case 6:
-        return "micronero";
+        return "xcash";
       case 3:
-        return "nanonero";
+        return "xcash";
       case 0:
-        return "piconero";
+        return "xcash";
       default:
         ASSERT_MES_AND_THROW("Invalid decimal point specification: " << decimal_point);
     }
