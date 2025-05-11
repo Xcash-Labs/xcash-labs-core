@@ -2395,6 +2395,14 @@ skip:
     MGINFO_YELLOW("Compiled block hash area check: " << m_core.is_within_compiled_block_hash_area(current_blockchain_height));
     MGINFO_YELLOW("m_synchronized current value: " << m_synchronized.load());
 
+    if(!m_core.is_within_compiled_block_hash_area(current_blockchain_height)) {
+       MGINFO_YELLOW("First half passes if statement.......");
+    }
+
+    if (m_synchronized.compare_exchange_strong(val_expected, true));
+       MGINFO_YELLOW("Second half passes if statement.......");
+    }
+  
 
     if(!m_core.is_within_compiled_block_hash_area(current_blockchain_height) && m_synchronized.compare_exchange_strong(val_expected, true))
     {
