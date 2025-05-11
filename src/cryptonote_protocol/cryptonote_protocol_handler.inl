@@ -2389,8 +2389,20 @@ skip:
   {
     bool val_expected = false;
     uint64_t current_blockchain_height = m_core.get_current_blockchain_height();
+
+
+    MGINFO_YELLOW("Current blockchain height: " << current_blockchain_height);
+    MGINFO_YELLOW("Compiled block hash area check: " << m_core.is_within_compiled_block_hash_area(current_blockchain_height));
+    MGINFO_YELLOW("m_synchronized current value: " << m_synchronized.load());
+
+
     if(!m_core.is_within_compiled_block_hash_area(current_blockchain_height) && m_synchronized.compare_exchange_strong(val_expected, true))
     {
+
+
+      MGINFO_YELLOW("Synchronization flag set successfully.......");
+
+
       if ((current_blockchain_height > m_sync_start_height) && (m_sync_spans_downloaded > 0))
       {
         uint64_t synced_blocks = current_blockchain_height - m_sync_start_height;
