@@ -2399,7 +2399,7 @@ skip:
        MGINFO_YELLOW("First half passes if statement.......");
     }
 
-    if (m_synchronized.compare_exchange_strong(val_expected, true));
+    if (m_synchronized.compare_exchange_strong(val_expected, true)) {
        MGINFO_YELLOW("Second half passes if statement.......");
     }
   
