@@ -83,10 +83,22 @@ namespace cryptonote
 
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
-    if(!extra_nonce.empty())
-      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-        return false;
-    if (!sort_tx_extra(tx.extra, tx.extra))
+//    if(!extra_nonce.empty())
+//      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+//        return false;
+
+    // Ensure at least 200 bytes of zero-padded extra_nonce
+    blobdata padded_nonce = extra_nonce;
+
+    const size_t required_reserve_size = 200;
+    if (padded_nonce.size() < required_reserve_size) {
+      padded_nonce.resize(required_reserve_size, 0); // pad with zeroes
+    }
+
+  if (!add_extra_nonce_to_tx_extra(tx.extra, padded_nonce))
+    return false;
+
+  if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
     txin_gen in;
