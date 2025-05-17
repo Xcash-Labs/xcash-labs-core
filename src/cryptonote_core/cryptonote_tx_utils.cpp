@@ -88,18 +88,27 @@ namespace cryptonote
 //      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
 //        return false;
 
-    blobdata padded_nonce = extra_nonce;
-
-    const size_t required_reserve_size = 200;  // or 512, or 4096 if you really want
-    if (padded_nonce.size() < required_reserve_size) {
-      padded_nonce.resize(required_reserve_size, 0);
-    }
-
-    if (!add_extra_nonce_to_tx_extra(tx.extra, padded_nonce))
-      return false;
 
 
-      
+
+
+
+
+blobdata padded_nonce = extra_nonce;
+
+// Only pad if extra_nonce is non-empty and close to reserve_size target
+const size_t required_reserve_size = 250;
+
+if (!extra_nonce.empty() && extra_nonce.size() < required_reserve_size) {
+  padded_nonce.resize(required_reserve_size, 0);
+}
+LOG_PRINT_L0("TX extra size: " << tx.extra.size() << ", padded_nonce size: " << padded_nonce.size());
+if (!add_extra_nonce_to_tx_extra(tx.extra, padded_nonce))
+  return false;
+
+
+
+
 
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
