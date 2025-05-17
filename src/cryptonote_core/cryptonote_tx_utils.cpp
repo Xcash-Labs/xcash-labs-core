@@ -83,48 +83,9 @@ namespace cryptonote
 
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
-
-//    if(!extra_nonce.empty())
-//      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-//        return false;
-
-
-
-
-// (Custom reserve data for VRF, etc.)
-const uint8_t CUSTOM_RESERVE_TAG = 0xFA;
-const size_t CUSTOM_RESERVE_SIZE = 100;
-
-fprintf(stderr, "DEBUG: Preparing to insert custom tx.extra field\n");
-fprintf(stderr, "  → CURRENT tx.extra size before insert: %zu\n", tx.extra.size());
-fprintf(stderr, "  → CUSTOM_RESERVE_TAG: 0x%02X\n", CUSTOM_RESERVE_TAG);
-fprintf(stderr, "  → CUSTOM_RESERVE_SIZE: %zu\n", CUSTOM_RESERVE_SIZE);
-
-blobdata custom_reserved_data(CUSTOM_RESERVE_SIZE, 0);
-size_t projected_extra_size =
-    tx.extra.size() + 1 /* tag */ + 1 /* length byte */ + custom_reserved_data.size();
-
-fprintf(stderr, "  → Projected final tx.extra size: %zu\n", projected_extra_size);
-fprintf(stderr, "  → MAX_TX_EXTRA_SIZE: %zu\n", (size_t)MAX_TX_EXTRA_SIZE);
-
-if (projected_extra_size > MAX_TX_EXTRA_SIZE) {
-    fprintf(stderr, "❌ tx.extra too large to include 200-byte custom field: %zu bytes\n", projected_extra_size);
-    return false;
-}
-
-tx.extra.push_back(CUSTOM_RESERVE_TAG);
-tx.extra.push_back(static_cast<uint8_t>(custom_reserved_data.size()));
-tx.extra.insert(tx.extra.end(), custom_reserved_data.begin(), custom_reserved_data.end());
-
-fprintf(stderr, "✅ Inserted custom field into tx.extra at offset %zu (data size: %zu)\n",
-        tx.extra.size() - custom_reserved_data.size(),
-        custom_reserved_data.size());
-
-
-
-
-
-
+    if(!extra_nonce.empty())
+      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+        return false;
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
