@@ -95,21 +95,20 @@ namespace cryptonote
 const uint8_t CUSTOM_RESERVE_TAG = 0xFA;
 const size_t CUSTOM_RESERVE_SIZE = 200;
 
-LOG_PRINT_L0("DEBUG: Preparing to insert custom tx.extra field");
-LOG_PRINT_L0("  → CURRENT tx.extra size before insert: " << tx.extra.size());
-LOG_PRINT_L0("  → CUSTOM_RESERVE_TAG: 0x" << std::hex << (int)CUSTOM_RESERVE_TAG);
-LOG_PRINT_L0("  → CUSTOM_RESERVE_SIZE: " << std::dec << CUSTOM_RESERVE_SIZE);
+fprintf(stderr, "DEBUG: Preparing to insert custom tx.extra field\n");
+fprintf(stderr, "  → CURRENT tx.extra size before insert: %zu\n", tx.extra.size());
+fprintf(stderr, "  → CUSTOM_RESERVE_TAG: 0x%02X\n", CUSTOM_RESERVE_TAG);
+fprintf(stderr, "  → CUSTOM_RESERVE_SIZE: %zu\n", CUSTOM_RESERVE_SIZE);
 
 blobdata custom_reserved_data(CUSTOM_RESERVE_SIZE, 0);
 size_t projected_extra_size =
     tx.extra.size() + 1 /* tag */ + 1 /* length byte */ + custom_reserved_data.size();
 
-LOG_PRINT_L0("  → Projected final tx.extra size: " << projected_extra_size);
-LOG_PRINT_L0("  → MAX_TX_EXTRA_SIZE: " << MAX_TX_EXTRA_SIZE);
+fprintf(stderr, "  → Projected final tx.extra size: %zu\n", projected_extra_size);
+fprintf(stderr, "  → MAX_TX_EXTRA_SIZE: %zu\n", (size_t)MAX_TX_EXTRA_SIZE);
 
 if (projected_extra_size > MAX_TX_EXTRA_SIZE) {
-    LOG_ERROR("❌ tx.extra too large to include 200-byte custom field: "
-              << projected_extra_size << " bytes");
+    fprintf(stderr, "❌ tx.extra too large to include 200-byte custom field: %zu bytes\n", projected_extra_size);
     return false;
 }
 
@@ -117,9 +116,10 @@ tx.extra.push_back(CUSTOM_RESERVE_TAG);
 tx.extra.push_back(static_cast<uint8_t>(custom_reserved_data.size()));
 tx.extra.insert(tx.extra.end(), custom_reserved_data.begin(), custom_reserved_data.end());
 
-LOG_PRINT_L0("✅ Inserted custom 0xFA field into tx.extra at offset "
-             << (tx.extra.size() - custom_reserved_data.size())
-             << " (data size: " << custom_reserved_data.size() << ")");
+fprintf(stderr, "✅ Inserted custom field into tx.extra at offset %zu (data size: %zu)\n",
+        tx.extra.size() - custom_reserved_data.size(),
+        custom_reserved_data.size());
+
 
 
 
