@@ -93,7 +93,7 @@ namespace cryptonote
 
 // (Custom reserve data for VRF, etc.)
 const uint8_t CUSTOM_RESERVE_TAG = 0xFA;
-const size_t CUSTOM_RESERVE_SIZE = 200;
+const size_t CUSTOM_RESERVE_SIZE = 100;
 
 fprintf(stderr, "DEBUG: Preparing to insert custom tx.extra field\n");
 fprintf(stderr, "  → CURRENT tx.extra size before insert: %zu\n", tx.extra.size());
