@@ -83,9 +83,17 @@ namespace cryptonote
 
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
-    if(!extra_nonce.empty())
-      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-        return false;
+//    if(!extra_nonce.empty())
+//      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+//        return false;
+
+if (!extra_nonce.empty())
+{
+  // Use custom 0xFA tag instead of TX_EXTRA_NONCE
+  tx.extra.push_back(0xFA);  // custom tag
+  tx.extra.push_back(static_cast<uint8_t>(extra_nonce.size()));  // length byte (must be ≤ 255)
+  tx.extra.insert(tx.extra.end(), extra_nonce.begin(), extra_nonce.end());
+}
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
