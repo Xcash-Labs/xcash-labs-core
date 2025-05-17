@@ -84,29 +84,29 @@ namespace cryptonote
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
 
-    if(!extra_nonce.empty())
-      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-        return false;
+//    if(!extra_nonce.empty())
+//      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+//        return false;
 
+// (Custom reserve data for VRF, etc.)
+const uint8_t CUSTOM_RESERVE_TAG = 0xFA;
+const size_t CUSTOM_RESERVE_SIZE = 200;
 
+blobdata custom_reserved_data(CUSTOM_RESERVE_SIZE, 0);
+size_t projected_extra_size =
+    tx.extra.size() + 1 + 1 + custom_reserved_data.size();
 
-
-
-
-/*
-blobdata padded_nonce = extra_nonce;
-
-// Only pad if extra_nonce is non-empty and close to reserve_size target
-const size_t required_reserve_size = 250;
-
-if (!extra_nonce.empty() && extra_nonce.size() < required_reserve_size) {
-  padded_nonce.resize(required_reserve_size, 0);
+if (projected_extra_size > MAX_TX_EXTRA_SIZE) {
+    LOG_ERROR("tx.extra too large to include 200-byte custom field: "
+              << projected_extra_size << " bytes");
+    return false;
 }
-LOG_PRINT_L0("TX extra size: " << tx.extra.size() << ", padded_nonce size: " << padded_nonce.size());
-if (!add_extra_nonce_to_tx_extra(tx.extra, padded_nonce))
-  return false;
-*/
 
+tx.extra.push_back(CUSTOM_RESERVE_TAG);
+tx.extra.push_back(static_cast<uint8_t>(custom_reserved_data.size()));
+tx.extra.insert(tx.extra.end(), custom_reserved_data.begin(), custom_reserved_data.end());
+
+LOG_PRINT_L0("Inserted custom 0xFA field in tx.extra...");
 
 
 
