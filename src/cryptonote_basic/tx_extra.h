@@ -104,19 +104,17 @@ namespace cryptonote
 
 
 
-
 struct tx_extra_nonce
 {
   std::string nonce;
 
-  // Deserialization (reading)
   template <template<bool> class Archive>
-  bool serialize(Archive<false>& ar)
+  bool serialize(Archive<false>& ar) // Reading
   {
     std::cout << "[DEBUG] tx_extra_nonce: starting deserialization" << std::endl;
 
     size_t len = 0;
-    if (!ar.template read_varint<size_t>(len))
+    if (!::serialization::serialize_varint(ar, len))
     {
       std::cout << "[DEBUG] tx_extra_nonce: failed to read varint length" << std::endl;
       return false;
@@ -131,7 +129,7 @@ struct tx_extra_nonce
     }
 
     nonce.resize(len);
-    if (len > 0 && !ar.read(nonce.data(), len))
+    if (len > 0 && !::serialization::serialize_blob(ar, &nonce[0], len))
     {
       std::cout << "[DEBUG] tx_extra_nonce: failed to load nonce data" << std::endl;
       return false;
@@ -141,9 +139,8 @@ struct tx_extra_nonce
     return true;
   }
 
-  // Serialization (writing)
   template <template<bool> class Archive>
-  bool serialize(Archive<true>& ar)
+  bool serialize(Archive<true>& ar) // Writing
   {
     size_t len = nonce.size();
     std::cout << "[DEBUG] tx_extra_nonce: starting serialization, len = " << len << std::endl;
@@ -154,13 +151,13 @@ struct tx_extra_nonce
       return false;
     }
 
-    if (!ar.template write_varint<size_t>(len))
+    if (!::serialization::serialize_varint(ar, len))
     {
       std::cout << "[DEBUG] tx_extra_nonce: failed to write varint length" << std::endl;
       return false;
     }
 
-    if (len > 0 && !ar.write(nonce.data(), len))
+    if (len > 0 && !::serialization::serialize_blob(ar, nonce.data(), len))
     {
       std::cout << "[DEBUG] tx_extra_nonce: failed to write nonce data" << std::endl;
       return false;
@@ -173,6 +170,7 @@ struct tx_extra_nonce
   BEGIN_SERIALIZE_OBJECT()
   END_SERIALIZE()
 };
+
 
 
 
