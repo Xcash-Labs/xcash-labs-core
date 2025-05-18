@@ -32,7 +32,7 @@
 
 
 #define TX_EXTRA_PADDING_MAX_COUNT          255
-#define TX_EXTRA_NONCE_MAX_COUNT            255
+#define TX_EXTRA_NONCE_MAX_COUNT            512
 
 #define TX_EXTRA_TAG_PADDING                0x00
 #define TX_EXTRA_TAG_PUBKEY                 0x01
@@ -177,7 +177,7 @@ namespace cryptonote
 
   struct tx_extra_vrf_signature
   {
-    std::string data;
+    std::vector<uint8_t> data;
 
     BEGIN_SERIALIZE()
       FIELD(data)

@@ -82,23 +82,10 @@ namespace cryptonote
     tx.extra.clear();
 
     keypair txkey = keypair::generate(hw::get_device("default"));
-
-    size_t reserve_size = extra_nonce.size();
-    if (reserve_size < 250) {
-        add_tx_pub_key_to_extra(tx, txkey.pub);
-        if (!extra_nonce.empty()) {
-            if (!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-                return false;
-        }
-    } else {
-        fprintf(stderr, "Skipping tx_pub_key to preserve space (reserve size %zu)\n", reserve_size);
-        if (!extra_nonce.empty()) {
-            tx.extra.push_back(0xFA);  // custom tag for VRF or custom fields
-            tx.extra.push_back(static_cast<uint8_t>(extra_nonce.size()));  // length byte
-            tx.extra.insert(tx.extra.end(), extra_nonce.begin(), extra_nonce.end());
-        }
-    }
-
+    add_tx_pub_key_to_extra(tx, txkey.pub);
+    if(!extra_nonce.empty())
+      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+        return false;
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
@@ -106,7 +93,7 @@ namespace cryptonote
     in.height = height;
 
     uint64_t block_reward;
-    if(!get_block_reward(median_weight, current_block_weight, already_generated_coins, block_reward, hard_fork_version, height))
+    if(!get_block_reward(median_weight, current_block_weight, already_generated_coins, block_reward, hard_fork_version))
     {
       LOG_PRINT_L0("Block is too big");
       return false;
