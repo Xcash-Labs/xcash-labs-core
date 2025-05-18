@@ -91,14 +91,14 @@ namespace cryptonote
     }
   };
 
-//  struct tx_extra_pub_key
-//  {
-//    crypto::public_key pub_key;
+  struct tx_extra_pub_key
+  {
+    crypto::public_key pub_key;
 
-//    BEGIN_SERIALIZE()
-//      FIELD(pub_key)
-//    END_SERIALIZE()
-//  };
+    BEGIN_SERIALIZE()
+      FIELD(pub_key)
+    END_SERIALIZE()
+  };
 
 
 struct tx_extra_nonce
@@ -174,14 +174,14 @@ struct tx_extra_nonce
 
 
 
-  struct tx_extra_nonce
-  {
-    std::string nonce;
-    BEGIN_SERIALIZE()
-      FIELD(nonce)
-      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
-    END_SERIALIZE()
-  };
+//  struct tx_extra_nonce
+//  {
+//    std::string nonce;
+//    BEGIN_SERIALIZE()
+//      FIELD(nonce)
+//      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
+//    END_SERIALIZE()
+//  };
 
   struct tx_extra_merge_mining_tag
   {
