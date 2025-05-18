@@ -167,10 +167,15 @@ struct tx_extra_nonce
   }
 
   BEGIN_SERIALIZE_OBJECT()
-    // FIELD(nonce) is intentionally omitted to use custom serialize()
   END_SERIALIZE()
 };
 
+  template <bool W, template<bool> class Archive>
+  bool do_serialize(Archive<W>& ar, tx_extra_nonce& x)
+  {
+    std::cout << "[DEBUG] do_serialize(tx_extra_nonce): dispatching to member serialize()\n";
+    return x.serialize(ar);
+  }
 
 
 
