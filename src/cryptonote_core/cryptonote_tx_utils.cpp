@@ -100,23 +100,6 @@ namespace cryptonote
     }
 
     if (!sort_tx_extra(tx.extra, tx.extra))
-        return false;
-
-   
-    if(!extra_nonce.empty())
-      if (reserve_size < 250) { 
-        if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-          return false;
-      } else {
-        if (!extra_nonce.empty()) {
-          tx.extra.push_back(0xFA);  // custom tag for VRF etc
-          tx.extra.push_back(static_cast<uint8_t>(extra_nonce.size()));  // length
-          tx.extra.insert(tx.extra.end(), extra_nonce.begin(), extra_nonce.end());
-        }
-      }
-    }
-
-    if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
     txin_gen in;
