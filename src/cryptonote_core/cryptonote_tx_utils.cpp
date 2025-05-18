@@ -82,7 +82,19 @@ namespace cryptonote
     tx.extra.clear();
 
     keypair txkey = keypair::generate(hw::get_device("default"));
+
+size_t pubkey_field_size = 1 + sizeof(crypto::public_key); // tag (0x01) + pubkey (32 bytes)
+size_t nonce_field_size  = extra_nonce.empty() ? 0 : (1 + 1 + extra_nonce.size()); // tag + length + data
+size_t total_extra_size  = pubkey_field_size + nonce_field_size;
+
+if (total_extra_size <= 255) {
     add_tx_pub_key_to_extra(tx, txkey.pub);
+} else {
+    fprintf(stderr, "Skipping tx_pub_key to preserve tx.extra space (reserve size %zu)\n", extra_nonce.size());
+}
+
+
+
     if(!extra_nonce.empty())
       if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
         return false;
