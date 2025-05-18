@@ -30,8 +30,7 @@
 
 #pragma once
 
-#include "serialization/varint.h"
-#include "serialization/blob.h"
+#include "serialization/binary_archive.h"
 
 #define TX_EXTRA_PADDING_MAX_COUNT          255
 #define TX_EXTRA_NONCE_MAX_COUNT            255
@@ -103,46 +102,56 @@ namespace cryptonote
 
 
 
-
-
-
-  struct tx_extra_nonce
-  {
-    std::string nonce;
-
-
-template<template<bool> class Archive>
-bool serialize(Archive<false>& ar)  // for loading
+struct tx_extra_nonce
 {
-  size_t len = 0;
+  std::string nonce;
 
-  // Step 1: Read the varint-prefixed length
-  if (!::serialization::serialize_varint(ar, len))
-    return false;
+  // Deserialization (reading)
+  template<template<bool> class Archive>
+  bool serialize(Archive<false>& ar)
+  {
+    size_t len = 0;
+    if (!serialization::serialize_varint(ar, len))
+      return false;
 
-  std::cout << "[DEBUG] tx_extra_nonce varint length: " << len << std::endl;
+    std::cout << "[DEBUG] tx_extra_nonce varint length: " << len << std::endl;
 
-  // Step 2: Bounds check
-  if (TX_EXTRA_NONCE_MAX_COUNT < len)
-    return false;
+    if (TX_EXTRA_NONCE_MAX_COUNT < len)
+      return false;
 
-  // Step 3: Allocate space for the data
-  nonce.resize(len);
+    nonce.resize(len);
+    return ar.load(nonce.data(), len);  // ✅ more compatible than serialize_blob()
+  }
 
-  // Step 4: Load raw bytes
-  return ::serialization::serialize_blob(ar, &nonce[0], len);
-}
+  // Serialization (writing)
+  template<template<bool> class Archive>
+  bool serialize(Archive<true>& ar)
+  {
+    size_t len = nonce.size();
+    if (TX_EXTRA_NONCE_MAX_COUNT < len)
+      return false;
+
+    if (!serialization::serialize_varint(ar, len))
+      return false;
+
+    return ar.save(nonce.data(), len);  // ✅ more portable than serialize_blob()
+  }
+
+  BEGIN_SERIALIZE_OBJECT()
+    // no FIELD(nonce) to avoid old broken fallback
+  END_SERIALIZE()
+};
 
 
 
-
-
+//  struct tx_extra_nonce
+//  {
+//    std::string nonce;
 //    BEGIN_SERIALIZE()
 //      FIELD(nonce)
 //      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
 //    END_SERIALIZE()
-
-  };
+//  };
 
   struct tx_extra_merge_mining_tag
   {
