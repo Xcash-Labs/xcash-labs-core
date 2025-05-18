@@ -91,14 +91,88 @@ namespace cryptonote
     }
   };
 
-  struct tx_extra_pub_key
-  {
-    crypto::public_key pub_key;
+//  struct tx_extra_pub_key
+//  {
+//    crypto::public_key pub_key;
 
-    BEGIN_SERIALIZE()
-      FIELD(pub_key)
-    END_SERIALIZE()
-  };
+//    BEGIN_SERIALIZE()
+//      FIELD(pub_key)
+//    END_SERIALIZE()
+//  };
+
+
+struct tx_extra_nonce
+{
+  std::string nonce;
+
+  // Deserialization (reading)
+  template <template<bool> class Archive>
+  bool serialize(Archive<false>& ar)
+  {
+    std::cout << "[DEBUG] tx_extra_nonce: starting deserialization" << std::endl;
+
+    size_t len = 0;
+    if (!ar.serialize_varint(len))
+    {
+      std::cout << "[DEBUG] tx_extra_nonce: failed to read varint length" << std::endl;
+      return false;
+    }
+
+    std::cout << "[DEBUG] tx_extra_nonce: varint length = " << len << std::endl;
+
+    if (len > TX_EXTRA_NONCE_MAX_COUNT)
+    {
+      std::cout << "[DEBUG] tx_extra_nonce: length exceeds max (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
+      return false;
+    }
+
+    nonce.resize(len);
+    if (len > 0 && !ar.load(&nonce[0], len))
+    {
+      std::cout << "[DEBUG] tx_extra_nonce: failed to load nonce data" << std::endl;
+      return false;
+    }
+
+    std::cout << "[DEBUG] tx_extra_nonce: successfully loaded nonce, size = " << nonce.size() << std::endl;
+    return true;
+  }
+
+  // Serialization (writing)
+  template <template<bool> class Archive>
+  bool serialize(Archive<true>& ar)
+  {
+    size_t len = nonce.size();
+    std::cout << "[DEBUG] tx_extra_nonce: starting serialization, len = " << len << std::endl;
+
+    if (len > TX_EXTRA_NONCE_MAX_COUNT)
+    {
+      std::cout << "[DEBUG] tx_extra_nonce: length exceeds max (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
+      return false;
+    }
+
+    if (!ar.serialize_varint(len))
+    {
+      std::cout << "[DEBUG] tx_extra_nonce: failed to write varint length" << std::endl;
+      return false;
+    }
+
+    if (len > 0 && !ar.save(nonce.data(), len))
+    {
+      std::cout << "[DEBUG] tx_extra_nonce: failed to write nonce data" << std::endl;
+      return false;
+    }
+
+    std::cout << "[DEBUG] tx_extra_nonce: successfully saved nonce" << std::endl;
+    return true;
+  }
+
+  BEGIN_SERIALIZE_OBJECT()
+    // FIELD(nonce) is intentionally omitted to use custom serialize()
+  END_SERIALIZE()
+};
+
+
+
 
   struct tx_extra_nonce
   {
