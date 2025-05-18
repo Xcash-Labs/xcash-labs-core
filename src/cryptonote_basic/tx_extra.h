@@ -98,13 +98,19 @@ namespace cryptonote
     END_SERIALIZE()
   };
 
+
+
+
+
+
   struct tx_extra_nonce
   {
     std::string nonce;
 
 
 BEGIN_SERIALIZE()
-  FIELD(nonce)  // ✅ this works in all supported Monero archives
+  std::cout << "[DEBUG] Start Serialize " << std::endl;
+  FIELD(nonce)  
 
   std::cout << "[DEBUG] Deserialized tx_extra_nonce, size: " << nonce.size() << std::endl;
 
