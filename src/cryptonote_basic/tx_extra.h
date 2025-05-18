@@ -103,19 +103,17 @@ namespace cryptonote
     std::string nonce;
 
 
-  BEGIN_SERIALIZE()
-    size_t len = 0;
-    ar.serialize_varint(len);
+BEGIN_SERIALIZE()
+  std::cout << "[DEBUG] Attempting to deserialize tx_extra_nonce\n";
+  if (!ar.serialize_str(nonce))
+    return false;
 
-    std::cout << "[DEBUG] Deserializing nonce with varint length: " << len << std::endl;
+  std::cout << "[DEBUG] tx_extra_nonce varint size: " << nonce.size() << std::endl;
 
-    if (TX_EXTRA_NONCE_MAX_COUNT < len)
-      return false;
+  if (TX_EXTRA_NONCE_MAX_COUNT < nonce.size())
+    return false;
+END_SERIALIZE()
 
-    nonce.resize(len);
-    if (!ar.load_binary(nonce.data(), len))
-      return false;
-  END_SERIALIZE()
 
 
 //    BEGIN_SERIALIZE()
