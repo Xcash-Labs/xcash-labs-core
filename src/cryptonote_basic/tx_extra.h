@@ -106,12 +106,11 @@ struct tx_extra_nonce
 {
   std::string nonce;
 
-  // Deserialization (reading)
   template<template<bool> class Archive>
   bool serialize(Archive<false>& ar)
   {
     size_t len = 0;
-    if (!serialization::serialize_varint(ar, len))
+    if (!serialize_varint(ar, len))  // ❌ remove "serialization::"
       return false;
 
     std::cout << "[DEBUG] tx_extra_nonce varint length: " << len << std::endl;
@@ -120,10 +119,9 @@ struct tx_extra_nonce
       return false;
 
     nonce.resize(len);
-    return ar.load(nonce.data(), len);  // ✅ more compatible than serialize_blob()
+    return ar.load(nonce.data(), len);  // works
   }
 
-  // Serialization (writing)
   template<template<bool> class Archive>
   bool serialize(Archive<true>& ar)
   {
@@ -131,14 +129,14 @@ struct tx_extra_nonce
     if (TX_EXTRA_NONCE_MAX_COUNT < len)
       return false;
 
-    if (!serialization::serialize_varint(ar, len))
+    if (!serialize_varint(ar, len))  // ❌ remove "serialization::"
       return false;
 
-    return ar.save(nonce.data(), len);  // ✅ more portable than serialize_blob()
+    return ar.save(nonce.data(), len);
   }
 
   BEGIN_SERIALIZE_OBJECT()
-    // no FIELD(nonce) to avoid old broken fallback
+    // skip FIELD(nonce)
   END_SERIALIZE()
 };
 
