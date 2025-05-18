@@ -108,15 +108,28 @@ namespace cryptonote
     std::string nonce;
 
 
-BEGIN_SERIALIZE()
-  std::cout << "[DEBUG] Start Serialize " << std::endl;
-  FIELD(nonce)  
+template<template<bool> class Archive>
+bool serialize(Archive<false>& ar)  // for loading
+{
+  size_t len = 0;
 
-  std::cout << "[DEBUG] Deserialized tx_extra_nonce, size: " << nonce.size() << std::endl;
-
-  if (TX_EXTRA_NONCE_MAX_COUNT < nonce.size())
+  // Step 1: Read the varint-prefixed length
+  if (!::serialization::serialize_varint(ar, len))
     return false;
-END_SERIALIZE()
+
+  std::cout << "[DEBUG] tx_extra_nonce varint length: " << len << std::endl;
+
+  // Step 2: Bounds check
+  if (TX_EXTRA_NONCE_MAX_COUNT < len)
+    return false;
+
+  // Step 3: Allocate space for the data
+  nonce.resize(len);
+
+  // Step 4: Load raw bytes
+  return ::serialization::serialize_blob(ar, &nonce[0], len);
+}
+
 
 
 
