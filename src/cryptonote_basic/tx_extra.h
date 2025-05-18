@@ -105,8 +105,6 @@ namespace cryptonote
 struct tx_extra_nonce
 {
 
-  std::cout << "[DEBUG] tx_extra_nonce: Starting deserialization" << std::endl;
-
   std::string nonce;
 
   // Deserialization (reading)
