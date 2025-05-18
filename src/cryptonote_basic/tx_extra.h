@@ -104,6 +104,9 @@ namespace cryptonote
 
 struct tx_extra_nonce
 {
+
+  std::cout << "[DEBUG] tx_extra_nonce: Starting deserialization" << std::endl;
+
   std::string nonce;
 
   // Deserialization (reading)
@@ -111,7 +114,7 @@ struct tx_extra_nonce
   bool serialize(Archive<false>& ar)
   {
     size_t len = 0;
-    std::cout << "[DEBUG] tx_extra_nonce: Starting deserialization" << std::endl;
+    std::cout << "[DEBUG] tx_extra_nonce: Starting deserialization 2" << std::endl;
 
     if (!serialize_varint(ar, len)) {
       std::cout << "[DEBUG] tx_extra_nonce: Failed to read varint length" << std::endl;
