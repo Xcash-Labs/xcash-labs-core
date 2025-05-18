@@ -103,10 +103,29 @@ namespace cryptonote
   {
     std::string nonce;
 
-    BEGIN_SERIALIZE()
-      FIELD(nonce)
-      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
-    END_SERIALIZE()
+BEGIN_SERIALIZE()
+  size_t len = 0;
+  if (!::serialization::serialize_varint(ar, len)) return false;
+
+std::cout << "[DEBUG] Deserializing nonce with varint length: " << len << std::endl;
+
+  if (TX_EXTRA_NONCE_MAX_COUNT < len) return false;
+
+  if constexpr (decltype(ar)::is_saving::value)
+  {
+    if (!ar.write_bytes(nonce.data(), len)) return false;
+  }
+  else
+  {
+    nonce.resize(len);
+    if (!ar.read_bytes(&nonce[0], len)) return false;
+  }
+END_SERIALIZE()
+
+//    BEGIN_SERIALIZE()
+//      FIELD(nonce)
+//      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
+//    END_SERIALIZE()
   };
 
   struct tx_extra_merge_mining_tag

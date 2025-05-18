@@ -715,7 +715,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool add_extra_nonce_to_tx_extra_OLD_(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
+  bool add_extra_nonce_to_tx_extra(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
   {
     CHECK_AND_ASSERT_MES(extra_nonce.size() <= TX_EXTRA_NONCE_MAX_COUNT, false, "extra nonce could be 255 bytes max");
     size_t start_pos = tx_extra.size();
@@ -730,46 +730,7 @@ namespace cryptonote
     memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
     return true;
   }
-
-
-bool add_extra_nonce_to_tx_extra(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
-{
-  std::cout << "[DEBUG] ----------------------------------------" << std::endl;
-  std::cout << "[DEBUG] extra_nonce.size(): " << extra_nonce.size() << std::endl;
-  std::cout << "[DEBUG] tx_extra.size() before resize: " << tx_extra.size() << std::endl;
-  std::cout << "[DEBUG] Total tx_extra if added: " 
-            << (tx_extra.size() + 2 + extra_nonce.size()) << " bytes" << std::endl;
-
-  if (extra_nonce.size() > TX_EXTRA_NONCE_MAX_COUNT) {
-    std::cerr << "[ERROR] Rejected: extra_nonce.size() (" << extra_nonce.size()
-              << ") exceeds TX_EXTRA_NONCE_MAX_COUNT (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
-    return false;
-  }
-
-  size_t start_pos = tx_extra.size();
-  tx_extra.resize(tx_extra.size() + 2 + extra_nonce.size());
-
-  std::cout << "[DEBUG] tx_extra.size() after resize: " << tx_extra.size() << std::endl;
-
-  // Write tag
-  tx_extra[start_pos] = TX_EXTRA_NONCE;
-
-  // Write len
-  ++start_pos;
-  tx_extra[start_pos] = static_cast<uint8_t>(extra_nonce.size());
-
-  // Write data
-  ++start_pos;
-  memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
-
-  std::cout << "[DEBUG] add_extra_nonce_to_tx_extra() completed successfully" << std::endl;
-  std::cout << "[DEBUG] ----------------------------------------" << std::endl;
-
-  return true;
-}
-
-
-
+  
   //---------------------------------------------------------------
   bool add_mm_merkle_root_to_tx_extra(std::vector<uint8_t>& tx_extra, const crypto::hash& mm_merkle_root, uint64_t mm_merkle_tree_depth)
   {
