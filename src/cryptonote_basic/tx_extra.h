@@ -30,6 +30,9 @@
 
 #pragma once
 
+#include "serialization/varint.h"
+#include "serialization/blob.h"
+
 #define TX_EXTRA_PADDING_MAX_COUNT          255
 #define TX_EXTRA_NONCE_MAX_COUNT            255
 
