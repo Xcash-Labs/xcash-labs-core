@@ -30,8 +30,6 @@
 
 #pragma once
 
-#include "serialization/basic_types.h"
-
 #define TX_EXTRA_PADDING_MAX_COUNT          255
 #define TX_EXTRA_NONCE_MAX_COUNT            255
 
@@ -106,22 +104,25 @@ namespace cryptonote
 
 BEGIN_SERIALIZE()
   size_t len = 0;
-  if (!::serialization::serialize_varint(ar, len)) return false;
+  ar.serialize_varint(len);
+  std::cout << "[DEBUG] Deserializing nonce with varint length: " << len << std::endl;
 
-std::cout << "[DEBUG] Deserializing nonce with varint length: " << len << std::endl;
-
-  if (TX_EXTRA_NONCE_MAX_COUNT < len) return false;
+  if (TX_EXTRA_NONCE_MAX_COUNT < len)
+    return false;
 
   if constexpr (decltype(ar)::is_saving::value)
   {
-    if (!ar.write_bytes(nonce.data(), len)) return false;
+    if (!ar.write_bytes(nonce.data(), len))
+      return false;
   }
   else
   {
     nonce.resize(len);
-    if (!ar.read_bytes(&nonce[0], len)) return false;
+    if (!ar.read_bytes(&nonce[0], len))
+      return false;
   }
 END_SERIALIZE()
+
 
 //    BEGIN_SERIALIZE()
 //      FIELD(nonce)
