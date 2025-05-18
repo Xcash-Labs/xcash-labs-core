@@ -104,15 +104,14 @@ namespace cryptonote
 
 
 BEGIN_SERIALIZE()
-  std::cout << "[DEBUG] Attempting to deserialize tx_extra_nonce\n";
-  if (!ar.serialize_str(nonce))
-    return false;
+  FIELD(nonce)  // ✅ this works in all supported Monero archives
 
-  std::cout << "[DEBUG] tx_extra_nonce varint size: " << nonce.size() << std::endl;
+  std::cout << "[DEBUG] Deserialized tx_extra_nonce, size: " << nonce.size() << std::endl;
 
   if (TX_EXTRA_NONCE_MAX_COUNT < nonce.size())
     return false;
 END_SERIALIZE()
+
 
 
 
