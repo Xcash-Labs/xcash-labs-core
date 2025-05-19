@@ -96,8 +96,9 @@ inline bool do_serialize(Archive<true>& ar, std::string& str)
 template <template <bool> class Archive>
 inline bool do_serialize(Archive<false>& ar, std::string& str)
 {
-  size_t size = 0;
-  ar.serialize_varint(size);
+//  size_t size = 0;
+  uint8_t size = 0;
+  ar.serialize_varint(size);   // jed need to check
   std::cout << "[DEBUG] do_serialize (read): varint size = " << size << std::endl;
 
   if (ar.remaining_bytes() < size)
