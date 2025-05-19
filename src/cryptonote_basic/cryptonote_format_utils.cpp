@@ -714,7 +714,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool add_extra_nonce_to_tx_extra(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
+  bool add_extra_nonce_to_tx_extra__OLD__(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
   {
     CHECK_AND_ASSERT_MES(extra_nonce.size() <= TX_EXTRA_NONCE_MAX_COUNT, false, "extra nonce could be 255 bytes max");
     size_t start_pos = tx_extra.size();
@@ -729,7 +729,38 @@ namespace cryptonote
     memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
     return true;
   }
-  
+ 
+// jed
+bool add_extra_nonce_to_tx_extra(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
+{
+  if (extra_nonce.size() > TX_EXTRA_NONCE_MAX_COUNT)
+  {
+    fprintf(stderr, "[ERROR] extra_nonce too large: %zu bytes (max allowed is %d)\n", extra_nonce.size(), TX_EXTRA_NONCE_MAX_COUNT);
+    return false;
+  }
+
+  size_t start_pos = tx_extra.size();
+  size_t total_added_size = 2 + extra_nonce.size();
+  tx_extra.resize(start_pos + total_added_size);
+
+  // Write tag
+  tx_extra[start_pos] = TX_EXTRA_NONCE;
+  fprintf(stderr, "[DEBUG] Writing TX_EXTRA_NONCE tag at offset %zu (value = 0x%02X)\n", start_pos, TX_EXTRA_NONCE);
+
+  // Write length
+  ++start_pos;
+  tx_extra[start_pos] = static_cast<uint8_t>(extra_nonce.size());
+  fprintf(stderr, "[DEBUG] Writing length byte at offset %zu (value = %zu)\n", start_pos, extra_nonce.size());
+
+  // Write data
+  ++start_pos;
+  memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
+  fprintf(stderr, "[DEBUG] Copied %zu bytes of extra_nonce data into tx_extra at offset %zu\n", extra_nonce.size(), start_pos);
+
+  return true;
+}
+
+
   //---------------------------------------------------------------
   bool add_mm_merkle_root_to_tx_extra(std::vector<uint8_t>& tx_extra, const crypto::hash& mm_merkle_root, uint64_t mm_merkle_tree_depth)
   {
