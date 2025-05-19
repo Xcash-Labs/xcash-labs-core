@@ -83,6 +83,25 @@ namespace cryptonote
 
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
+
+
+
+// Ensure tx.extra is big enough to hold the extra_nonce (reserve space)
+size_t reserve_offset = 0;
+if (!get_reserved_offset(tx.extra, reserve_offset))
+{
+  LOG_PRINT_L0("Failed to get reserved offset in tx.extra");
+  return false;
+}
+
+if (reserve_offset + extra_nonce.size() > tx.extra.size())
+{
+  tx.extra.resize(reserve_offset + extra_nonce.size(), 0);
+  LOG_PRINT_L1("[DEBUG] Resized tx.extra to " << tx.extra.size() << " bytes");
+}
+
+
+
     if(!extra_nonce.empty())
       if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
         return false;
