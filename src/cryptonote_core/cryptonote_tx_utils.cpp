@@ -126,7 +126,7 @@ if (reserve_offset + extra_nonce.size() > tx.extra.size())
   LOG_PRINT_L1("[DEBUG] Resized tx.extra to " << tx.extra.size() << " bytes");
 }
 
-jed
+
 
     if(!extra_nonce.empty())
       if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
