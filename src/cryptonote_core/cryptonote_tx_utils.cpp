@@ -76,32 +76,6 @@ namespace cryptonote
     LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses and " << num_subaddresses << " subaddresses");
   }
   //---------------------------------------------------------------
-  bool get_reserved_offset(const std::vector<uint8_t>& extra, size_t& offset)
-{
-  cryptonote::tx_extra_nonce extra_nonce;
-  std::vector<cryptonote::tx_extra_field> fields;
-  if (!cryptonote::parse_tx_extra(extra, fields))
-    return false;
-
-  size_t pos = 0;
-  for (const auto& field : fields)
-  {
-    if (typeid(field) == typeid(cryptonote::tx_extra_nonce))
-    {
-      offset = pos;
-      return true;
-    }
-
-    // rough estimate size (not perfect, but fine for nonce offset)
-    pos += boost::apply_visitor([](const auto& f) { return sizeof(f); }, field);
-  }
-
-  // fallback: assume it's appended to the end
-  offset = extra.size();
-  return true;
-}
-
-  
   bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
     tx.vin.clear();
     tx.vout.clear();
@@ -109,24 +83,6 @@ namespace cryptonote
 
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
-
-
-
-// Ensure tx.extra is big enough to hold the extra_nonce (reserve space)
-size_t reserve_offset = 0;
-if (!get_reserved_offset(tx.extra, reserve_offset))
-{
-  LOG_PRINT_L0("Failed to get reserved offset in tx.extra");
-  return false;
-}
-
-if (reserve_offset + extra_nonce.size() > tx.extra.size())
-{
-  tx.extra.resize(reserve_offset + extra_nonce.size(), 0);
-  LOG_PRINT_L1("[DEBUG] Resized tx.extra to " << tx.extra.size() << " bytes");
-}
-
-
 
     if(!extra_nonce.empty())
       if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
