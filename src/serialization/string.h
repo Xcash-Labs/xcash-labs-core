@@ -67,19 +67,16 @@ template <template <bool> class Archive>
 inline bool do_serialize(Archive<false>& ar, std::string& str)
 {
   size_t size = 0;
-  if (!ar.template read_varint<size_t>(size))  
-    return false;
-
+  ar.serialize_varint(size);
   if (ar.remaining_bytes() < size)
   {
     ar.set_fail();
     return false;
   }
 
-  str.resize(size);
-  if (size > 0 && !ar.read(reinterpret_cast<void*>(&str[0]), size))  
-    return false;
-
+  std::unique_ptr<std::string::value_type[]> buf(new std::string::value_type[size]);
+  ar.serialize_blob(buf.get(), size);
+  str.assign(buf.get(), size);
   return true;
 }
 
@@ -87,11 +84,7 @@ template <template <bool> class Archive>
 inline bool do_serialize(Archive<true>& ar, std::string& str)
 {
   size_t size = str.size();
-  if (!ar.template write_varint<size_t>(size)) 
-    return false;
-
-  if (size > 0 && !ar.write(str.data(), size)) 
-    return false;
-
+  ar.serialize_varint(size);
+  ar.serialize_blob(const_cast<std::string::value_type*>(str.data()), size);
   return true;
 }
