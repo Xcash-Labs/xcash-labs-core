@@ -620,8 +620,7 @@ namespace cryptonote
     if (!pick<tx_extra_additional_pub_keys>(nar, tx_extra_fields, TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) return false;
     if (!pick<tx_extra_nonce>(nar, tx_extra_fields, TX_EXTRA_NONCE)) return false;
     if (!pick<tx_extra_merge_mining_tag>(nar, tx_extra_fields, TX_EXTRA_MERGE_MINING_TAG)) return false;
-    if (!pick<tx_extra_vrf_signature1>(nar, tx_extra_fields, TX_EXTRA_VRF_SIGNATURE_TAG1)) return false;
-    if (!pick<tx_extra_vrf_signature2>(nar, tx_extra_fields, TX_EXTRA_VRF_SIGNATURE_TAG2)) return false;
+    if (!pick<tx_extra_vrf_signature1>(nar, tx_extra_fields, TX_EXTRA_VRF_SIGNATURE_TAG)) return false;
     if (!pick<tx_extra_padding>(nar, tx_extra_fields, TX_EXTRA_TAG_PADDING)) return false;
 
     // if not empty, someone added a new type and did not add a case above

@@ -84,9 +84,31 @@ namespace cryptonote
     keypair txkey = keypair::generate(hw::get_device("default"));
     add_tx_pub_key_to_extra(tx, txkey.pub);
 
-    if(!extra_nonce.empty())
-      if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-        return false;
+  //  if(!extra_nonce.empty())
+  //    if(!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+  //      return false;
+  
+  if (!extra_nonce.empty())
+{
+  fprintf(stderr, "[DEBUG] extra_nonce provided, size = %zu\n", extra_nonce.size());
+
+  if (!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
+  {
+    fprintf(stderr, "[ERROR] Failed to add extra_nonce to tx.extra. Size may be too large or format invalid.\n");
+    return false;
+  }
+  else
+  {
+    fprintf(stderr, "[DEBUG] Successfully added extra_nonce to tx.extra. tx.extra size is now: %zu\n", tx.extra.size());
+  }
+}
+else
+{
+  fprintf(stderr, "[DEBUG] No extra_nonce provided.\n");
+}
+
+  
+  
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 

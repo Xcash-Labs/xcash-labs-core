@@ -38,8 +38,7 @@
 #define TX_EXTRA_NONCE                      0x02
 #define TX_EXTRA_MERGE_MINING_TAG           0x03
 #define TX_EXTRA_TAG_ADDITIONAL_PUBKEYS     0x04
-#define TX_EXTRA_VRF_SIGNATURE_TAG1         0x05
-#define TX_EXTRA_VRF_SIGNATURE_TAG2         0x06
+#define TX_EXTRA_VRF_SIGNATURE_TAG          0x07
 
 #define TX_EXTRA_NONCE_PAYMENT_ID           0x00
 #define TX_EXTRA_NONCE_ENCRYPTED_PAYMENT_ID 0x01
@@ -98,10 +97,6 @@ namespace cryptonote
     END_SERIALIZE()
   };
 
-
-
-
-
   struct tx_extra_nonce
   {
     std::string nonce;
@@ -110,11 +105,6 @@ namespace cryptonote
       if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
     END_SERIALIZE()
   };
-
-
-
-
-
 
   struct tx_extra_merge_mining_tag
   {
@@ -173,7 +163,7 @@ namespace cryptonote
     END_SERIALIZE()
   };
 
-  struct tx_extra_vrf_signature1
+  struct tx_extra_vrf_signature
   {
     std::vector<uint8_t> data;
 
@@ -182,16 +172,7 @@ namespace cryptonote
     END_SERIALIZE()
   };
 
-  struct tx_extra_vrf_signature2
-  {
-    std::vector<uint8_t> data;
-
-    BEGIN_SERIALIZE()
-      FIELD(data)
-    END_SERIALIZE()
-  };
-
-  typedef boost::variant<tx_extra_padding, tx_extra_pub_key, tx_extra_nonce, tx_extra_merge_mining_tag, tx_extra_additional_pub_keys, tx_extra_vrf_signature1, tx_extra_vrf_signature2> tx_extra_field;
+  typedef boost::variant<tx_extra_padding, tx_extra_pub_key, tx_extra_nonce, tx_extra_merge_mining_tag, tx_extra_additional_pub_keys, tx_extra_vrf_signature> tx_extra_field;
 }
 
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_padding, TX_EXTRA_TAG_PADDING);
@@ -199,5 +180,4 @@ VARIANT_TAG(binary_archive, cryptonote::tx_extra_pub_key, TX_EXTRA_TAG_PUBKEY);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_nonce, TX_EXTRA_NONCE);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_merge_mining_tag, TX_EXTRA_MERGE_MINING_TAG);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_additional_pub_keys, TX_EXTRA_TAG_ADDITIONAL_PUBKEYS);
-VARIANT_TAG(binary_archive, cryptonote::tx_extra_vrf_signature1, TX_EXTRA_VRF_SIGNATURE_TAG1);
-VARIANT_TAG(binary_archive, cryptonote::tx_extra_vrf_signature2, TX_EXTRA_VRF_SIGNATURE_TAG2);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_vrf_signature, TX_EXTRA_VRF_SIGNATURE_TAG);
