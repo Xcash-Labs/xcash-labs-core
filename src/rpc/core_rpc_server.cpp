@@ -1884,7 +1884,7 @@ namespace cryptonote
     if(!m_core.get_block_template(b, prev_block, address, difficulty, height, expected_reward, cumulative_weight, extra_nonce, seed_height, seed_hash))
     {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "Internal error: failed to create block template 1";
+      error_resp.message = "Internal error: failed to create block template";
       LOG_ERROR("Failed to create block template");
       return false;
     }
@@ -1893,7 +1893,7 @@ namespace cryptonote
     if(tx_pub_key == crypto::null_pkey)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "Internal error: failed to create block template 2";
+      error_resp.message = "Internal error: failed to create block template";
       LOG_ERROR("Failed to get tx pub key in coinbase extra");
       return false;
     }
@@ -1915,7 +1915,7 @@ namespace cryptonote
     if(!reserved_offset)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "Internal error: failed to create block template 3";
+      error_resp.message = "Internal error: failed to create block template";
       LOG_ERROR("Failed to find tx pub key in blockblob");
       return false;
     }
@@ -1923,7 +1923,7 @@ namespace cryptonote
     if(reserved_offset + extra_nonce.size() > block_blob.size())
     {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "Internal error: failed to create block template 4";
+      error_resp.message = "Internal error: failed to create block template";
       LOG_ERROR("Failed to calculate offset for ");
       return false;
     }
