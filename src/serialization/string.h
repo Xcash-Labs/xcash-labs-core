@@ -98,8 +98,9 @@ inline bool do_serialize(Archive<false>& ar, std::string& str)
 {
   size_t size = 0;
   uint8_t len = 0;
-  ar.serialize_bytes(reinterpret_cast<char*>(&len), 1);
+  ar.serialize_int(len);
   size = len;
+
 //  ar.serialize_varint(size);   // jed need to check
   std::cout << "[DEBUG] do_serialize (read): varint size = " << size << std::endl;
 
