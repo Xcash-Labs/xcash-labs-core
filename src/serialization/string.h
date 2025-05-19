@@ -32,6 +32,7 @@
 #include <memory>
 #include "serialization.h"
 #include "serialization/binary_utils.h"
+#include <iostream>
 
 /*
 template <template <bool> class Archive>
@@ -61,7 +62,7 @@ inline bool do_serialize(Archive<true>& ar, std::string& str)
   ar.serialize_blob(const_cast<std::string::value_type*>(str.c_str()), size);
   return true;
 }
-*/
+
 
 template <template <bool> class Archive>
 inline bool do_serialize(Archive<false>& ar, std::string& str)
@@ -86,5 +87,44 @@ inline bool do_serialize(Archive<true>& ar, std::string& str)
   size_t size = str.size();
   ar.serialize_varint(size);
   ar.serialize_blob(const_cast<std::string::value_type*>(str.data()), size);
+  return true;
+}
+*/
+
+  
+
+template <template <bool> class Archive>
+inline bool do_serialize(Archive<false>& ar, std::string& str)
+{
+  size_t size = 0;
+  ar.serialize_varint(size);
+  std::cout << "[DEBUG] do_serialize (read): varint size = " << size << std::endl;
+
+  if (ar.remaining_bytes() < size)
+  {
+    std::cout << "[DEBUG] do_serialize (read): insufficient remaining bytes, needed = " << size
+              << ", available = " << ar.remaining_bytes() << std::endl;
+    ar.set_fail();
+    return false;
+  }
+
+  std::unique_ptr<std::string::value_type[]> buf(new std::string::value_type[size]);
+  ar.serialize_blob(buf.get(), size);
+  str.assign(buf.get(), size);
+
+  std::cout << "[DEBUG] do_serialize (read): string content loaded, actual size = " << str.size() << std::endl;
+  return true;
+}
+
+template <template <bool> class Archive>
+inline bool do_serialize(Archive<true>& ar, std::string& str)
+{
+  size_t size = str.size();
+  std::cout << "[DEBUG] do_serialize (write): writing string of size = " << size << std::endl;
+
+  ar.serialize_varint(size);
+  ar.serialize_blob(const_cast<std::string::value_type*>(str.data()), size);
+
+  std::cout << "[DEBUG] do_serialize (write): string data written" << std::endl;
   return true;
 }
