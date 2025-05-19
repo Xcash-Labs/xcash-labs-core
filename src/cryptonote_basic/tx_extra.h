@@ -30,9 +30,6 @@
 
 #pragma once
 
-#include "serialization/binary_archive.h"
-#include "serialization/serialization.h"
-
 #define TX_EXTRA_PADDING_MAX_COUNT          255
 #define TX_EXTRA_NONCE_MAX_COUNT            255
 
@@ -105,107 +102,19 @@ namespace cryptonote
 
 
 
-struct tx_extra_nonce
-{
-  std::string nonce;
-
-  // Serialization (writing)
-template <template<bool> class Archive>
-bool serialize(Archive<true>& ar)
-{
-  size_t len = nonce.size();
-  std::cout << "[DEBUG] tx_extra_nonce: starting serialization, len = " << len << std::endl;
-
-  if (len > TX_EXTRA_NONCE_MAX_COUNT)
+  struct tx_extra_nonce
   {
-    std::cout << "[DEBUG] tx_extra_nonce: length exceeds max (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
-    return false;
-  }
-
-  ar.serialize_varint(len); // no return value
-  if (!ar.good())
-  {
-    std::cout << "[DEBUG] tx_extra_nonce: failed to write varint length" << std::endl;
-    return false;
-  }
-
-  if (len > 0)
-  {
-    ar.serialize_blob((void*)nonce.data(), len, "");
-    if (!ar.good())
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: failed to write blob" << std::endl;
-      return false;
-    }
-  }
-
-  std::cout << "[DEBUG] tx_extra_nonce: successfully saved nonce" << std::endl;
-  return true;
-}
-// Deserialization (reading)
-template <template<bool> class Archive>
-bool serialize(Archive<false>& ar)
-{
-  std::cout << "[DEBUG] tx_extra_nonce: starting deserialization" << std::endl;
-
-  size_t len = 0;
-  ar.serialize_varint(len);
-  if (!ar.good())
-  {
-    std::cout << "[DEBUG] tx_extra_nonce: failed to read varint length" << std::endl;
-    return false;
-  }
-
-  std::cout << "[DEBUG] tx_extra_nonce: varint length = " << len << std::endl;
-
-  if (len > TX_EXTRA_NONCE_MAX_COUNT)
-  {
-    std::cout << "[DEBUG] tx_extra_nonce: length exceeds max (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
-    return false;
-  }
-
-  nonce.resize(len);
-  if (len > 0)
-  {
-    ar.serialize_blob(&nonce[0], len, "");
-    if (!ar.good())
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: failed to load nonce data" << std::endl;
-      return false;
-    }
-  }
-
-  std::cout << "[DEBUG] tx_extra_nonce: successfully loaded nonce, size = " << nonce.size() << std::endl;
-  return true;
-}
-
-
-  BEGIN_SERIALIZE_OBJECT()
-  END_SERIALIZE()
-};
+    std::string nonce;
+    BEGIN_SERIALIZE()
+      FIELD(nonce)
+      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
+    END_SERIALIZE()
+  };
 
 
 
 
 
-
-  template <bool W, template<bool> class Archive>
-  bool do_serialize(Archive<W>& ar, tx_extra_nonce& x)
-  {
-    std::cout << "[DEBUG] do_serialize(tx_extra_nonce): dispatching to member serialize()\n";
-    return x.serialize(ar);
-  }
-
-
-
-//  struct tx_extra_nonce
-//  {
-//    std::string nonce;
-//    BEGIN_SERIALIZE()
-//      FIELD(nonce)
-//      if(TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) return false;
-//    END_SERIALIZE()
-//  };
 
   struct tx_extra_merge_mining_tag
   {

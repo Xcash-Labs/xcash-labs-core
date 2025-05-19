@@ -31,7 +31,9 @@
 #pragma once
 #include <memory>
 #include "serialization.h"
+#include "serialization/binary_utils.h"
 
+/*
 template <template <bool> class Archive>
 inline bool do_serialize(Archive<false>& ar, std::string& str)
 {
@@ -57,5 +59,39 @@ inline bool do_serialize(Archive<true>& ar, std::string& str)
   size_t size = str.size();
   ar.serialize_varint(size);
   ar.serialize_blob(const_cast<std::string::value_type*>(str.c_str()), size);
+  return true;
+}
+*/
+
+template <template <bool> class Archive>
+inline bool do_serialize(Archive<false>& ar, std::string& str)
+{
+  size_t size = 0;
+  if (!ar.template read_varint<size_t>(size))  
+    return false;
+
+  if (ar.remaining_bytes() < size)
+  {
+    ar.set_fail();
+    return false;
+  }
+
+  str.resize(size);
+  if (size > 0 && !ar.read(reinterpret_cast<void*>(&str[0]), size))  
+    return false;
+
+  return true;
+}
+
+template <template <bool> class Archive>
+inline bool do_serialize(Archive<true>& ar, std::string& str)
+{
+  size_t size = str.size();
+  if (!ar.template write_varint<size_t>(size)) 
+    return false;
+
+  if (size > 0 && !ar.write(str.data(), size)) 
+    return false;
+
   return true;
 }
