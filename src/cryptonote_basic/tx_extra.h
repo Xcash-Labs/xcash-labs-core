@@ -109,64 +109,43 @@ struct tx_extra_nonce
 {
   std::string nonce;
 
-  template <template<bool> class Archive>
-  bool serialize(Archive<false>& ar) // Reading
-  {
-    std::cout << "[DEBUG] tx_extra_nonce: starting deserialization" << std::endl;
+template <template<bool> class Archive>
+bool serialize(Archive<false>& ar)
+{
+  std::cout << "[DEBUG] tx_extra_nonce: starting deserialization" << std::endl;
 
-    size_t len = 0;
-    if (!::serialization::serialize_varint(ar, len))
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: failed to read varint length" << std::endl;
-      return false;
-    }
+  size_t len = 0;
+  if (!ar.serialize_varint(len))
+    return false;
 
-    std::cout << "[DEBUG] tx_extra_nonce: varint length = " << len << std::endl;
+  if (len > TX_EXTRA_NONCE_MAX_COUNT)
+    return false;
 
-    if (len > TX_EXTRA_NONCE_MAX_COUNT)
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: length exceeds max (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
-      return false;
-    }
+  nonce.resize(len);
+  if (len > 0 && !ar.serialize_blob(&nonce[0], len))
+    return false;
 
-    nonce.resize(len);
-    if (len > 0 && !::serialization::serialize_blob(ar, &nonce[0], len))
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: failed to load nonce data" << std::endl;
-      return false;
-    }
+  std::cout << "[DEBUG] tx_extra_nonce: successfully loaded nonce of size " << len << std::endl;
+  return true;
+}
 
-    std::cout << "[DEBUG] tx_extra_nonce: successfully loaded nonce, size = " << nonce.size() << std::endl;
-    return true;
-  }
+template <template<bool> class Archive>
+bool serialize(Archive<true>& ar)
+{
+  size_t len = nonce.size();
+  if (len > TX_EXTRA_NONCE_MAX_COUNT)
+    return false;
 
-  template <template<bool> class Archive>
-  bool serialize(Archive<true>& ar) // Writing
-  {
-    size_t len = nonce.size();
-    std::cout << "[DEBUG] tx_extra_nonce: starting serialization, len = " << len << std::endl;
+  if (!ar.serialize_varint(len))
+    return false;
 
-    if (len > TX_EXTRA_NONCE_MAX_COUNT)
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: length exceeds max (" << TX_EXTRA_NONCE_MAX_COUNT << ")" << std::endl;
-      return false;
-    }
+  if (len > 0 && !ar.serialize_blob(nonce.data(), len))
+    return false;
 
-    if (!::serialization::serialize_varint(ar, len))
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: failed to write varint length" << std::endl;
-      return false;
-    }
+  std::cout << "[DEBUG] tx_extra_nonce: successfully saved nonce of size " << len << std::endl;
+  return true;
+}
 
-    if (len > 0 && !::serialization::serialize_blob(ar, nonce.data(), len))
-    {
-      std::cout << "[DEBUG] tx_extra_nonce: failed to write nonce data" << std::endl;
-      return false;
-    }
-
-    std::cout << "[DEBUG] tx_extra_nonce: successfully saved nonce" << std::endl;
-    return true;
-  }
 
   BEGIN_SERIALIZE_OBJECT()
   END_SERIALIZE()
