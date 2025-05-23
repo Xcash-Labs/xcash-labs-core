@@ -39,6 +39,7 @@
 #include "crypto/hash.h"
 #include <unordered_map>
 #include <boost/multiprecision/cpp_int.hpp>
+#include "common/varint.h"
 
 namespace epee
 {
