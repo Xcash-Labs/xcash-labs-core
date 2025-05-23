@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2025 XCASH Project, Derived from The Monero Project
+// Copyright (c) 2014-2024, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -31,18 +31,12 @@
 #pragma once
 #include <memory>
 #include "serialization.h"
-#include "serialization/binary_utils.h"
-#include <iostream>
 
 template <template <bool> class Archive>
 inline bool do_serialize(Archive<false>& ar, std::string& str)
 {
-  //  ar.serialize_varint(size);
   size_t size = 0;
-  uint8_t len = 0;
-  ar.serialize_int(len);
-  size = len;
-
+  ar.serialize_varint(size);
   if (ar.remaining_bytes() < size)
   {
     ar.set_fail();
@@ -51,16 +45,17 @@ inline bool do_serialize(Archive<false>& ar, std::string& str)
 
   std::unique_ptr<std::string::value_type[]> buf(new std::string::value_type[size]);
   ar.serialize_blob(buf.get(), size);
-  str.assign(buf.get(), size);
-
+  str.erase();
+  str.append(buf.get(), size);
   return true;
 }
+
 
 template <template <bool> class Archive>
 inline bool do_serialize(Archive<true>& ar, std::string& str)
 {
   size_t size = str.size();
   ar.serialize_varint(size);
-  ar.serialize_blob(const_cast<std::string::value_type*>(str.data()), size);
+  ar.serialize_blob(const_cast<std::string::value_type*>(str.c_str()), size);
   return true;
 }
