@@ -714,32 +714,13 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool add_extra_nonce_to_tx_extra__old(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
-  {
-    CHECK_AND_ASSERT_MES(extra_nonce.size() <= TX_EXTRA_NONCE_MAX_COUNT, false, "extra nonce could be 255 bytes max");
-    size_t start_pos = tx_extra.size();
-    tx_extra.resize(tx_extra.size() + 2 + extra_nonce.size());
-    //write tag
-    tx_extra[start_pos] = TX_EXTRA_NONCE;
-    //write len
-    ++start_pos;
-    tx_extra[start_pos] = static_cast<uint8_t>(extra_nonce.size());
-    //write data
-    ++start_pos;
-    memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
-    return true;
-  }
-
   bool add_extra_nonce_to_tx_extra(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce) {
     CHECK_AND_ASSERT_MES(extra_nonce.size() <= TX_EXTRA_NONCE_MAX_COUNT, false, "extra nonce could be 255 bytes max");
-
     tx_extra.push_back(TX_EXTRA_NONCE);                                       // tag
     tools::write_varint(std::back_inserter(tx_extra), extra_nonce.size());    // length as varint
     tx_extra.insert(tx_extra.end(), extra_nonce.begin(), extra_nonce.end());  // data
-
     return true;
   }
-
   //---------------------------------------------------------------
   bool add_mm_merkle_root_to_tx_extra(std::vector<uint8_t>& tx_extra, const crypto::hash& mm_merkle_root, uint64_t mm_merkle_tree_depth)
   {
