@@ -98,7 +98,7 @@
 // Mine amount equal to the current outstanding supply
 #define OUTSUPPLY_BLOCK_HEIGHT 1
 #define OUTSUPPLY_BLOCK_REWARD ((uint64_t)(60000000000000000))
-#define XCASH_SIGN_DATA_PREFIX "SigV1" // The prefix for  for the signed data for public transactions
+#define XCASH_SIGN_DATA_PREFIX "SigV2" // The prefix for  for the signed data for public transactions
 
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 DIFFICULTY_TARGET_V1 *CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V2 DIFFICULTY_TARGET_V2 *CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
