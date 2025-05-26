@@ -40,7 +40,7 @@
 #include "difficulty.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "difficulty"
+#define MONERO_DEFAULT_LOG_CATEGORY "dpops"
 
 namespace cryptonote {
 
@@ -48,6 +48,7 @@ namespace cryptonote {
   using std::uint64_t;
   using std::vector;
 
+  /*
 #if defined(__x86_64__)
   static inline void mul(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high) {
     low = mul128(a, b, &high);
@@ -102,6 +103,7 @@ namespace cryptonote {
     return a + b < a || (c && a + b == (uint64_t) -1);
   }
 
+
   bool check_hash_64(const crypto::hash &hash, uint64_t difficulty) {
     uint64_t low, high, top, cur;
     // First check the highest word, this will most likely fail for a random hash.
@@ -145,7 +147,7 @@ namespace cryptonote {
       cut_begin = (length - (DIFFICULTY_WINDOW - 2 * DIFFICULTY_CUT) + 1) / 2;
       cut_end = cut_begin + (DIFFICULTY_WINDOW - 2 * DIFFICULTY_CUT);
     }
-    assert(/*cut_begin >= 0 &&*/ cut_begin + 2 <= cut_end && cut_end <= length);
+    assert(cut_begin + 2 <= cut_end && cut_end <= length);
     uint64_t time_span = timestamps[cut_end - 1] - timestamps[cut_begin];
     if (time_span == 0) {
       time_span = 1;
@@ -161,6 +163,14 @@ namespace cryptonote {
     }
     return (low + time_span - 1) / time_span;
   }
+*/
+
+  uint64_t next_difficulty_64(std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulative_difficulties, size_t target_seconds) {
+    (void)timestamps;
+    (void)cumulative_difficulties;
+    (void)target_seconds;
+    return 1;
+  }
 
 #if defined(_MSC_VER)
 #ifdef max
@@ -174,6 +184,7 @@ namespace cryptonote {
 
 #define FORCE_FULL_128_BITS
 
+/*
   bool check_hash_128(const crypto::hash &hash, difficulty_type difficulty) {
 #ifndef FORCE_FULL_128_BITS
     // fast check
@@ -192,14 +203,22 @@ namespace cryptonote {
     }
     return hashVal * difficulty <= max256bit;
   }
+*/
+
+//  bool check_hash(const crypto::hash &hash, difficulty_type difficulty) {
+//    if (difficulty <= max64bit) // if can convert to small difficulty - do it
+//      return check_hash_64(hash, difficulty.convert_to<std::uint64_t>());
+//    else
+//      return check_hash_128(hash, difficulty);
+//  }
 
   bool check_hash(const crypto::hash &hash, difficulty_type difficulty) {
-    if (difficulty <= max64bit) // if can convert to small difficulty - do it
-      return check_hash_64(hash, difficulty.convert_to<std::uint64_t>());
-    else
-      return check_hash_128(hash, difficulty);
+    (void)hash;
+    (void)difficulty;
+    return true;  // In DPoPS, PoW is not used
   }
 
+/*
   difficulty_type next_difficulty(std::vector<uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds) {
     //cutoff DIFFICULTY_LAG
     if(timestamps.size() > DIFFICULTY_WINDOW)
@@ -237,6 +256,14 @@ namespace cryptonote {
     if(res > max128bit)
       return 0; // to behave like previous implementation, may be better return max128bit?
     return res.convert_to<difficulty_type>();
+  }
+  */
+
+  difficulty_type next_difficulty(std::vector<uint64_t> timestamps, std::vector<difficulty_type> cumulative_difficulties, size_t target_seconds) {
+    (void)timestamps;
+    (void)cumulative_difficulties;
+    (void)target_seconds;
+    return 1;  // Fixed difficulty under DPoPS
   }
 
   std::string hex(difficulty_type v)
