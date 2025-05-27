@@ -4966,11 +4966,15 @@ namespace tools
         er.message = "Failed to send the vote";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Failed to send the vote";
+
+      if(m_wallet->watch_only())
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+        er.message = "command not supported by watch-only wallet";
         return false;
       }
+
+      CHECK_MULTISIG_ENABLED();
 
       // get the wallet transfers
       m_wallet->get_transfers(transfers);
@@ -5094,11 +5098,15 @@ namespace tools
         er.message = "Failed to register the delegate";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Failed to register the delegate";
+
+      if(m_wallet->watch_only())
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+        er.message = "command not supported by watch-only wallet";
         return false;
       }
+
+      CHECK_MULTISIG_ENABLED();
 
       // wait until the next valid data time
       sync_minutes_and_seconds(0);
@@ -5206,11 +5214,15 @@ namespace tools
         er.message = "Failed to update the delegates information";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Failed to update the delegates information";
+
+      if(m_wallet->watch_only())
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+        er.message = "command not supported by watch-only wallet";
         return false;
       }
+
+      CHECK_MULTISIG_ENABLED();
 
       // check if the item to update is a valid item
       if (req.item != "IP_address" && req.item != "about" && req.item != "website" && req.item != "team" && req.item != "shared_delegate_status" && req.item != "delegate_fee" && req.item != "server_specs") {
@@ -5358,11 +5370,15 @@ namespace tools
         er.message = "Failed to recover the delegate";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Failed to recover the delegate";
+
+      if(m_wallet->watch_only())
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+        er.message = "command not supported by watch-only wallet";
         return false;
       }
+
+      CHECK_MULTISIG_ENABLED();
 
       // wait until the next valid data time
       sync_minutes_and_seconds(0);
@@ -5450,11 +5466,15 @@ namespace tools
         er.message = "Failed to send the vote";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Failed to send the vote";
+
+      if(m_wallet->watch_only())
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+        er.message = "command not supported by watch-only wallet";
         return false;
       }
+
+      CHECK_MULTISIG_ENABLED();
 
       // get the wallet transfers
       m_wallet->get_transfers(transfers);
@@ -5560,11 +5580,15 @@ namespace tools
         er.message = "Failed to send the vote";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Failed to send the vote";
+
+      if(m_wallet->watch_only())
+      {
+        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+        er.message = "command not supported by watch-only wallet";
         return false;
       }
+
+      CHECK_MULTISIG_ENABLED();
 
       // get the wallet transfers
       m_wallet->get_transfers(transfers);
