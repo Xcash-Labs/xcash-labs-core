@@ -313,7 +313,7 @@ namespace config
   network_data_nodes_list.network_data_nodes_public_address[3] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_4; \
   network_data_nodes_list.network_data_nodes_IP_address[3] = NETWORK_DATA_NODE_IP_ADDRESS_4;
 
-// Network
+  // Network
   #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
   #define CONNECTION_TIMEOUT_SETTINGS 1000 // the time in milliseconds for a connection to be created
   #define SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS 3000 // The time in milliseconds to wait for sending or receving socket data
@@ -321,6 +321,16 @@ namespace config
   #define SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS 5000 // The minimum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
   #define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
   #define SOCKET_END_STRING "|END|" // End string when sending data between nodes, to signal the end of sending data
+
+  // Blockchain
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
+  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
+  
+  #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
+  #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
+  #define BLOCK_VERIFIERS_VALID_AMOUNT 3 // The amount of block verifiers that need to vote true for the part of the round to be valid.
+  #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.4 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
+
 
 
   namespace testnet
