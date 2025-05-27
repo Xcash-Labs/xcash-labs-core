@@ -4966,7 +4966,7 @@ namespace tools
         er.message = "Failed to send the vote";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->multisig()) {
+      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to send the vote";
         return false;
@@ -5094,7 +5094,7 @@ namespace tools
         er.message = "Failed to register the delegate";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->multisig()) {
+      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to register the delegate";
         return false;
@@ -5206,7 +5206,7 @@ namespace tools
         er.message = "Failed to update the delegates information";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->multisig()) {
+      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to update the delegates information";
         return false;
@@ -5358,7 +5358,7 @@ namespace tools
         er.message = "Failed to recover the delegate";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->multisig()) {
+      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to recover the delegate";
         return false;
@@ -5450,7 +5450,7 @@ namespace tools
         er.message = "Failed to send the vote";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->multisig()) {
+      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to send the vote";
         return false;
@@ -5560,7 +5560,7 @@ namespace tools
         er.message = "Failed to send the vote";
         return false;
       }
-      if (m_wallet->watch_only() || m_wallet->multisig()) {
+      if (m_wallet->watch_only() || m_wallet->is_multisig()) {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to send the vote";
         return false;
