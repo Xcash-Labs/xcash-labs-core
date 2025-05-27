@@ -330,7 +330,7 @@ namespace config
   #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
   #define BLOCK_VERIFIERS_VALID_AMOUNT 3 // The amount of block verifiers that need to vote true for the part of the round to be valid.
   #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.4 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
-
+  #define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 2 // The first block of the X-CASH proof of stake
 
 
   namespace testnet
