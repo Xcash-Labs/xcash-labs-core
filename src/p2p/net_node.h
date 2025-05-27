@@ -300,10 +300,10 @@ namespace nodetool
 
   private:
     const std::vector<std::string> m_seed_nodes_list =
-    { "seeds.xcashseeds.us"
-    , "seeds.xcashseeds.uk"
-    , "seeds.xcashseeds.cc"
-    , "seeds.xcashseeds.me"
+    { NETWORK_DATA_NODE_IP_ADDRESS_1
+    , NETWORK_DATA_NODE_IP_ADDRESS_2
+    , NETWORK_DATA_NODE_IP_ADDRESS_3
+    , NETWORK_DATA_NODE_IP_ADDRESS_4
     };
 
     bool islimitup=false;

@@ -288,6 +288,31 @@ namespace config
   // Multisig
   const uint32_t MULTISIG_MAX_SIGNERS{16};
 
+  // XCASH DPOPS
+  // Network data nodes
+  #define NETWORK_DATA_NODES_AMOUNT 4 // The amount of network data nodes
+
+  #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_1 "XCA1T1uxPiS8oprWpaCrUiiFcQB3KEriiUVqeeqnVtiKakSZmrZhoXKGbzqn4wj3EXY4JFPdJHqGr7iRHVxF4yyE28NvzLQgZf"
+  #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_2 "XCA1b6Sg5QVBX4jrctQ9SVUcHFqpaGST6bqtFpyoQadTX8SaDs92xR8iec3VfaXKzhYijFiMfwoM4TuYRgy6NXzn5titJnWbra"
+  #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_3 "XCA1YfTaE1EUJ2cn63ifPjjFYNvoJ4rhUAamj9qqPzp19zd5qwSmWBtPLsop5StXRsZ6bshYp6pcG5BPPrfLfN3q4ALapSU2fu"
+  #define NETWORK_DATA_NODE_PUBLIC_ADDRESS_4 "XCA1aQciNagSNaMftRCShnMMkQRH4vDN9LiH7VurtS1pWwmPcWkeKEX8anGQkaUnceWBJKiEmYCZZEtrYYAd1GMLAPF11FS6Nu"
+
+  #define NETWORK_DATA_NODE_IP_ADDRESS_1 "seeds.xcashseeds.us"
+  #define NETWORK_DATA_NODE_IP_ADDRESS_2 "seeds.xcashseeds.uk"
+  #define NETWORK_DATA_NODE_IP_ADDRESS_3 "seeds.xcashseeds.cc"
+  #define NETWORK_DATA_NODE_IP_ADDRESS_4 "seeds.xcashseeds.me"
+
+  #define INITIALIZE_NETWORK_DATA_NODES_LIST const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4,NETWORK_DATA_NODE_IP_ADDRESS_5}
+  #define INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT \
+  network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1; \
+  network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1; \
+  network_data_nodes_list.network_data_nodes_public_address[1] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_2; \
+  network_data_nodes_list.network_data_nodes_IP_address[1] = NETWORK_DATA_NODE_IP_ADDRESS_2; \
+  network_data_nodes_list.network_data_nodes_public_address[2] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_3; \
+  network_data_nodes_list.network_data_nodes_IP_address[2] = NETWORK_DATA_NODE_IP_ADDRESS_3; \
+  network_data_nodes_list.network_data_nodes_public_address[3] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_4; \
+  network_data_nodes_list.network_data_nodes_IP_address[3] = NETWORK_DATA_NODE_IP_ADDRESS_4;
+
   namespace testnet
   {
     uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 53;

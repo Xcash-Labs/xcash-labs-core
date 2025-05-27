@@ -259,7 +259,16 @@ namespace cryptonote
     bool public_nodes(const std::vector<std::string>& args);
     bool welcome(const std::vector<std::string>& args);
     bool version(const std::vector<std::string>& args);
+    bool vote(const std::vector<std::string>& args);
+    bool delegate_register(const std::vector<std::string>& args);
+    bool delegate_update(const std::vector<std::string>& args);
+    bool delegate_recover(const std::vector<std::string>& args);
+    bool vote_status(const std::vector<std::string>& args);
+    bool revote(const std::vector<std::string>& args);
     bool on_unknown_command(const std::vector<std::string>& args);
+// jed
+
+
 
     bool cold_sign_tx(const std::vector<tools::wallet2::pending_tx>& ptx_vector, tools::wallet2::signed_tx_set &exported_txs, std::vector<cryptonote::address_parse_info> &dsts_info, std::function<bool(const tools::wallet2::signed_tx_set &)> accept_func);
     uint64_t get_daemon_blockchain_height(std::string& err);
