@@ -4939,7 +4939,7 @@ namespace tools
 #undef MESSAGE
   }
 
-  bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er) {
+  bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req, wallet_rpc::COMMAND_RPC_VOTE::response& res, epee::json_rpc::error& er, const connection_context *ctx) {
     // Variables
     std::string public_address = "";
     std::string reserve_proof = "";
@@ -5042,7 +5042,6 @@ namespace tools
       data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_data + "|" + reserve_proof + "|" + public_address + "|";
 
       // sign the data
-      // data3 = m_wallet->sign(data2);
       data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
@@ -5073,7 +5072,7 @@ namespace tools
     return true;
   }
 
-  bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::response& res, epee::json_rpc::error& er) {
+  bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::response& res, epee::json_rpc::error& er, const connection_context *ctx) {
     // Variables
     std::string public_address = "";
     tools::wallet2::transfer_container transfers;
@@ -5158,7 +5157,6 @@ namespace tools
       data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + req.delegate_name + "|" + req.delegate_IP_address + "|" + req.delegates_public_key + "|" + public_address + "|";
 
       // sign the data
-      // data3 = m_wallet->sign(data2);
       data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
@@ -5189,7 +5187,7 @@ namespace tools
     return true;
   }
 
-  bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::response& res, epee::json_rpc::error& er) {
+  bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::response& res, epee::json_rpc::error& er, const connection_context *ctx) {
     // Variables
     std::string public_address = "";
     tools::wallet2::transfer_container transfers;
@@ -5316,7 +5314,6 @@ namespace tools
       data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + req.item + "|" + req.value + "|" + public_address + "|";
 
       // sign the data
-      // data3 = m_wallet->sign(data2);
       data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
@@ -5347,7 +5344,7 @@ namespace tools
     return true;
   }
 
-  bool wallet_rpc_server::on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er) {
+  bool wallet_rpc_server::on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er, const connection_context *ctx) {
     // Variables
     std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT];  // The block verifiers IP address
     std::string string = "";
@@ -5436,7 +5433,7 @@ namespace tools
     return true;
   }
 
-  bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS::request& req, wallet_rpc::COMMAND_RPC_VOTE_STATUS::response& res, epee::json_rpc::error& er) {
+  bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS::request& req, wallet_rpc::COMMAND_RPC_VOTE_STATUS::response& res, epee::json_rpc::error& er, const connection_context *ctx) {
     // structures
     struct network_data_nodes_list {
       std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];  // The network data nodes public address
@@ -5542,7 +5539,7 @@ namespace tools
     return true;
   }
 
-  bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request& req, wallet_rpc::COMMAND_RPC_REVOTE::response& res, epee::json_rpc::error& er) {
+  bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request& req, wallet_rpc::COMMAND_RPC_REVOTE::response& res, epee::json_rpc::error& er, const connection_context *ctx) {
     // structures
     struct network_data_nodes_list {
       std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];  // The network data nodes public address
@@ -5697,7 +5694,6 @@ namespace tools
       data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + delegate_name + "|" + reserve_proof + "|" + public_address + "|";
 
       // sign the data
-      // data3 = m_wallet->sign(data2);
       data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
