@@ -5041,10 +5041,9 @@ namespace tools
       // create the data
       data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_data + "|" + reserve_proof + "|" + public_address + "|";
 
-      // sign the data  jed
-      //data3 = m_wallet->sign(data2);
-      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
-
+      // sign the data
+      // data3 = m_wallet->sign(data2);
+      data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
       // send the data to all block verifiers
@@ -5160,8 +5159,7 @@ namespace tools
 
       // sign the data
       // data3 = m_wallet->sign(data2);
-      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
-
+      data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
       // send the data to all block verifiers
@@ -5319,8 +5317,7 @@ namespace tools
 
       // sign the data
       // data3 = m_wallet->sign(data2);
-      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
-
+      data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
       // send the data to all block verifiers
@@ -5701,7 +5698,7 @@ namespace tools
 
       // sign the data
       // data3 = m_wallet->sign(data2);
-      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
+      data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
       // send the data to all block verifiers
