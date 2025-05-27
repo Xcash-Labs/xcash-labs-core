@@ -75,6 +75,7 @@
 #include <stdexcept>
 #include "wallet/message_store.h"
 #include "QrCode.hpp"
+#include "common/send_and_receive_data.h"
 
 #ifdef WIN32
 #include <boost/locale.hpp>
