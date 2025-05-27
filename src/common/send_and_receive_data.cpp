@@ -1,3 +1,4 @@
+/*
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <iostream>
@@ -241,3 +242,202 @@ void get_block_hashes(std::size_t block_height, std::vector<std::string>& server
 } // namespace xcash_net
 
 
+*/
+
+#include <boost/asio.hpp>
+#include <boost/asio/steady_timer.hpp>
+#include <iostream>
+#include <vector>
+#include <string>
+#include <memory>
+#include <sstream>
+#include <thread>
+#include <functional>
+
+#include "common/send_and_receive_data.h"
+#include "common/blocking_tcp_client.h"
+
+std::string send_and_receive_data(std::string IP_address, std::string data2, int timeout) {
+  std::string result;
+  auto connection_timeout = boost::posix_time::milliseconds(CONNECTION_TIMEOUT_SETTINGS);
+  auto data_timeout = boost::posix_time::milliseconds(timeout);
+
+  try {
+    data2 += SOCKET_END_STRING;
+    client c;
+    c.connect(IP_address, SEND_DATA_PORT, connection_timeout);
+    c.write_line(data2, data_timeout);
+    result = c.read_until('}', data_timeout);
+  } catch (const std::exception&) {
+    return "";
+  }
+
+  return result;
+}
+
+namespace xcash_net {
+
+void xcash_send_msg_async(
+    const std::string& server,
+    const std::string& port,
+    const std::string& message,
+    boost::asio::io_context& io_context,
+    std::vector<XcashResult>* results,
+    std::function<void()> on_complete,
+    const std::string& message_ender = "|END|") {
+
+  auto socket = std::make_shared<tcp::socket>(io_context);
+  auto timer = std::make_shared<boost::asio::steady_timer>(io_context);
+  auto reply_buffer = std::make_shared<boost::asio::streambuf>();
+  auto result = std::make_shared<XcashResult>();
+  result->server_info = server + ":" + port;
+  const std::string full_message = message + message_ender;
+
+  try {
+    tcp::resolver resolver(io_context);
+    auto endpoints = resolver.resolve(server, port);
+
+    timer->expires_after(std::chrono::milliseconds(300));
+    timer->async_wait([socket, timer, result, results, on_complete](const boost::system::error_code& ec) {
+      if (!ec) {
+        socket->close();
+        result->reply = "Error: Connection Timeout occurred";
+        results->push_back(*result);
+        on_complete();
+      }
+    });
+
+    socket->async_connect(*endpoints.begin(), [=](const boost::system::error_code& ec) {
+      timer->cancel();
+      if (ec) {
+        result->reply = "Error: " + ec.message();
+        results->push_back(*result);
+        on_complete();
+        return;
+      }
+
+      timer->expires_after(std::chrono::milliseconds(600));
+      timer->async_wait([socket, timer, result, results, on_complete](const boost::system::error_code& ec) {
+        if (!ec) {
+          socket->close();
+          result->reply = "Error: Write Timeout occurred";
+          results->push_back(*result);
+          on_complete();
+        }
+      });
+
+      boost::asio::async_write(*socket, boost::asio::buffer(full_message), [=](const boost::system::error_code& ec, std::size_t) {
+        timer->cancel();
+        if (ec) {
+          result->reply = "Error: " + ec.message();
+          results->push_back(*result);
+          on_complete();
+          return;
+        }
+
+        timer->expires_after(std::chrono::seconds(6));
+        timer->async_wait([socket, timer, result, results, on_complete](const boost::system::error_code& ec) {
+          if (!ec) {
+            socket->close();
+            result->reply = "Error: Read Timeout occurred";
+            results->push_back(*result);
+            on_complete();
+          }
+        });
+
+        boost::asio::async_read_until(*socket, *reply_buffer, message_ender, [=](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+          timer->cancel();
+          if (!ec) {
+            result->reply.assign(boost::asio::buffers_begin(reply_buffer->data()),
+                                 boost::asio::buffers_begin(reply_buffer->data()) + bytes_transferred);
+          } else {
+            result->reply = "Error: " + ec.message();
+          }
+          results->push_back(*result);
+          on_complete();
+        });
+      });
+    });
+  } catch (const std::exception& ex) {
+    result->reply = "Error: " + std::string(ex.what());
+    results->push_back(*result);
+    on_complete();
+  }
+}
+
+void xcash_send_multi_msg_async(
+    const std::vector<std::string>& servers,
+    const std::string& message,
+    std::vector<XcashResult>* results,
+    const std::string& message_ender = "|END|") {
+
+  if (servers.empty()) {
+    std::cerr << "Error: No servers provided.\n";
+    return;
+  }
+
+  boost::asio::io_context io_context;
+  std::atomic<std::size_t> pending_operations(servers.size());
+  std::vector<XcashResult> local_results;
+
+  auto on_complete = [&]() {
+    if (--pending_operations == 0) {
+      io_context.stop();
+    }
+  };
+
+  for (const auto& server : servers) {
+    xcash_send_msg_async(server, "18283", message, io_context, &local_results, on_complete, message_ender);
+  }
+
+  io_context.run();
+
+  for (auto& result : local_results) {
+    if (result.reply.rfind("Error:", 0) != 0) {
+      if (result.reply.size() >= message_ender.size() &&
+          result.reply.compare(result.reply.size() - message_ender.size(), message_ender.size(), message_ender) == 0) {
+        result.reply.erase(result.reply.size() - message_ender.size());
+        results->push_back(result);
+      }
+    }
+  }
+}
+
+std::vector<std::string> extract_block_verifiers_IP_address_list(const std::string& message) {
+  std::vector<std::string> ip_list;
+  std::string key = "block_verifiers_IP_address_list";
+  auto start_pos = message.find(key);
+  if (start_pos != std::string::npos) {
+    start_pos = message.find(":", start_pos + key.length());
+    start_pos = message.find("\"", start_pos + 1);
+    auto end_pos = message.find("\"", start_pos + 1);
+    if (start_pos != std::string::npos && end_pos != std::string::npos) {
+      std::string ip_list_str = message.substr(start_pos + 1, end_pos - start_pos - 1);
+      std::stringstream ss(ip_list_str);
+      std::string ip;
+      while (std::getline(ss, ip, '|')) {
+        ip_list.push_back(ip);
+      }
+    }
+  }
+  return ip_list;
+}
+
+void get_block_hashes(std::size_t block_height, std::vector<std::string>& servers, std::vector<std::string>& hashes) {
+  std::string message_str = "{\r\n \"message_settings\": \"XCASH_GET_BLOCK_HASH\",\r\n\"block_height\": " + std::to_string(block_height) + "\r\n}";
+  std::vector<XcashResult> results;
+  xcash_send_multi_msg_async(servers, message_str, &results);
+
+  for (const auto& result : results) {
+    auto start_pos = result.reply.find("\"block_hash\":\"");
+    if (start_pos != std::string::npos) {
+      start_pos += std::string("\"block_hash\":\"").length();
+      auto end_pos = result.reply.find("\"", start_pos);
+      if (end_pos != std::string::npos) {
+        hashes.push_back(result.reply.substr(start_pos, end_pos - start_pos));
+      }
+    }
+  }
+}
+
+} // namespace xcash_net
