@@ -2603,7 +2603,7 @@ namespace wallet_rpc
 
   struct COMMAND_RPC_VOTE
   {
-    struct request_t   
+    struct request  
     {
       std::string delegate_data;
  
@@ -2612,7 +2612,7 @@ namespace wallet_rpc
       END_KV_SERIALIZE_MAP()
     };
  
-    struct response_t
+    struct response
     {
       std::string vote_status;
  
@@ -2624,7 +2624,7 @@ namespace wallet_rpc
 
   struct COMMAND_RPC_DELEGATE_REGISTER
   {
-    struct request_t
+    struct request
     {
       std::string delegate_name;
       std::string delegate_IP_address;
@@ -2637,7 +2637,7 @@ namespace wallet_rpc
       END_KV_SERIALIZE_MAP()
     };
  
-    struct response_t
+    struct response
     {
       std::string delegate_register_status;
  
@@ -2649,7 +2649,7 @@ namespace wallet_rpc
 
   struct COMMAND_RPC_DELEGATE_UPDATE
   {
-    struct request_t
+    struct request
     {
       std::string item;
       std::string value;
@@ -2660,7 +2660,7 @@ namespace wallet_rpc
       END_KV_SERIALIZE_MAP()
     };
  
-    struct response_t
+    struct response
     {
       std::string delegate_update_status;
  
@@ -2672,7 +2672,7 @@ namespace wallet_rpc
 
   struct COMMAND_RPC_DELEGATE_RECOVER
   {
-    struct request_t
+    struct request
     {
       std::string domain_name;
  
@@ -2681,7 +2681,7 @@ namespace wallet_rpc
       END_KV_SERIALIZE_MAP()
     };
  
-    struct response_t
+    struct response
     {
       std::string status;
  
@@ -2693,13 +2693,13 @@ namespace wallet_rpc
 
   struct COMMAND_RPC_VOTE_STATUS
   {
-    struct request_t
+    struct request
     {
       BEGIN_KV_SERIALIZE_MAP()
       END_KV_SERIALIZE_MAP()
     };
 
-    struct response_t
+    struct response
     {
       std::string status;
 
@@ -2711,13 +2711,13 @@ namespace wallet_rpc
 
   struct COMMAND_RPC_REVOTE
   {
-    struct request_t
+    struct request
     {
       BEGIN_KV_SERIALIZE_MAP()
       END_KV_SERIALIZE_MAP()
     };
 
-    struct response_t
+    struct response
     {
       std::string status;
 
