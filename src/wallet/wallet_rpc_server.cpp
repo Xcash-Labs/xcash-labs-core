@@ -5041,8 +5041,9 @@ namespace tools
       // create the data
       data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + req.delegate_data + "|" + reserve_proof + "|" + public_address + "|";
 
-      // sign the data
-      data3 = m_wallet->sign(data2);
+      // sign the data  jed
+      //data3 = m_wallet->sign(data2);
+      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
 
       data2 += data3 + "|";
 
@@ -5158,7 +5159,8 @@ namespace tools
       data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + req.delegate_name + "|" + req.delegate_IP_address + "|" + req.delegates_public_key + "|" + public_address + "|";
 
       // sign the data
-      data3 = m_wallet->sign(data2);
+      // data3 = m_wallet->sign(data2);
+      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
 
       data2 += data3 + "|";
 
@@ -5316,7 +5318,8 @@ namespace tools
       data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + req.item + "|" + req.value + "|" + public_address + "|";
 
       // sign the data
-      data3 = m_wallet->sign(data2);
+      // data3 = m_wallet->sign(data2);
+      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
 
       data2 += data3 + "|";
 
@@ -5697,8 +5700,8 @@ namespace tools
       data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + delegate_name + "|" + reserve_proof + "|" + public_address + "|";
 
       // sign the data
-      data3 = m_wallet->sign(data2);
-
+      // data3 = m_wallet->sign(data2);
+      data3 = m_wallet->sign(data2, tools::wallet2::message_signature_type_t::msg_signature, {0, 0});
       data2 += data3 + "|";
 
       // send the data to all block verifiers
