@@ -57,6 +57,9 @@ using namespace epee;
 #include "daemonizer/daemonizer.h"
 #include "common/send_and_receive_data.h"
 
+#include "p2p/net_node_common.h"
+#include "net/net_zone.h"  
+
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "wallet.rpc"
 
