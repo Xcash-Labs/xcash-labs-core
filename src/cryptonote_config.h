@@ -55,7 +55,7 @@
 // #define EMISSION_SPEED_FACTOR_PER_MINUTE                (20)
 // #define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
 #define MONEY_SUPPLY ((uint64_t)(100000000000000000))
-#define EMISSION_SPEED_FACTOR_PER_MINUTE (30)   // was 19 then 28
+#define EMISSION_SPEED_FACTOR_PER_MINUTE (29)   // was 19 then 28
 //#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)2000000000) // 2000 XCASH per minute, creates 1051200000 XCASH per year, which is an annual inflation of 1.05%. The start date will be around 16/06/2025
 #define FINAL_SUBSIDY_PER_MINUTE ((uint64_t) 700000) // 7 XCASH per minute
 
@@ -332,7 +332,7 @@ namespace config
   #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.4 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
   #define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 2 // The first block of the X-CASH proof of stake
   #define BUFFER_SIZE_RESERVE_PROOF 25000 // The maximum length of a reserve proof
-  #define BLOCK_TIME 1 // the block time in minutes
+  #define BLOCK_TIME 2 // the block time in minutes
 
   namespace testnet
   {
