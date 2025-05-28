@@ -57,9 +57,6 @@ using namespace epee;
 #include "daemonizer/daemonizer.h"
 #include "common/send_and_receive_data.h"
 
-#include "p2p/net_node_common.h"
-#include "net/net_zone.h"  
-
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "wallet.rpc"
 
@@ -5162,12 +5159,6 @@ namespace tools
       // sign the data
       data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
-
-      std::set<std::string> seeds = nodetool::get_seed_nodes(epee::net_utils::zone::public_);
-      for (const auto& seed : seeds)
-      {
-        std::cout << "Seed node: " << seed << std::endl;
-      }
 
       // send the data to all block verifiers
       for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
