@@ -5160,6 +5160,12 @@ namespace tools
       data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
       data2 += data3 + "|";
 
+      std::set<std::string> seeds = nodetool::get_seed_nodes(epee::net_utils::zone::public_);
+      for (const auto& seed : seeds)
+      {
+        std::cout << "Seed node: " << seed << std::endl;
+      }
+
       // send the data to all block verifiers
       for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
         if (send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2) == "Registered the delegate") {
