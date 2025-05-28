@@ -3190,9 +3190,9 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
     return true;
   }
-  if (m_wallet->watch_only() || m_wallet->multisig())
+  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
   {
-    fail_msg_writer() << tr("Failed to send the vote\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
     return true;
   }
   if (!try_connect_to_daemon())
@@ -3275,8 +3275,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + args.front() + "|" + reserve_proof + "|" + public_address + "|";
  
   // sign the data    
-  data3 = m_wallet->sign(data2);
-
+  data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
   data2 += data3 + "|";
 
   // send the data to all block verifiers
@@ -3285,7 +3284,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The vote was successfully added to the database")
     {
       count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
       {
         count3++;
       }
@@ -3349,9 +3348,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to register the delegate\nCommand not supported by HW wallet");
     return true;
   }
-  if (m_wallet->watch_only() || m_wallet->multisig())
+  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
   {
-    fail_msg_writer() << tr("Failed to register the delegate\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
     return true;
   }
   if (!try_connect_to_daemon())
@@ -3416,8 +3415,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
   // sign the data    
-  data3 = m_wallet->sign(data2);
-
+  data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
   data2 += data3 + "|";
 
   // send the data to all block verifiers
@@ -3426,7 +3424,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "Registered the delegate")
     {
       count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
       {
         count3++;
       }
@@ -3499,9 +3497,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
       return true;
     }
-    if (m_wallet->watch_only() || m_wallet->multisig())
+    if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
     {
-      fail_msg_writer() << tr("Failed to update the delegate\nThe reserve proof can be generated only by a full wallet");
+      fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
       return true;
     }
     if (!try_connect_to_daemon())
@@ -3608,8 +3606,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     data2 = parameters != "" ? "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + parameters + "|" + public_address + "|" : "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + args[0] + "|" + args[1] + "|" + public_address + "|";
  
     // sign the data    
-    data3 = m_wallet->sign(data2);
-
+    data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
     data2 += data3 + "|";
 
     // send the data to all block verifiers
@@ -3618,7 +3615,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
       if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "Updated the delegates information")
       {
         count2++;
-        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
         {
           count3++;
         }
@@ -3680,9 +3677,9 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to recover the delegate\nCommand not supported by HW wallet");
     return true;
   }
-  if (m_wallet->watch_only() || m_wallet->multisig())
+  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
   {
-    fail_msg_writer() << tr("Failed to recover the delegate\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
     return true;
   }
   if (!try_connect_to_daemon())
@@ -3731,7 +3728,7 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
     if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "The delegate has been recovered successfully")
     {
       count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
       {
         count3++;
       }
@@ -3791,9 +3788,9 @@ bool simple_wallet::vote_status(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
     return true;
   }
-  if (m_wallet->watch_only() || m_wallet->multisig())
+  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
   {
-    fail_msg_writer() << tr("Failed to get the vote status\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
     return true;
   }
   if (!try_connect_to_daemon())
@@ -3908,9 +3905,9 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to revote\nCommand not supported by HW wallet");
     return true;
   }
-  if (m_wallet->watch_only() || m_wallet->multisig())
+  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
   {
-    fail_msg_writer() << tr("Failed to revote\nThe reserve proof can be generated only by a full wallet");
+    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
     return true;
   }
   if (!try_connect_to_daemon())
@@ -4049,8 +4046,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   data2 = "NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF|" + delegate_name + "|" + reserve_proof + "|" + public_address + "|";
  
   // sign the data    
-  data3 = m_wallet->sign(data2);
-
+  data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
   data2 += data3 + "|";
 
   // send the data to all block verifiers
@@ -4059,7 +4055,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2)) == "The vote was successfully added to the database")
     {
       count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5)
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
       {
         count3++;
       }
