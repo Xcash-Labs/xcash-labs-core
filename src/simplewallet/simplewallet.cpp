@@ -3122,7 +3122,7 @@ std::string get_current_block_verifiers_list()
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
 
   // define macros
-  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\"\r\n}"
 
   // initialize the network_data_nodes_list struct
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
