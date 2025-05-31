@@ -55,7 +55,7 @@
 // #define EMISSION_SPEED_FACTOR_PER_MINUTE                (20)
 // #define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
 #define MONEY_SUPPLY ((uint64_t)(100000000000000000))
-#define EMISSION_SPEED_FACTOR_PER_MINUTE (29)   // was 19 then 28
+#define EMISSION_SPEED_FACTOR_PER_MINUTE (29)   // was 19
 //#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)2000000000) // 2000 XCASH per minute, creates 1051200000 XCASH per year, which is an annual inflation of 1.05%. The start date will be around 16/06/2025
 #define FINAL_SUBSIDY_PER_MINUTE ((uint64_t) 700000) // 7 XCASH per minute
 

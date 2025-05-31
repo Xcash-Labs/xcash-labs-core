@@ -1122,6 +1122,20 @@ struct Wallet
      */
     virtual Device getDeviceType() const = 0;
 
+// jed
+
+    virtual std::string delegate_register(const  std::string &delegate_name,const  std::string &delegate_IP_address,const  std::string &block_verifier_messages_public_key)  = 0;
+    
+    virtual std::string delegate_update(const  std::string &item,const  std::string &value)  = 0;
+
+    virtual std::string vote(const  std::string &value)  = 0;
+
+    virtual std::string delegate_recover(const  std::string &domain_name)  = 0;
+
+    virtual std::string vote_status()  = 0;
+
+    virtual std::string revote()  = 0;
+
     //! cold-device protocol key image sync
     virtual uint64_t coldKeyImageSync(uint64_t &spent, uint64_t &unspent) = 0;
 

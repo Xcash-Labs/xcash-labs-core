@@ -3363,7 +3363,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   SCOPED_WALLET_UNLOCK();
 
   // wait until the next valid data time
-  sync_minutes_and_seconds(0);
+  // sync_minutes_and_seconds(0);
 
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
@@ -4721,6 +4721,30 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::version, _1),
                            tr(USAGE_VERSION),
                            tr("Returns version information"));
+  m_cmd_binder.set_handler("vote",
+                           boost::bind(&simple_wallet::vote, this, _1),
+                           tr("vote <delegates_name|delegates_public_address>"),
+                           tr("Votes for a delegate in the DPOPS system"));
+  m_cmd_binder.set_handler("delegate_register",
+                           boost::bind(&simple_wallet::delegate_register, this, _1),
+                           tr("delegate_register <delegates_name> <delegates_IP_address> <delegates_public_key>"),
+                           tr("Registers a delegate in the DPOPS system"));
+  m_cmd_binder.set_handler("delegate_update",
+                           boost::bind(&simple_wallet::delegate_update, this, _1),
+                           tr("delegate_update [about|website|team|shared_delegate_status|delegate_fee|server_specs] <value>"),
+                           tr("Updates a registered delegates data in the DPOPS system"));
+  m_cmd_binder.set_handler("delegate_recover",
+                           boost::bind(&simple_wallet::delegate_recover, this, _1),
+                           tr("delegate_recover <domain_name>"),
+                           tr("Updates a registered delegates public address and or public key in the DPOPS system. Setup a TXT record (one for the public address, one for the public key) that you want to change on your domain. For example if you only want to change your public address setup a TXT record with the prefix string \"xcash-dpops:\" followed by the public address. Run the delegate recover function to update the public address. Remove the TXT records from the domain."));
+  m_cmd_binder.set_handler("vote_status",
+                           boost::bind(&simple_wallet::vote_status, this, _1),
+                           tr("vote_status"),
+                           tr("Gets the vote status of the wallet (delegate name voted to and the total)"));
+  m_cmd_binder.set_handler("revote",
+                           boost::bind(&simple_wallet::revote, this, _1),
+                           tr("revote"),
+                           tr("Revotes to the currently staked to delegate with the full wallet balance"));
   m_cmd_binder.set_handler("show_qr_code",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::show_qr_code, _1),
                            tr(USAGE_SHOW_QR_CODE),
