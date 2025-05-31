@@ -20,8 +20,8 @@ std::string send_and_receive_data(std::string IP_address,std::string data2, int 
 
   try
   {
-    // add the end string to the data
-    data2 += SOCKET_END_STRING;
+// add the end string to the data
+//    data2 += SOCKET_END_STRING;
 
     client c;
     c.connect(IP_address, SEND_DATA_PORT, connection_timeout);
