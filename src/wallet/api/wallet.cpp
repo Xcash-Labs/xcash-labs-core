@@ -2841,7 +2841,7 @@ std::string get_current_block_verifiers_list()
   int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
 
   // define macros
-  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n}"
+  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\"\r\n}"
 
   // initialize the network_data_nodes_list struct
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
@@ -2894,12 +2894,12 @@ std::string WalletImpl::delegate_register(const  std::string &delegate_name,cons
   {
 
   // wait until the next valid data time
-  sync_minutes_and_seconds(0);
+  //sync_minutes_and_seconds(0);
   
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
-    return "Failed to register the delegate with timeout"; 
+    return "Failed to register the delegate with timeout";
   }
 
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
