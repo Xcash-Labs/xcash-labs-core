@@ -3365,7 +3365,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
-    fail_msg_writer() << tr("Failed to register the delegate\n");
+    fail_msg_writer() << tr("Failed to register the delegate, no response from DPOPS");
     return true; 
   }
 
