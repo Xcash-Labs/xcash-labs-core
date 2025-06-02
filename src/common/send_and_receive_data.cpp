@@ -29,7 +29,6 @@ std::string send_and_receive_data(std::string IP_address,std::string data2, int 
   }
   catch (std::exception &ex)
   {
-    MWARNING("Send_and_receive_data exception: " << ex.what());
     return "";
   }
   return response_string;

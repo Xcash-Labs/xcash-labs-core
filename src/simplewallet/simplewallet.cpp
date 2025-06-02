@@ -3368,7 +3368,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to register the delegatexxxxxxxxxxxxxxxxxxx\n");
     return true; 
   }
-
+  std::cout << "Message 1 jed" << std::endl;
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
   {
@@ -3376,6 +3376,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
   MWARNING("Display a message here........");
+  std::cout << "Message 2" << std::endl;
 
 
   // initialize the current_block_verifiers_list struct
