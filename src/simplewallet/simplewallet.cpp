@@ -3350,7 +3350,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
   {
-    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
+    fail_msg_writer() << tr("Register request failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot be used.");
     return true;
   }
   if (!try_connect_to_daemon())
@@ -3362,13 +3362,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // ask for the password
   SCOPED_WALLET_UNLOCK();
 
-  // wait until the next valid data time
-  // sync_minutes_and_seconds(0);
-
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
-    fail_msg_writer() << tr("Failed to register the delegate\n");
+    fail_msg_writer() << tr("Failed to register the delegatexxxxxxxxxxxxxxxxxxx\n");
     return true; 
   }
 
@@ -3378,6 +3375,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     total_delegates = BLOCK_VERIFIERS_AMOUNT;
   }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+  MWARNING("Display a message here........");
+
 
   // initialize the current_block_verifiers_list struct
   for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
