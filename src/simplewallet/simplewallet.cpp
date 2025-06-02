@@ -3435,18 +3435,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     }   
   }
 
-
-
-
-
-// ****** need to check amount in wallet --solo and shared--  if already registered and ****** 
-
-
-
-
-
-
-
   // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
   if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
   {
