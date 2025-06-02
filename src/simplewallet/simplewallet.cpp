@@ -3368,14 +3368,19 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     fail_msg_writer() << tr("Failed to register the delegatexxxxxxxxxxxxxxxxxxx\n");
     return true; 
   }
+
   std::cout << "Message 1 jed" << std::endl;
+
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+
+
   if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
   {
     total_delegates = BLOCK_VERIFIERS_AMOUNT;
   }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-  MWARNING("Display a message here........");
+  std::cout << "Total delegates: " << total_delegates << std::endl;
+
   std::cout << "Message 2" << std::endl;
 
 
@@ -3442,9 +3447,20 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   else
   {
-    fail_msg_writer() << tr("Failed to register the delegate");
-    fail_msg_writer() << error_message; 
+
+    if (count2 < total_delegates_valid_amount) {
+        fail_msg_writer()
+            << tr("Failed to register the delegate: only ")
+            << count2
+            << tr(" of ")
+            << total_delegates_valid_amount
+            << tr(" block verifiers returned a valid response.");
+    } else {
+      fail_msg_writer() << tr("Failed to register the delegate");
+      fail_msg_writer() << error_message;
+    }
   }
+  
   }
   catch (...)
   {
