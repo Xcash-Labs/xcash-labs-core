@@ -3365,24 +3365,19 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
   {
-    fail_msg_writer() << tr("Failed to register the delegatexxxxxxxxxxxxxxxxxxx\n");
+    fail_msg_writer() << tr("Failed to register the delegate\n");
     return true; 
   }
 
-  std::cout << "Message 1 jed" << std::endl;
-
   total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-
 
   if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
   {
     total_delegates = BLOCK_VERIFIERS_AMOUNT;
   }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+
   std::cout << "Total delegates: " << total_delegates << std::endl;
-
-  std::cout << "Message 2" << std::endl;
-
 
   // initialize the current_block_verifiers_list struct
   for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
@@ -3447,18 +3442,18 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   else
   {
-
     if (count2 < total_delegates_valid_amount) {
-        fail_msg_writer()
-            << tr("Failed to register the delegate: only ")
-            << count2
-            << tr(" of ")
-            << total_delegates_valid_amount
-            << tr(" block verifiers returned a valid response.");
-    } else {
-      fail_msg_writer() << tr("Failed to register the delegate");
-      fail_msg_writer() << error_message;
+        fail_msg_writer() << tr("Failed to register the delegate, not enough delegates online");
     }
+    else
+    {
+      if count3 < (NETWORK_DATA_NODES_AMOUNT-1) {
+        fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");;
+      } else {
+        fail_msg_writer() << tr("Failed to register the delegate");
+      }
+    }
+    fail_msg_writer() << error_message
   }
   
   }
