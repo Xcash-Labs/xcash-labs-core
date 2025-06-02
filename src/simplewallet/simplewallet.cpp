@@ -3411,13 +3411,47 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // get the current block height
   current_block_height = m_wallet->get_blockchain_current_height();
  
-  // create the data  
-  data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
+  // create the data
+  // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
-  // sign the data    
-  data3 = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
-  data2 += data3 + "|";
+  // 1) Build an “unsigned” JSON that ends in "\r\n}"
+std::ostringstream o;
+o << "{\r\n"
+  << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
+  << "  \"delegate_name\":     \"" << args[0]          << "\",\r\n"
+  << "  \"delegate_IP\":       \"" << args[1]          << "\",\r\n"
+  << "  \"delegate_public_key\":\"" << args[2]         << "\",\r\n"
+  << "  \"public_address\":    \"" << public_address << "\"\r\n"
+  << "}";
 
+std::string unsigned_json = o.str();
+
+// 2) Sign that exact JSON string:
+std::string signature = m_wallet->sign(
+    unsigned_json,
+    tools::wallet2::sign_with_spend_key,
+    {0, 0}
+);
+
+// 3) Remove the final "\r\n}" (three characters):
+if (unsigned_json.size() >= 3) {
+    unsigned_json.resize(unsigned_json.size() - 3);
+}
+
+// 4) Re-open and append the "signature" field, then close with "\n}":
+{
+    std::ostringstream p;
+    p << unsigned_json
+      << ",\r\n"
+      << "  \"signature\": \"" << signature << "\"\r\n"
+      << "}";
+
+    data2 = p.str();
+}
+
+// Debug print:
+std::cout << "message 2: " << data2 << std::endl;   // jed
+  
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
