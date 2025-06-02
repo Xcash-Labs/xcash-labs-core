@@ -3459,13 +3459,13 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     }
     else
     {
-      if count3 < (NETWORK_DATA_NODES_AMOUNT-1) {
+      if (count3 < (NETWORK_DATA_NODES_AMOUNT-1)) {
         fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");;
       } else {
         fail_msg_writer() << tr("Failed to register the delegate");
       }
     }
-    fail_msg_writer() << error_message
+    fail_msg_writer() << error_message;
   }
   
   }
