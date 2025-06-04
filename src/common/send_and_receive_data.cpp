@@ -35,7 +35,6 @@ std::string send_and_receive_data(std::string IP_address,std::string data2, int 
   return response_string;
 }
 
-
 namespace xcash_net {
 // Function to send a message and receive a reply from a single server asynchronously
 void xcash_send_msg_async(

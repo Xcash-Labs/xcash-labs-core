@@ -3377,8 +3377,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
-  std::cout << "Total delegates: " << total_delegates << std::endl;
-
   // initialize the current_block_verifiers_list struct
   for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
   {
@@ -3401,57 +3399,52 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         public_address = m_wallet->get_subaddress_as_str({0, 0});
     };
     print_address_sub();
-  
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
-  {
-    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
-    return true;  
-  }
 
-  // get the current block height
-  current_block_height = m_wallet->get_blockchain_current_height();
- 
-  // create the data
-  // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
+    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+      return true;
+    }
 
-  // 1) Build an “unsigned” JSON that ends in "\r\n}"
-std::ostringstream o;
-o << "{\r\n"
-  << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
-  << "  \"delegate_name\":     \"" << args[0]          << "\",\r\n"
-  << "  \"delegate_IP\":       \"" << args[1]          << "\",\r\n"
-  << "  \"delegate_public_key\":\"" << args[2]         << "\",\r\n"
-  << "  \"public_address\":    \"" << public_address << "\"\r\n"
-  << "}";
+    // get the current block height
+    current_block_height = m_wallet->get_blockchain_current_height();
 
-std::string unsigned_json = o.str();
+    // create the data
+    // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
-// 2) Sign that exact JSON string:
-std::string signature = m_wallet->sign(
-    unsigned_json,
-    tools::wallet2::sign_with_spend_key,
-    {0, 0}
-);
-
-// 3) Remove the final "\r\n}" (three characters):
-if (unsigned_json.size() >= 3) {
-    unsigned_json.resize(unsigned_json.size() - 3);
-}
-
-// 4) Re-open and append the "signature" field, then close with "\n}":
-{
-    std::ostringstream p;
-    p << unsigned_json
-      << ",\r\n"
-      << "  \"signature\": \"" << signature << "\"\r\n"
+    // 1) Build an “unsigned” JSON that ends in "\r\n}"
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
+      << "  \"delegate_name\":     \"" << args[0] << "\",\r\n"
+      << "  \"delegate_IP\":       \"" << args[1] << "\",\r\n"
+      << "  \"delegate_public_key\":\"" << args[2] << "\",\r\n"
+      << "  \"public_address\":    \"" << public_address << "\"\r\n"
       << "}";
 
-    data2 = p.str();
-}
+    std::string unsigned_json = o.str();
 
-// Debug print:
-std::cout << "message 2: " << data2 << std::endl;   // jed
-  
+    // 2) Sign that exact JSON string:
+    std::string signature = m_wallet->sign(
+        unsigned_json,
+        tools::wallet2::sign_with_spend_key,
+        {0, 0});
+
+    // 3) Remove the final "\r\n}" (three characters):
+    if (unsigned_json.size() >= 3) {
+      unsigned_json.resize(unsigned_json.size() - 3);
+    }
+
+    // 4) Re-open and append the "signature" field, then close with "\n}":
+    {
+      std::ostringstream p;
+      p << unsigned_json
+        << ",\r\n"
+        << "  \"signature\": \"" << signature << "\"\r\n"
+        << "}";
+
+      data2 = p.str();
+    }
+
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
@@ -3487,7 +3480,9 @@ std::cout << "message 2: " << data2 << std::endl;   // jed
         fail_msg_writer() << tr("Failed to register the delegate");
       }
     }
-    fail_msg_writer() << error_message;
+    if (!error_message.empty()) {
+      fail_msg_writer() << error_message;
+    }
   }
   
   }
