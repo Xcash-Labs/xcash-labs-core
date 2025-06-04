@@ -3069,6 +3069,12 @@ bool simple_wallet::set_enable_multisig(const std::vector<std::string> &args/* =
 
 
 
+
+
+
+
+
+
 // jed
 
 
@@ -3369,7 +3375,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     return true; 
   }
 
-  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+//  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
+  total_delegates = std::count(string.begin(), string.end(), '|');
 
   if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
   {
@@ -3378,11 +3385,35 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  {
-    count3 = string.find("|",count2);
-    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-    count2 = count3 + 1;
+  //for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
+  //{
+  //  count3 = string.find("|",count2);
+  //  block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
+  //  count2 = count3 + 1;
+  //}
+
+  size_t start = string.find("\"block_verifiers_IP_address_list\":");
+  if (start == std::string::npos) return false;
+
+  // Find the opening quote of the value
+  start = string.find("\"", start + 34);  // move past the key
+  if (start == std::string::npos) return false;
+  start += 1;
+
+  // Find the closing quote
+  size_t end = string.find("\"", start);
+  if (end == std::string::npos) return false;
+
+  // Extract just the list of IPs
+  std::string ip_list = string.substr(start, end - start);
+
+  // Split by '|'
+  std::istringstream ss(ip_list);
+  std::string ip;
+  total_delegates = 0;
+
+  while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_AMOUNT) {
+    block_verifiers_IP_address[total_delegates++] = ip;
   }
 
   // get the wallet transfers   
