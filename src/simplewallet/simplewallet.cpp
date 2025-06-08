@@ -3449,7 +3449,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       << "  \"delegate_name\":     \"" << args[0] << "\",\r\n"
       << "  \"delegate_IP\":       \"" << args[1] << "\",\r\n"
       << "  \"delegate_public_key\":\"" << args[2] << "\",\r\n"
-      << "  \"public_address\":    \"" << public_address << "\"\r\n"
+      << "  \"public_address\":    \"" << public_address << "\""
       << "}";
 
     std::string unsigned_json = o.str();
