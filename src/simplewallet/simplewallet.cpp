@@ -3330,10 +3330,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
-  std::string error_message;
   std::size_t count; 
   std::size_t count2;
   std::size_t count3;
+  std::size_t seed_count;
   std::size_t total_delegates;
   std::size_t total_delegates_valid_amount;
   uint64_t current_block_height;
@@ -3382,6 +3382,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   {
     total_delegates = BLOCK_VERIFIERS_AMOUNT;
   }
+
+  if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
+    fail_msg_writer() << tr("Failed to register the delegate, minimum number of delegates not online");
+    return true;
+  }
+
   total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
 
   // initialize the current_block_verifiers_list struct
@@ -3472,40 +3478,42 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   data2 = final.str();
 
-  // send the data to all block verifiers
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
-    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2)) == "Registered the delegate") {
-      count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4) {
-        count3++;
-      }
-    } else {
-      error_message = data3;
+  seed_count = 0;
+  for (count = 0; count < total_delegates; ++count) {
+    if (std::find(seed_ips.begin(), seed_ips.end(), block_verifiers_IP_address[count]) != seed_ips.end()) {
+      seed_count++;
     }
   }
 
-  // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
-  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT - 1))) {
-    message_writer(console_color_green, false) << "The delegate has been registered successfully";
-  } else {
-    if (count2 < total_delegates_valid_amount && current_block_height > HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
-      fail_msg_writer() << tr("Failed to register the delegate, not enough delegates online");
+  if (seed_count < (NETWORK_DATA_NODES_AMOUNT -1)) {
+    fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
+    return true; 
+  }
+
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
+    data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+    if (data3 = "Registered the delegate") {
+      count3++;
     } else {
-      if (count3 < (NETWORK_DATA_NODES_AMOUNT - 1) && current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
-        fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
-        ;
-      } else {
+      if count3 == 0) {
         fail_msg_writer() << tr("Failed to register the delegate");
+      } else {
+        fail_msg_writer() << tr("Delegate registration process encountered errors: not all delegates responded successfully");
       }
-    }
-    if (!error_message.empty()) {
-      fail_msg_writer() << error_message;
+      if (!data3.empty()) {
+        fail_msg_writer() << data3;
+      }
+      fail_msg_writer() << tr("Failed at node: ") << block_verifiers_IP_address[count];
+      return true;
     }
   }
+
+  message_writer(console_color_green, false) << "The delegate has been registered successfully";
 
   } catch (...) {
     fail_msg_writer() << tr("Failed to register the delegate");
   }
+
   return true;
 
 #undef PARAMETER_AMOUNT
