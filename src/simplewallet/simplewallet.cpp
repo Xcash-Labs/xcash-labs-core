@@ -3468,7 +3468,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     // 4) Construct final JSON with signature
     std::ostringstream final;
-    final << unsigned_json.substr(0, insert_pos) << ",\r\n"
+    final << unsigned_json.substr(0, insert_pos) << ","
           << "  \"signature\": \"" << signature << "\"\r\n"
           << "}";
 
