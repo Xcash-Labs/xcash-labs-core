@@ -3492,10 +3492,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
     data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-    if (data3 = "Registered the delegate") {
+    if (data3 == "Registered the delegate") {
       count3++;
     } else {
-      if count3 == 0) {
+      if (count3 == 0) {
         fail_msg_writer() << tr("Failed to register the delegate");
       } else {
         fail_msg_writer() << tr("Delegate registration process encountered errors: not all delegates responded successfully");
