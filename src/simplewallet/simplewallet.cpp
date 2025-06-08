@@ -3416,95 +3416,84 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     block_verifiers_IP_address[total_delegates++] = ip;
   }
 
-  // get the wallet transfers   
+  // get the wallet transfers
   m_wallet->get_transfers(transfers);
 
   // get the wallets public address
-  auto print_address_sub = [this, &transfers, &public_address]()
-    {
-      bool used = std::find_if(
-        transfers.begin(), transfers.end(),
-        [this](const tools::wallet2::transfer_details& td) {
-          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
-        }) != transfers.end();
-        public_address = m_wallet->get_subaddress_as_str({0, 0});
-    };
-    print_address_sub();
+  auto print_address_sub = [this, &transfers, &public_address]() {
+    bool used = std::find_if(
+                    transfers.begin(), transfers.end(),
+                    [this](const tools::wallet2::transfer_details &td) {
+                      return td.m_subaddr_index == cryptonote::subaddress_index{0, 0};
+                    }) != transfers.end();
+    public_address = m_wallet->get_subaddress_as_str({0, 0});
+  };
+  print_address_sub();
 
-    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
-      return true;
-    }
+  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+    return true;
+  }
 
-    // get the current block height
-    current_block_height = m_wallet->get_blockchain_current_height();
+  // get the current block height
+  current_block_height = m_wallet->get_blockchain_current_height();
 
-    // create the data
-    // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
+  // create the data
+  // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
-    // 1) Create JSON excluding the signature
-    std::ostringstream o;
-    o << "{\r\n"
-      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
-      << "  \"delegate_name\":     \"" << args[0] << "\",\r\n"
-      << "  \"delegate_IP\":       \"" << args[1] << "\",\r\n"
-      << "  \"delegate_public_key\":\"" << args[2] << "\",\r\n"
-      << "  \"public_address\":    \"" << public_address << "\""
-      << "}";
+  // 1) Create JSON excluding the signature
+  std::ostringstream o;
+  o << "{\r\n"
+    << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
+    << "  \"delegate_name\":     \"" << args[0] << "\",\r\n"
+    << "  \"delegate_IP\":       \"" << args[1] << "\",\r\n"
+    << "  \"delegate_public_key\":\"" << args[2] << "\",\r\n"
+    << "  \"public_address\":    \"" << public_address << "\"\r\n"
+    << "}";
 
-    std::string unsigned_json = o.str();
+  std::string unsigned_json = o.str();
 
-    // 2) Sign the full JSON
-    std::string signature = m_wallet->sign(
-        unsigned_json,
-        tools::wallet2::sign_with_spend_key,
-        {0, 0});
+  // 2) Sign the full JSON
+  std::string signature = m_wallet->sign(
+      unsigned_json,
+      tools::wallet2::sign_with_spend_key,
+      {0, 0});
 
-    // 3) Parse unsigned_json to locate the closing brace position
-    auto insert_pos = unsigned_json.rfind('}');
-    if (insert_pos == std::string::npos) {
-      throw std::runtime_error("Malformed JSON: no closing brace");
-    }
+  // 3) Parse unsigned_json to locate the closing brace position
+  auto insert_pos = unsigned_json.rfind('}');
+  if (insert_pos == std::string::npos) {
+    throw std::runtime_error("Malformed JSON: no closing brace");
+  }
 
-    // 4) Construct final JSON with signature
-    std::ostringstream final;
-    final << unsigned_json.substr(0, insert_pos) << ","
-          << "  \"signature\": \"" << signature << "\"\r\n"
-          << "}";
+  // 4) Construct final JSON with signature
+  std::ostringstream final;
+  final << unsigned_json.substr(0, insert_pos);
+  final << ",\"signature\": \"" << signature << "\"}";  // add signature and close object
 
-    data2 = final.str();
+  data2 = final.str();
 
   // send the data to all block verifiers
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
-  {
-    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "Registered the delegate")
-    {
+  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2)) == "Registered the delegate") {
       count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
-      {
+      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4) {
         count3++;
       }
-    }
-    else
-    {
+    } else {
       error_message = data3;
-    }   
+    }
   }
 
   // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
-  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
-  {
-    message_writer(console_color_green, false) << "The delegate has been registered successfully";             
-  }
-  else
-  {
+  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT - 1))) {
+    message_writer(console_color_green, false) << "The delegate has been registered successfully";
+  } else {
     if (count2 < total_delegates_valid_amount && current_block_height > HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
-        fail_msg_writer() << tr("Failed to register the delegate, not enough delegates online");
-    }
-    else
-    {
-      if (count3 < (NETWORK_DATA_NODES_AMOUNT-1) && current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
-        fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");;
+      fail_msg_writer() << tr("Failed to register the delegate, not enough delegates online");
+    } else {
+      if (count3 < (NETWORK_DATA_NODES_AMOUNT - 1) && current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
+        fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
+        ;
       } else {
         fail_msg_writer() << tr("Failed to register the delegate");
       }
@@ -3513,15 +3502,13 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       fail_msg_writer() << error_message;
     }
   }
-  
-  }
-  catch (...)
-  {
+
+  } catch (...) {
     fail_msg_writer() << tr("Failed to register the delegate");
   }
-  return true;  
+  return true;
 
-  #undef PARAMETER_AMOUNT
+#undef PARAMETER_AMOUNT
 }
 
 bool simple_wallet::delegate_update(const std::vector<std::string>& args)
