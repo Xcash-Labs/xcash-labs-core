@@ -3442,7 +3442,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // create the data
     // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
-    // 1) Build an “unsigned” JSON that ends in "\r\n}"
+    // 1) Create JSON excluding the signature
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
@@ -3454,27 +3454,25 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     std::string unsigned_json = o.str();
 
-    // 2) Sign that exact JSON string:
+    // 2) Sign the full JSON
     std::string signature = m_wallet->sign(
         unsigned_json,
         tools::wallet2::sign_with_spend_key,
         {0, 0});
 
-    // 3) Remove the final "\r\n}" (three characters):
-    if (unsigned_json.size() >= 3) {
-      unsigned_json.resize(unsigned_json.size() - 3);
+    // 3) Parse unsigned_json to locate the closing brace position
+    auto insert_pos = unsigned_json.rfind('}');
+    if (insert_pos == std::string::npos) {
+      throw std::runtime_error("Malformed JSON: no closing brace");
     }
 
-    // 4) Re-open and append the "signature" field, then close with "\n}":
-    {
-      std::ostringstream p;
-      p << unsigned_json
-        << ",\r\n"
-        << "  \"signature\": \"" << signature << "\"\r\n"
-        << "}";
+    // 4) Construct final JSON with signature
+    std::ostringstream final;
+    final << unsigned_json.substr(0, insert_pos) << ",\r\n"
+          << "  \"signature\": \"" << signature << "\"\r\n"
+          << "}";
 
-      data2 = p.str();
-    }
+    data2 = final.str();
 
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
@@ -3500,12 +3498,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   }
   else
   {
-    if (count2 < total_delegates_valid_amount) {
+    if (count2 < total_delegates_valid_amount && current_block_height > HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
         fail_msg_writer() << tr("Failed to register the delegate, not enough delegates online");
     }
     else
     {
-      if (count3 < (NETWORK_DATA_NODES_AMOUNT-1)) {
+      if (count3 < (NETWORK_DATA_NODES_AMOUNT-1) && current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE) {
         fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");;
       } else {
         fail_msg_writer() << tr("Failed to register the delegate");
