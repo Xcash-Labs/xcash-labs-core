@@ -3478,9 +3478,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
   data2 = final.str();
 
-  seed_count = 0;
-  for (count = 0; count < total_delegates; ++count) {
-    if (std::find(seed_ips.begin(), seed_ips.end(), block_verifiers_IP_address[count]) != seed_ips.end()) {
+  int seed_count = 0;
+  for (int count = 0; count < total_delegates; ++count) {
+    if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
       seed_count++;
     }
   }

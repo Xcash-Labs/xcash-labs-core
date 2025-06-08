@@ -302,7 +302,7 @@ namespace config
   #define NETWORK_DATA_NODE_IP_ADDRESS_3 "seeds.xcashseeds.cc"
   #define NETWORK_DATA_NODE_IP_ADDRESS_4 "seeds.xcashseeds.me"
 
-  #define INITIALIZE_NETWORK_DATA_NODES_LIST const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4,NETWORK_DATA_NODE_IP_ADDRESS_5}
+  #define INITIALIZE_NETWORK_DATA_NODES_LIST const std::vector<std::string> network_data_nodes_list = {NETWORK_DATA_NODE_IP_ADDRESS_1,NETWORK_DATA_NODE_IP_ADDRESS_2,NETWORK_DATA_NODE_IP_ADDRESS_3,NETWORK_DATA_NODE_IP_ADDRESS_4}
   #define INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT \
   network_data_nodes_list.network_data_nodes_public_address[0] = NETWORK_DATA_NODE_PUBLIC_ADDRESS_1; \
   network_data_nodes_list.network_data_nodes_IP_address[0] = NETWORK_DATA_NODE_IP_ADDRESS_1; \
