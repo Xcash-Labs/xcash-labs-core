@@ -3448,13 +3448,15 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
 
   // 1) Create JSON excluding the signature
+  time_t registration_time = time(NULL);
   std::ostringstream o;
   o << "{\r\n"
     << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
-    << "  \"delegate_name\":     \"" << args[0] << "\",\r\n"
-    << "  \"delegate_IP\":       \"" << args[1] << "\",\r\n"
-    << "  \"delegate_public_key\":\"" << args[2] << "\",\r\n"
-    << "  \"public_address\":    \"" << public_address << "\"\r\n"
+    << "  \"delegate_name\": \"" << args[0] << "\",\r\n"
+    << "  \"delegate_IP\": \"" << args[1] << "\",\r\n"
+    << "  \"delegate_public_key\": \"" << args[2] << "\",\r\n"
+    << "  \"public_address\": \"" << public_address << "\",\r\n"
+    << "  \"registration_timestamp\": " << registration_time << "\r\n"
     << "}";
 
   std::string unsigned_json = o.str();

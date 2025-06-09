@@ -326,7 +326,7 @@ namespace config
   #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
   #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
   
-  #define BLOCK_VERIFIERS_TOTAL_AMOUNT 100 // The total amount of block verifiers
+  #define BLOCK_VERIFIERS_TOTAL_AMOUNT 75 // The total amount of block verifiers
   #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
   #define BLOCK_VERIFIERS_VALID_AMOUNT 3 // ??? The amount of block verifiers that need to vote true for the part of the round to be valid.
   #define BLOCK_VERIFIERS_MIN_AMOUNT 3 // The amount of block verifiers that need to vote true for the part of the round to be valid.
