@@ -3510,6 +3510,13 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     }
   }
 
+  // send to self
+  data3 = send_and_receive_data("127.0.0.1", data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+  if (data3 != "Registered the delegate") {
+    fail_msg_writer() << tr("Failed to register the delegate on local node");
+    return true;
+  }
+
   message_writer(console_color_green, false) << "The delegate has been registered successfully";
 
   } catch (...) {
