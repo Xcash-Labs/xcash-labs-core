@@ -1362,6 +1362,25 @@ namespace cryptonote
     bool handle_block_to_main_chain(const block& bl, block_verification_context& bvc);
 
     /**
+    * @brief Verifies the contents of a VRF signature blob extracted from tx_extra
+    *
+    * This function validates the integrity and format of a 208-byte VRF signature blob
+    * included in the coinbase transaction's tx_extra field. The blob contains the following:
+    * - 80-byte VRF proof
+    * - 64-byte VRF beta
+    * - 32-byte VRF public key
+    * - 64-byte block signature
+    *
+    * The function ensures proper lengths, parses each segment, and performs cryptographic
+    * checks to verify that the VRF proof and beta are valid for the provided public key
+    * and that the block signature matches the block hash.
+    *
+    * @param blob the 208-byte VRF data buffer to validate
+    * @return true if all fields are valid and the cryptographic checks pass, false otherwise
+    */
+    bool verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const;
+
+    /**
      * @brief validate and add a new block to the end of the blockchain
      *
      * When a block is given to Blockchain to be added to the blockchain, it
