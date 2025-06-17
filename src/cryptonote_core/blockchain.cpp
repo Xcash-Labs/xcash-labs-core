@@ -4099,7 +4099,7 @@ if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
   bvc.m_verifivation_failed = true;
   goto leave;
 }
-/*
+*/
 
 
 // ✅ Custom validation goes here
