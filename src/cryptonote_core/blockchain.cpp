@@ -3980,13 +3980,13 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 
 
 
-/*
+
 //  jed
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const
 {
-  if (blob.size() != 208)
+  if (blob.size() != 240)
   {
-    MERROR("VRF blob size mismatch: expected 208, got " << blob.size());
+    MERROR("VRF blob size mismatch: expected 240, got " << blob.size());
     return false;
   }
 
@@ -4020,7 +4020,6 @@ std::cerr << "VRF Signature:" << sig_str.str() << std::endl;
   return true;
 }
 
-*/
 
 
 
@@ -4087,7 +4086,7 @@ leave:
   }
 
 
-
+/*
 fprintf(stderr, "\n[DEBUG] Parsing tx_extra (size: %zu bytes):\n", bl.miner_tx.extra.size());
 for (size_t i = 0; i < bl.miner_tx.extra.size(); ++i) {
   fprintf(stderr, "%02x ", bl.miner_tx.extra[i]);
@@ -4100,9 +4099,9 @@ if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
   bvc.m_verifivation_failed = true;
   goto leave;
 }
-
-
 /*
+
+
 // ✅ Custom validation goes here
 // === BEGIN CUSTOM VRF EXTRA CHECK === jed
 
@@ -4144,8 +4143,6 @@ if (!found_vrf) {
 
 // === END CUSTOM VRF EXTRA CHECK ===
 
-
-*/
 
 
 
