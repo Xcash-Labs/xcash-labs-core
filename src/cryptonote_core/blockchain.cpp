@@ -1365,7 +1365,7 @@ bool Blockchain::validate_miner_transaction(const block& b, size_t cumulative_bl
   if(base_reward + fee < money_in_use)
   {
     MERROR_VER("coinbase transaction spend too much money (" << print_money(money_in_use) << "). Block reward is " << print_money(base_reward + fee) << "(" << print_money(base_reward) << "+" << print_money(fee) << "), cumulative_block_weight " << cumulative_block_weight);
-      return true; // fix later jed
+      return false;
   }
   // Till 12, we allow a miner to claim less block reward than is allowed, in case a miner wants less dust
   if (version >= HF_VERSION_EXACT_COINBASE)
