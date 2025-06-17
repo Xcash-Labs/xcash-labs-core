@@ -3982,6 +3982,7 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 
 
 //  jed
+/*
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const
 {
   if (blob.size() != 240)
@@ -4008,7 +4009,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   for (int i = 0; i < 32; ++i)
     pubkey_str << std::hex << std::setw(2) << std::setfill('0') << (int)vrf_pubkey[i];
 
-  for (int i = 0; i < 32; ++i)
+  for (int i = 0; i < 64; ++i)
     sig_str << std::hex << std::setw(2) << std::setfill('0') << (int)signature[i];
 
 std::cerr << "VRF Proof:    " << proof_str.str() << std::endl;
@@ -4019,7 +4020,7 @@ std::cerr << "VRF Signature:" << sig_str.str() << std::endl;
   // You can return true for now if you're just inspecting the data
   return true;
 }
-
+*/
 
 
 
@@ -4086,7 +4087,7 @@ leave:
   }
 
 
-/*
+
 fprintf(stderr, "\n[DEBUG] Parsing tx_extra (size: %zu bytes):\n", bl.miner_tx.extra.size());
 for (size_t i = 0; i < bl.miner_tx.extra.size(); ++i) {
   fprintf(stderr, "%02x ", bl.miner_tx.extra[i]);
@@ -4099,12 +4100,12 @@ if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
   bvc.m_verifivation_failed = true;
   goto leave;
 }
-*/
+
 
 
 // ✅ Custom validation goes here
 // === BEGIN CUSTOM VRF EXTRA CHECK === jed
-
+/*
 std::vector<cryptonote::tx_extra_field> extra_fields;
 if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
   MERROR_VER("Failed to parse tx_extra in block id: " << id);
@@ -4140,7 +4141,7 @@ if (!found_vrf) {
   bvc.m_verifivation_failed = true;
   goto leave;
 }
-
+*/
 // === END CUSTOM VRF EXTRA CHECK ===
 
 
