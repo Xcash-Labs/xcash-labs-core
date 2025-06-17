@@ -1531,11 +1531,14 @@ namespace cryptonote
     binary_archive<false> ba{epee::strspan<std::uint8_t>(b_blob)};
 fprintf(stderr, "Entering parse_and_validate_block_from_blob 1\n");
 
+fprintf(stderr, "[DEBUG] Blob size: %zu\n", b_blob.size());
+fprintf(stderr, "[DEBUG] Blob hash (first 8 bytes): %02x%02x%02x%02x ...\n",
+        b_blob[0], b_blob[1], b_blob[2], b_blob[3]);
+
     bool r = ::serialization::serialize(ba, b);
 
 if (!r) {
   fprintf(stderr, "[ERROR] Failed to parse block from blob\n");
-  return false;
 }
 
 fprintf(stderr, "[DEBUG] Block major version: %d\n", b.major_version);
