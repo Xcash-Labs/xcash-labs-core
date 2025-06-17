@@ -3980,7 +3980,7 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 
 
 
-
+/*
 //  jed
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const
 {
@@ -4020,7 +4020,7 @@ std::cerr << "VRF Signature:" << sig_str.str() << std::endl;
   return true;
 }
 
-
+*/
 
 
 
@@ -4088,7 +4088,7 @@ leave:
 
 
 
-
+/*
 // ✅ Custom validation goes here
 // === BEGIN CUSTOM VRF EXTRA CHECK === jed
 
@@ -4131,7 +4131,7 @@ if (!found_vrf) {
 // === END CUSTOM VRF EXTRA CHECK ===
 
 
-
+*/
 
 
 

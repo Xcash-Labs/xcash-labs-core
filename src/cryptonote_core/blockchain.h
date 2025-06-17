@@ -1378,7 +1378,7 @@ namespace cryptonote
     * @param blob the 208-byte VRF data buffer to validate
     * @return true if all fields are valid and the cryptographic checks pass, false otherwise
     */
-    bool verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const;
+  //  bool verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const;
 
     /**
      * @brief validate and add a new block to the end of the blockchain
