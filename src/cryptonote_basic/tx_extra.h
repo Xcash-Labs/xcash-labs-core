@@ -173,7 +173,7 @@ namespace cryptonote
 //  };
 
   struct tx_extra_vrf_signature {
-    std::array<uint8_t, 240> data;
+    std::vector<uint8_t> data;
 
     BEGIN_SERIALIZE()
     FIELDS(data)
