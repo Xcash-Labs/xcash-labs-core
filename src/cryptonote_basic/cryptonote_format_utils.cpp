@@ -1524,31 +1524,9 @@ namespace cryptonote
   //---------------------------------------------------------------
   bool parse_and_validate_block_from_blob(const blobdata_ref& b_blob, block& b, crypto::hash *block_hash)
   {
-
-    fprintf(stderr, "Entering parse_and_validate_block_from_blob\n");
-
-
     binary_archive<false> ba{epee::strspan<std::uint8_t>(b_blob)};
-fprintf(stderr, "Entering parse_and_validate_block_from_blob 1\n");
-
-fprintf(stderr, "[DEBUG] Blob size: %zu\n", b_blob.size());
-fprintf(stderr, "[DEBUG] Blob hash (first 8 bytes): %02x%02x%02x%02x ...\n",
-        b_blob[0], b_blob[1], b_blob[2], b_blob[3]);
-
     bool r = ::serialization::serialize(ba, b);
-
-if (!r) {
-  fprintf(stderr, "[ERROR] Failed to parse block from blob\n");
-}
-
-fprintf(stderr, "[DEBUG] Block major version: %d\n", b.major_version);
-fprintf(stderr, "[DEBUG] Block timestamp: %llu\n", (unsigned long long)b.timestamp);
-fprintf(stderr, "[DEBUG] Miner TX outputs: %zu\n", b.miner_tx.vout.size());
-
-
-fprintf(stderr, "Entering parse_and_validate_block_from_blob 2\n");
-
-    CHECK_AND_ASSERT_MES(r, false, "Failed to parse block from blob 2");
+    CHECK_AND_ASSERT_MES(r, false, "Failed to parse block from blob...");
     b.invalidate_hashes();
     b.miner_tx.invalidate_hashes();
     if (block_hash)
