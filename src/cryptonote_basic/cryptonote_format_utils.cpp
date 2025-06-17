@@ -1524,12 +1524,16 @@ namespace cryptonote
   //---------------------------------------------------------------
   bool parse_and_validate_block_from_blob(const blobdata_ref& b_blob, block& b, crypto::hash *block_hash)
   {
-    MERROR_VER("Entering parse_and_validate_block_from_blob");
+
+    fprintf(stderr, "Entering parse_and_validate_block_from_blob\n");
+
 
     binary_archive<false> ba{epee::strspan<std::uint8_t>(b_blob)};
-        MERROR_VER("Entering parse_and_validate_block_from_blob  1");
+fprintf(stderr, "Entering parse_and_validate_block_from_blob 1\n");
+
     bool r = ::serialization::serialize(ba, b);
-        MERROR_VER("Entering parse_and_validate_block_from_blob");
+fprintf(stderr, "Entering parse_and_validate_block_from_blob 2\n");
+
     CHECK_AND_ASSERT_MES(r, false, "Failed to parse block from blob 2");
     b.invalidate_hashes();
     b.miner_tx.invalidate_hashes();
