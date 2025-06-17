@@ -358,28 +358,12 @@ namespace serialization {
    *
    * \brief serializes \a v into \a ar
    */
-//  template <class Archive, class T>
-//  inline bool serialize(Archive &ar, T &v)
-//  {
-//    bool r = do_serialize(ar, v);
-//    return r && check_stream_state(ar, false);
-//  }
-
-
-template <class Archive, class T>
-inline bool serialize(Archive &ar, T &v)
-{
-  fprintf(stderr, "[DEBUG] serialize(): entering for type %s\n", typeid(T).name());
-  bool r = do_serialize(ar, v);
-  if (!r)
-    fprintf(stderr, "[ERROR] serialize(): do_serialize failed for type %s\n", typeid(T).name());
-  else if (!check_stream_state(ar, false))
-    fprintf(stderr, "[ERROR] serialize(): stream state check failed for type %s\n", typeid(T).name());
-  return r && check_stream_state(ar, false);
-}
-
-
-
+  template <class Archive, class T>
+  inline bool serialize(Archive &ar, T &v)
+  {
+    bool r = do_serialize(ar, v);
+    return r && check_stream_state(ar, false);
+  }
 
   /*! \fn serialize
    *
