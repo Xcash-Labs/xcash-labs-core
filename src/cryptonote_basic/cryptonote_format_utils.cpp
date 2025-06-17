@@ -1532,6 +1532,17 @@ namespace cryptonote
 fprintf(stderr, "Entering parse_and_validate_block_from_blob 1\n");
 
     bool r = ::serialization::serialize(ba, b);
+
+if (!r) {
+  fprintf(stderr, "[ERROR] Failed to parse block from blob\n");
+  return false;
+}
+
+fprintf(stderr, "[DEBUG] Block major version: %d\n", b.major_version);
+fprintf(stderr, "[DEBUG] Block timestamp: %llu\n", (unsigned long long)b.timestamp);
+fprintf(stderr, "[DEBUG] Miner TX outputs: %zu\n", b.miner_tx.vout.size());
+
+
 fprintf(stderr, "Entering parse_and_validate_block_from_blob 2\n");
 
     CHECK_AND_ASSERT_MES(r, false, "Failed to parse block from blob 2");
