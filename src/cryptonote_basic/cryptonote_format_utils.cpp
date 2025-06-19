@@ -541,7 +541,7 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
-  bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
+  bool parse_tx_extra_original_(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
   {
     tx_extra_fields.clear();
 
@@ -561,6 +561,52 @@ namespace cryptonote
 
     return true;
   }
+
+
+
+
+bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
+{
+  tx_extra_fields.clear();
+
+  if (tx_extra.empty()) {
+    fprintf(stderr, "\n[DEBUG] tx_extra is empty.\n");
+    return true;
+  }
+
+  fprintf(stderr, "\n[DEBUG] Parsing tx_extra (size: %zu bytes):\n", tx_extra.size());
+  for (size_t i = 0; i < tx_extra.size(); ++i) {
+    fprintf(stderr, "%02x ", tx_extra[i]);
+    if ((i + 1) % 16 == 0)
+      fprintf(stderr, "\n");
+  }
+  if (tx_extra.size() % 16 != 0)
+    fprintf(stderr, "\n");
+
+  binary_archive<false> ar{epee::to_span(tx_extra)};
+
+  do {
+    tx_extra_field field;
+    bool r = ::do_serialize(ar, field);
+    if (!r) {
+      fprintf(stderr, "[ERROR] Failed to deserialize extra field.\n");
+      fprintf(stderr, "[ERROR] Extra: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+      return false;
+    }
+    tx_extra_fields.push_back(field);
+  } while (!ar.eof());
+
+  if (!::serialization::check_stream_state(ar)) {
+    fprintf(stderr, "[ERROR] Stream state check failed.\n");
+    fprintf(stderr, "[ERROR] Extra: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+    return false;
+  }
+
+  return true;
+}
+
+
+
   //---------------------------------------------------------------
   template<typename T>
   static bool pick(binary_archive<true> &ar, std::vector<tx_extra_field> &fields, uint8_t tag)
