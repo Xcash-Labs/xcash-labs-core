@@ -582,43 +582,41 @@ bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_f
   if (tx_extra.size() % 16 != 0) fprintf(stderr, "\n");
 
   binary_archive<false> ar{epee::to_span(tx_extra)};
-  const uint8_t* base_ptr = tx_extra.data();
-
   size_t field_index = 0;
+  size_t bytes_remaining_before = ar.remaining_bytes();
 
   do {
-    const uint8_t* offset_before_ptr = ar.stream_pos();  // pointer to current pos (internal)
-    size_t offset_before = offset_before_ptr - base_ptr;
-
-    fprintf(stderr, "\n[DEBUG] Trying to deserialize field #%zu at byte offset %zu\n", field_index, offset_before);
-
     tx_extra_field field;
+
+    fprintf(stderr, "\n[DEBUG] Attempting to deserialize field #%zu\n", field_index);
     bool r = ::do_serialize(ar, field);
-    if (!r) {
+    size_t bytes_remaining_after = ar.remaining_bytes();
+
+    if (!r || bytes_remaining_after > bytes_remaining_before) {
       fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
-      fprintf(stderr, "[ERROR] Hex dump: %s\n",
+      fprintf(stderr, "[ERROR] Extra dump: %s\n",
               string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
       return false;
     }
 
-    const uint8_t* offset_after_ptr = ar.stream_pos();
-    size_t offset_after = offset_after_ptr - base_ptr;
-
-    fprintf(stderr, "[DEBUG] Parsed field #%zu (bytes used: %zu)\n", field_index, offset_after - offset_before);
+    fprintf(stderr, "[DEBUG] Field #%zu parsed (%zu bytes consumed)\n",
+            field_index, bytes_remaining_before - bytes_remaining_after);
 
     tx_extra_fields.push_back(field);
     field_index++;
+    bytes_remaining_before = bytes_remaining_after;
 
   } while (!ar.eof());
 
   if (!::serialization::check_stream_state(ar)) {
-    fprintf(stderr, "[ERROR] Stream state invalid after parsing.\n");
+    fprintf(stderr, "[ERROR] Stream state check failed.\n");
     return false;
   }
 
   fprintf(stderr, "[DEBUG] parse_tx_extra success: %zu field(s) parsed.\n", tx_extra_fields.size());
   return true;
 }
+
 
 
 
