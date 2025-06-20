@@ -565,58 +565,51 @@ namespace cryptonote
 
 
 
-bool parse_tx_extra(const std::vector<uint8_t>& tx_extra)
+
+bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
 {
-  using namespace cryptonote;
+  tx_extra_fields.clear();
 
   if (tx_extra.empty()) {
-    fprintf(stderr, "[DEBUG] tx_extra is empty.\n");
+    fprintf(stderr, "[DEBUG] parse_tx_extra: tx_extra is empty.\n");
     return true;
   }
 
-  fprintf(stderr, "[DEBUG] Raw tx_extra (%zu bytes):\n", tx_extra.size());
+  fprintf(stderr, "[DEBUG] parse_tx_extra: tx_extra size = %zu bytes\n", tx_extra.size());
+  fprintf(stderr, "[DEBUG] Hex dump of tx_extra:\n");
   for (size_t i = 0; i < tx_extra.size(); ++i) {
     fprintf(stderr, "%02x ", tx_extra[i]);
     if ((i + 1) % 16 == 0) fprintf(stderr, "\n");
   }
   if (tx_extra.size() % 16 != 0) fprintf(stderr, "\n");
 
-  size_t offset = 0;
+  binary_archive<false> ar{epee::to_span(tx_extra)};
   size_t field_index = 0;
 
-  while (offset < tx_extra.size()) {
-    fprintf(stderr, "\n[DEBUG] Field #%zu at offset %zu:\n", field_index, offset);
-    uint8_t tag = tx_extra[offset];
-    fprintf(stderr, "[DEBUG] Tag byte: 0x%02x\n", tag);
-
-    // Prepare a temporary slice starting at current offset
-    std::vector<uint8_t> temp(tx_extra.begin() + offset, tx_extra.end());
-    binary_archive<false> ar{epee::to_span(temp)};
-
+  do {
     tx_extra_field field;
-    if (!::serialization::serialize(ar, field)) {
+    fprintf(stderr, "[DEBUG] Attempting to deserialize field #%zu at byte offset %ld\n", field_index, (long)(tx_extra.data() - ar.buffer().data()));
+    bool r = ::do_serialize(ar, field);
+    if (!r) {
       fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
-      fprintf(stderr, "[ERROR] Remaining bytes (hex): %s\n",
-              string_tools::buff_to_hex_nodelimer(
-                std::string(reinterpret_cast<const char*>(&tx_extra[offset]),
-                            tx_extra.size() - offset)
-              ).c_str());
+      fprintf(stderr, "[ERROR] Full tx_extra hex: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
       return false;
     }
 
-    // Move offset based on how many bytes were consumed
-    size_t remaining_after = ar.remaining_bytes();
-    size_t consumed = temp.size() - remaining_after;
-    fprintf(stderr, "[DEBUG] Field #%zu deserialized successfully (%zu bytes consumed)\n", field_index, consumed);
+    tx_extra_fields.push_back(field);
+    fprintf(stderr, "[DEBUG] Successfully deserialized field #%zu\n", field_index);
+    field_index++;
+  } while (!ar.eof());
 
-    offset += consumed;
-    ++field_index;
+  if (!::serialization::check_stream_state(ar)) {
+    fprintf(stderr, "[ERROR] parse_tx_extra: stream state check failed\n");
+    fprintf(stderr, "[ERROR] Remaining tx_extra: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+    return false;
   }
 
+  fprintf(stderr, "[DEBUG] parse_tx_extra: Successfully parsed %zu fields\n", tx_extra_fields.size());
   return true;
 }
-
-
 
 
 
