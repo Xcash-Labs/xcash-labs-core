@@ -569,47 +569,47 @@ bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
 {
   using namespace cryptonote;
 
-  std::vector<tx_extra_field> tx_extra_fields;
-
   if (tx_extra.empty()) {
     fprintf(stderr, "[DEBUG] tx_extra is empty.\n");
     return true;
   }
 
-  fprintf(stderr, "[DEBUG] Parsing tx_extra (%zu bytes):\n", tx_extra.size());
+  fprintf(stderr, "[DEBUG] Raw tx_extra (%zu bytes):\n", tx_extra.size());
   for (size_t i = 0; i < tx_extra.size(); ++i) {
     fprintf(stderr, "%02x ", tx_extra[i]);
-    if ((i + 1) % 16 == 0)
-      fprintf(stderr, "\n");
+    if ((i + 1) % 16 == 0) fprintf(stderr, "\n");
   }
-  if (tx_extra.size() % 16 != 0)
-    fprintf(stderr, "\n");
+  if (tx_extra.size() % 16 != 0) fprintf(stderr, "\n");
 
-  binary_archive<false> ar{epee::to_span(tx_extra)};
+  size_t offset = 0;
   size_t field_index = 0;
 
-  while (!ar.eof()) {
-    const auto span_before = ar.span();
+  while (offset < tx_extra.size()) {
+    fprintf(stderr, "\n[DEBUG] Field #%zu at offset %zu:\n", field_index, offset);
+    uint8_t tag = tx_extra[offset];
+    fprintf(stderr, "[DEBUG] Tag byte: 0x%02x\n", tag);
+
+    // Prepare a temporary slice starting at current offset
+    std::vector<uint8_t> temp(tx_extra.begin() + offset, tx_extra.end());
+    binary_archive<false> ar{epee::to_span(temp)};
+
     tx_extra_field field;
-
-    fprintf(stderr, "[DEBUG] Attempting to deserialize field #%zu...\n", field_index);
-
     if (!::serialization::serialize(ar, field)) {
       fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
-
-      std::string remaining(reinterpret_cast<const char*>(span_before.data()), span_before.size());
-      fprintf(stderr, "[ERROR] Remaining data (hex): %s\n",
-              string_tools::buff_to_hex_nodelimer(remaining).c_str());
+      fprintf(stderr, "[ERROR] Remaining bytes (hex): %s\n",
+              string_tools::buff_to_hex_nodelimer(
+                std::string(reinterpret_cast<const char*>(&tx_extra[offset]),
+                            tx_extra.size() - offset)
+              ).c_str());
       return false;
     }
 
-    const auto span_after = ar.span();
-    size_t bytes_consumed = span_before.size() - span_after.size();
+    // Move offset based on how many bytes were consumed
+    size_t remaining_after = ar.remaining_bytes();
+    size_t consumed = temp.size() - remaining_after;
+    fprintf(stderr, "[DEBUG] Field #%zu deserialized successfully (%zu bytes consumed)\n", field_index, consumed);
 
-    fprintf(stderr, "[DEBUG] Field #%zu parsed successfully (%zu bytes consumed)\n",
-            field_index, bytes_consumed);
-
-    tx_extra_fields.push_back(field);
+    offset += consumed;
     ++field_index;
   }
 
