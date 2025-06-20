@@ -574,36 +574,50 @@ bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_f
     return true;
   }
 
-  fprintf(stderr, "\n[DEBUG] Parsing tx_extra (size: %zu bytes):\n", tx_extra.size());
+  fprintf(stderr, "\n[DEBUG] Parsing tx_extra (%zu bytes):\n", tx_extra.size());
   for (size_t i = 0; i < tx_extra.size(); ++i) {
     fprintf(stderr, "%02x ", tx_extra[i]);
-    if ((i + 1) % 16 == 0)
-      fprintf(stderr, "\n");
+    if ((i + 1) % 16 == 0) fprintf(stderr, "\n");
   }
-  if (tx_extra.size() % 16 != 0)
-    fprintf(stderr, "\n");
+  if (tx_extra.size() % 16 != 0) fprintf(stderr, "\n");
 
   binary_archive<false> ar{epee::to_span(tx_extra)};
 
+  size_t field_index = 0;
+
   do {
     tx_extra_field field;
+    size_t offset_before = ar.stream().tellg();
+
+    fprintf(stderr, "\n[DEBUG] Attempting to deserialize field #%zu at offset %zu\n", field_index, offset_before);
+
     bool r = ::do_serialize(ar, field);
     if (!r) {
-      fprintf(stderr, "[ERROR] Failed to deserialize extra field.\n");
-      fprintf(stderr, "[ERROR] Extra: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+      size_t offset_after = ar.stream().tellg();
+      fprintf(stderr, "[ERROR] Failed to deserialize tx_extra field #%zu\n", field_index);
+      fprintf(stderr, "[ERROR] Failed between offsets %zu and %zu\n", offset_before, offset_after);
+      fprintf(stderr, "[ERROR] Raw extra (hex): %s\n",
+              string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
       return false;
     }
+
+    fprintf(stderr, "[DEBUG] Successfully parsed tx_extra field #%zu\n", field_index);
     tx_extra_fields.push_back(field);
+    field_index++;
+
   } while (!ar.eof());
 
   if (!::serialization::check_stream_state(ar)) {
-    fprintf(stderr, "[ERROR] Stream state check failed.\n");
-    fprintf(stderr, "[ERROR] Extra: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+    fprintf(stderr, "[ERROR] Stream state check failed after parsing all fields.\n");
+    fprintf(stderr, "[ERROR] Extra (hex): %s\n",
+            string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
     return false;
   }
 
+  fprintf(stderr, "[DEBUG] Completed parsing tx_extra. Parsed %zu fields.\n", tx_extra_fields.size());
   return true;
 }
+
 
 
 
