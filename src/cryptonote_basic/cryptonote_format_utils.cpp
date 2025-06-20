@@ -565,60 +565,60 @@ namespace cryptonote
 
 
 
-bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
+bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
 {
-  tx_extra_fields.clear();
+  std::vector<cryptonote::tx_extra_field> tx_extra_fields;
 
   if (tx_extra.empty()) {
-    fprintf(stderr, "\n[DEBUG] tx_extra is empty.\n");
+    fprintf(stderr, "[DEBUG] tx_extra is empty.\n");
     return true;
   }
 
-  fprintf(stderr, "\n[DEBUG] Parsing tx_extra (%zu bytes):\n", tx_extra.size());
+  fprintf(stderr, "[DEBUG] Parsing tx_extra (size: %zu bytes):\n", tx_extra.size());
   for (size_t i = 0; i < tx_extra.size(); ++i) {
     fprintf(stderr, "%02x ", tx_extra[i]);
-    if ((i + 1) % 16 == 0) fprintf(stderr, "\n");
+    if ((i + 1) % 16 == 0)
+      fprintf(stderr, "\n");
   }
-  if (tx_extra.size() % 16 != 0) fprintf(stderr, "\n");
+  if (tx_extra.size() % 16 != 0)
+    fprintf(stderr, "\n");
 
+  // Initialize archive reader
   binary_archive<false> ar{epee::to_span(tx_extra)};
   size_t field_index = 0;
-  size_t bytes_remaining_before = ar.remaining_bytes();
 
-  do {
-    tx_extra_field field;
-
-    fprintf(stderr, "\n[DEBUG] Attempting to deserialize field #%zu\n", field_index);
+  // Parsing loop
+  while (!ar.eof()) {
+    // Peek at the next tag byte (safe method)
     uint8_t tag_byte = 0;
-    memcpy(&tag_byte, ar.span().data(), 1);
-    fprintf(stderr, "[DEBUG] Field #%zu tag: 0x%02x\n", field_index, tag_byte);
-    bool r = ::do_serialize(ar, field);
-    size_t bytes_remaining_after = ar.remaining_bytes();
-
-    if (!r || bytes_remaining_after > bytes_remaining_before) {
-      fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
-      fprintf(stderr, "[ERROR] Extra dump: %s\n",
-              string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+    bool ok = ar.serialize_int(tag_byte);
+    if (!ok) {
+      fprintf(stderr, "[ERROR] Failed to read tag at field #%zu\n", field_index);
       return false;
     }
 
-    fprintf(stderr, "[DEBUG] Field #%zu parsed (%zu bytes consumed)\n",
-            field_index, bytes_remaining_before - bytes_remaining_after);
+    // Print tag info
+    fprintf(stderr, "[DEBUG] Field #%zu: tag = 0x%02x\n", field_index, tag_byte);
+
+    // Rewind to include tag in deserialization
+    ar.rewind_bytes(1); // ← requires this method to exist or implement it
+
+    cryptonote::tx_extra_field field;
+    if (!::serialization::serialize(ar, field)) {
+      fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
+      fprintf(stderr, "[ERROR] Extra dump: %s\n",
+        string_tools::buff_to_hex_nodelimer(
+          std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+      return false;
+    }
 
     tx_extra_fields.push_back(field);
-    field_index++;
-    bytes_remaining_before = bytes_remaining_after;
-
-  } while (!ar.eof());
-
-  if (!::serialization::check_stream_state(ar)) {
-    fprintf(stderr, "[ERROR] Stream state check failed.\n");
-    return false;
+    ++field_index;
   }
 
-  fprintf(stderr, "[DEBUG] parse_tx_extra success: %zu field(s) parsed.\n", tx_extra_fields.size());
   return true;
 }
+
 
 
 
