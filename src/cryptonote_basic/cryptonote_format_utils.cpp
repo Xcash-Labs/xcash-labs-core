@@ -585,28 +585,26 @@ bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
   if (tx_extra.size() % 16 != 0)
     fprintf(stderr, "\n");
 
-  // Setup the archive
   binary_archive<false> ar{epee::to_span(tx_extra)};
   size_t field_index = 0;
-  const uint8_t* start_ptr = epee::to_span(tx_extra).data();
 
   while (!ar.eof()) {
-    const uint8_t* before_ptr = ar.stream().data();  // points to current position
+    const auto span_before = ar.span();
     tx_extra_field field;
 
     fprintf(stderr, "[DEBUG] Attempting to deserialize field #%zu...\n", field_index);
 
     if (!::serialization::serialize(ar, field)) {
       fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
+
+      std::string remaining(reinterpret_cast<const char*>(span_before.data()), span_before.size());
       fprintf(stderr, "[ERROR] Remaining data (hex): %s\n",
-              string_tools::buff_to_hex_nodelimer(
-                std::string(reinterpret_cast<const char*>(before_ptr),
-                            start_ptr + tx_extra.size() - before_ptr)).c_str());
+              string_tools::buff_to_hex_nodelimer(remaining).c_str());
       return false;
     }
 
-    const uint8_t* after_ptr = ar.stream().data();
-    size_t bytes_consumed = after_ptr - before_ptr;
+    const auto span_after = ar.span();
+    size_t bytes_consumed = span_before.size() - span_after.size();
 
     fprintf(stderr, "[DEBUG] Field #%zu parsed successfully (%zu bytes consumed)\n",
             field_index, bytes_consumed);
@@ -617,6 +615,7 @@ bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
 
   return true;
 }
+
 
 
 
