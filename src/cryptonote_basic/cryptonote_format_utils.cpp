@@ -567,14 +567,16 @@ namespace cryptonote
 
 bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
 {
-  std::vector<cryptonote::tx_extra_field> tx_extra_fields;
+  using namespace cryptonote;
+
+  std::vector<tx_extra_field> tx_extra_fields;
 
   if (tx_extra.empty()) {
     fprintf(stderr, "[DEBUG] tx_extra is empty.\n");
     return true;
   }
 
-  fprintf(stderr, "[DEBUG] Parsing tx_extra (size: %zu bytes):\n", tx_extra.size());
+  fprintf(stderr, "[DEBUG] Parsing tx_extra (%zu bytes):\n", tx_extra.size());
   for (size_t i = 0; i < tx_extra.size(); ++i) {
     fprintf(stderr, "%02x ", tx_extra[i]);
     if ((i + 1) % 16 == 0)
@@ -583,34 +585,31 @@ bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
   if (tx_extra.size() % 16 != 0)
     fprintf(stderr, "\n");
 
-  // Initialize archive reader
+  // Setup the archive
   binary_archive<false> ar{epee::to_span(tx_extra)};
   size_t field_index = 0;
+  const uint8_t* start_ptr = epee::to_span(tx_extra).data();
 
-  // Parsing loop
   while (!ar.eof()) {
-    // Peek at the next tag byte (safe method)
-    uint8_t tag_byte = 0;
-    bool ok = ar.serialize_int(tag_byte);
-    if (!ok) {
-      fprintf(stderr, "[ERROR] Failed to read tag at field #%zu\n", field_index);
-      return false;
-    }
+    const uint8_t* before_ptr = ar.stream().data();  // points to current position
+    tx_extra_field field;
 
-    // Print tag info
-    fprintf(stderr, "[DEBUG] Field #%zu: tag = 0x%02x\n", field_index, tag_byte);
+    fprintf(stderr, "[DEBUG] Attempting to deserialize field #%zu...\n", field_index);
 
-    // Rewind to include tag in deserialization
-    ar.rewind_bytes(1); // ← requires this method to exist or implement it
-
-    cryptonote::tx_extra_field field;
     if (!::serialization::serialize(ar, field)) {
       fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
-      fprintf(stderr, "[ERROR] Extra dump: %s\n",
-        string_tools::buff_to_hex_nodelimer(
-          std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+      fprintf(stderr, "[ERROR] Remaining data (hex): %s\n",
+              string_tools::buff_to_hex_nodelimer(
+                std::string(reinterpret_cast<const char*>(before_ptr),
+                            start_ptr + tx_extra.size() - before_ptr)).c_str());
       return false;
     }
+
+    const uint8_t* after_ptr = ar.stream().data();
+    size_t bytes_consumed = after_ptr - before_ptr;
+
+    fprintf(stderr, "[DEBUG] Field #%zu parsed successfully (%zu bytes consumed)\n",
+            field_index, bytes_consumed);
 
     tx_extra_fields.push_back(field);
     ++field_index;
@@ -618,6 +617,7 @@ bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
 
   return true;
 }
+
 
 
 
