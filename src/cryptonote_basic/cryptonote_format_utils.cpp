@@ -582,41 +582,44 @@ bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_f
   if (tx_extra.size() % 16 != 0) fprintf(stderr, "\n");
 
   binary_archive<false> ar{epee::to_span(tx_extra)};
+  const uint8_t* base_ptr = tx_extra.data();
 
   size_t field_index = 0;
 
   do {
+    const uint8_t* offset_before_ptr = ar.stream_pos();  // pointer to current pos (internal)
+    size_t offset_before = offset_before_ptr - base_ptr;
+
+    fprintf(stderr, "\n[DEBUG] Trying to deserialize field #%zu at byte offset %zu\n", field_index, offset_before);
+
     tx_extra_field field;
-    size_t offset_before = ar.stream().tellg();
-
-    fprintf(stderr, "\n[DEBUG] Attempting to deserialize field #%zu at offset %zu\n", field_index, offset_before);
-
     bool r = ::do_serialize(ar, field);
     if (!r) {
-      size_t offset_after = ar.stream().tellg();
-      fprintf(stderr, "[ERROR] Failed to deserialize tx_extra field #%zu\n", field_index);
-      fprintf(stderr, "[ERROR] Failed between offsets %zu and %zu\n", offset_before, offset_after);
-      fprintf(stderr, "[ERROR] Raw extra (hex): %s\n",
+      fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
+      fprintf(stderr, "[ERROR] Hex dump: %s\n",
               string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
       return false;
     }
 
-    fprintf(stderr, "[DEBUG] Successfully parsed tx_extra field #%zu\n", field_index);
+    const uint8_t* offset_after_ptr = ar.stream_pos();
+    size_t offset_after = offset_after_ptr - base_ptr;
+
+    fprintf(stderr, "[DEBUG] Parsed field #%zu (bytes used: %zu)\n", field_index, offset_after - offset_before);
+
     tx_extra_fields.push_back(field);
     field_index++;
 
   } while (!ar.eof());
 
   if (!::serialization::check_stream_state(ar)) {
-    fprintf(stderr, "[ERROR] Stream state check failed after parsing all fields.\n");
-    fprintf(stderr, "[ERROR] Extra (hex): %s\n",
-            string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+    fprintf(stderr, "[ERROR] Stream state invalid after parsing.\n");
     return false;
   }
 
-  fprintf(stderr, "[DEBUG] Completed parsing tx_extra. Parsed %zu fields.\n", tx_extra_fields.size());
+  fprintf(stderr, "[DEBUG] parse_tx_extra success: %zu field(s) parsed.\n", tx_extra_fields.size());
   return true;
 }
+
 
 
 
