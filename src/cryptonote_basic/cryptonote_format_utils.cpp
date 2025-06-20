@@ -565,7 +565,7 @@ namespace cryptonote
 
 
 
-bool debug_parse_tx_extra(const std::vector<uint8_t>& tx_extra)
+bool parse_tx_extra(const std::vector<uint8_t>& tx_extra)
 {
   using namespace cryptonote;
 
