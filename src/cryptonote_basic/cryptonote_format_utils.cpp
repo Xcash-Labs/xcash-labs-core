@@ -589,6 +589,9 @@ bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_f
     tx_extra_field field;
 
     fprintf(stderr, "\n[DEBUG] Attempting to deserialize field #%zu\n", field_index);
+    uint8_t tag_byte = 0;
+    memcpy(&tag_byte, ar.span().data(), 1);
+    fprintf(stderr, "[DEBUG] Field #%zu tag: 0x%02x\n", field_index, tag_byte);
     bool r = ::do_serialize(ar, field);
     size_t bytes_remaining_after = ar.remaining_bytes();
 
