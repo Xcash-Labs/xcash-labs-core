@@ -565,7 +565,6 @@ namespace cryptonote
 
 
 
-
 bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
 {
   tx_extra_fields.clear();
@@ -588,22 +587,27 @@ bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_f
 
   do {
     tx_extra_field field;
-    fprintf(stderr, "[DEBUG] Attempting to deserialize field #%zu at byte offset %ld\n", field_index, (long)(tx_extra.data() - ar.buffer().data()));
+
+    fprintf(stderr, "[DEBUG] Attempting to deserialize field #%zu...\n", field_index);
     bool r = ::do_serialize(ar, field);
     if (!r) {
       fprintf(stderr, "[ERROR] Failed to deserialize field #%zu\n", field_index);
-      fprintf(stderr, "[ERROR] Full tx_extra hex: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+      fprintf(stderr, "[ERROR] tx_extra hex: %s\n",
+              string_tools::buff_to_hex_nodelimer(
+                std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
       return false;
     }
 
     tx_extra_fields.push_back(field);
-    fprintf(stderr, "[DEBUG] Successfully deserialized field #%zu\n", field_index);
-    field_index++;
+    fprintf(stderr, "[DEBUG] Field #%zu deserialized successfully\n", field_index);
+    ++field_index;
   } while (!ar.eof());
 
   if (!::serialization::check_stream_state(ar)) {
     fprintf(stderr, "[ERROR] parse_tx_extra: stream state check failed\n");
-    fprintf(stderr, "[ERROR] Remaining tx_extra: %s\n", string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
+    fprintf(stderr, "[ERROR] tx_extra hex: %s\n",
+            string_tools::buff_to_hex_nodelimer(
+              std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())).c_str());
     return false;
   }
 
