@@ -43,6 +43,8 @@
 #define TX_EXTRA_NONCE_PAYMENT_ID           0x00
 #define TX_EXTRA_NONCE_ENCRYPTED_PAYMENT_ID 0x01
 
+
+/*
 namespace cryptonote
 {
   struct tx_extra_padding
@@ -175,6 +177,188 @@ namespace cryptonote
   typedef boost::variant<tx_extra_padding, tx_extra_pub_key, tx_extra_nonce, tx_extra_merge_mining_tag, tx_extra_additional_pub_keys, tx_extra_vrf_signature> tx_extra_field;
 }
 
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_padding, TX_EXTRA_TAG_PADDING);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_pub_key, TX_EXTRA_TAG_PUBKEY);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_nonce, TX_EXTRA_NONCE);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_merge_mining_tag, TX_EXTRA_MERGE_MINING_TAG);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_additional_pub_keys, TX_EXTRA_TAG_ADDITIONAL_PUBKEYS);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_vrf_signature, TX_EXTRA_VRF_SIGNATURE_TAG);
+*/
+
+#include "string_tools.h" // for pod_to_hex, buff_to_hex_nodelimer
+#include "serialization/binary_archive.h"
+#include "cryptonote_basic/cryptonote_basic.h"
+#include <vector>
+#include <string>
+#include <sstream>
+#include <stdint.h>
+
+#define fprint(fmt, ...) fprintf(stderr, "[DEBUG] " fmt, ##__VA_ARGS__)
+
+namespace cryptonote
+{
+  struct tx_extra_padding
+  {
+    size_t size;
+
+    template <template <bool> class Archive>
+    bool member_do_serialize(Archive<false>& ar)
+    {
+      fprint("Parsing tx_extra_padding...\n");
+      for (size = 1; size <= TX_EXTRA_PADDING_MAX_COUNT; ++size)
+      {
+        if (ar.eof()) {
+          fprint("Reached EOF at size: %zu\n", size);
+          break;
+        }
+
+        uint8_t zero;
+        if (!::do_serialize(ar, zero)) {
+          fprint("Failed to deserialize byte at position: %zu\n", size);
+          return false;
+        }
+
+        if (zero != 0) {
+          fprint("Non-zero byte found in padding at position: %zu\n", size);
+          return false;
+        }
+      }
+
+      fprint("Padding size: %zu\n", size);
+      return size <= TX_EXTRA_PADDING_MAX_COUNT;
+    }
+
+    template <template <bool> class Archive>
+    bool member_do_serialize(Archive<true>& ar)
+    {
+      if (TX_EXTRA_PADDING_MAX_COUNT < size)
+        return false;
+
+      for (size_t i = 1; i < size; ++i)
+      {
+        uint8_t zero = 0;
+        if (!::do_serialize(ar, zero))
+          return false;
+      }
+      return true;
+    }
+  };
+
+  struct tx_extra_pub_key
+  {
+    crypto::public_key pub_key;
+
+    BEGIN_SERIALIZE()
+      fprint("Parsing tx_extra_pub_key...\n");
+      FIELD(pub_key)
+      fprint("pub_key: %s\n", epee::string_tools::pod_to_hex(pub_key).c_str());
+    END_SERIALIZE()
+  };
+
+  struct tx_extra_nonce
+  {
+    std::string nonce;
+
+    BEGIN_SERIALIZE()
+      fprint("Parsing tx_extra_nonce...\n");
+      FIELD(nonce)
+      fprint("nonce length: %zu\n", nonce.size());
+      fprint("nonce: %s\n", epee::string_tools::buff_to_hex_nodelimer(nonce).c_str());
+      if (TX_EXTRA_NONCE_MAX_COUNT < nonce.size()) {
+        fprint("ERROR: nonce too long\n");
+        return false;
+      }
+    END_SERIALIZE()
+  };
+
+  struct tx_extra_merge_mining_tag
+  {
+    struct serialize_helper
+    {
+      tx_extra_merge_mining_tag& mm_tag;
+
+      serialize_helper(tx_extra_merge_mining_tag& mm_tag_) : mm_tag(mm_tag_) {}
+
+      BEGIN_SERIALIZE()
+        VARINT_FIELD_N("depth", mm_tag.depth)
+        FIELD_N("merkle_root", mm_tag.merkle_root)
+      END_SERIALIZE()
+    };
+
+    uint64_t depth;
+    crypto::hash merkle_root;
+
+    template <template <bool> class Archive>
+    bool member_do_serialize(Archive<false>& ar)
+    {
+      fprint("Parsing tx_extra_merge_mining_tag...\n");
+      std::string field;
+      if (!::do_serialize(ar, field)) {
+        fprint("ERROR: Failed to deserialize merge mining field\n");
+        return false;
+      }
+
+      binary_archive<false> iar{epee::strspan<std::uint8_t>(field)};
+      serialize_helper helper(*this);
+      bool result = ::serialization::serialize(iar, helper);
+      if (result) {
+        fprint("depth: %lu\n", depth);
+        fprint("merkle_root: %s\n", epee::string_tools::pod_to_hex(merkle_root).c_str());
+      }
+      return result;
+    }
+
+    template <template <bool> class Archive>
+    bool member_do_serialize(Archive<true>& ar)
+    {
+      std::ostringstream oss;
+      binary_archive<true> oar(oss);
+      serialize_helper helper(*this);
+      if (!::do_serialize(oar, helper))
+        return false;
+
+      std::string field = oss.str();
+      return ::serialization::serialize(ar, field);
+    }
+  };
+
+  struct tx_extra_additional_pub_keys
+  {
+    std::vector<crypto::public_key> data;
+
+    BEGIN_SERIALIZE()
+      fprint("Parsing tx_extra_additional_pub_keys...\n");
+      FIELD(data)
+      fprint("Number of additional keys: %zu\n", data.size());
+      for (size_t i = 0; i < data.size(); ++i) {
+        fprint("Key %zu: %s\n", i, epee::string_tools::pod_to_hex(data[i]).c_str());
+      }
+    END_SERIALIZE()
+  };
+
+  struct tx_extra_vrf_signature
+  {
+    std::vector<uint8_t> data;
+
+    BEGIN_SERIALIZE()
+      fprint("Parsing tx_extra_vrf_signature...\n");
+      FIELD(data)
+      fprint("VRF data length: %zu\n", data.size());
+      fprint("VRF hex: %s\n", epee::string_tools::buff_to_hex_nodelimer(std::string((const char*)data.data(), data.size())).c_str());
+    END_SERIALIZE()
+  };
+
+  typedef boost::variant<
+    tx_extra_padding,
+    tx_extra_pub_key,
+    tx_extra_nonce,
+    tx_extra_merge_mining_tag,
+    tx_extra_additional_pub_keys,
+    tx_extra_vrf_signature
+  > tx_extra_field;
+}
+
+// These must exist in the same translation unit
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_padding, TX_EXTRA_TAG_PADDING);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_pub_key, TX_EXTRA_TAG_PUBKEY);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_nonce, TX_EXTRA_NONCE);
