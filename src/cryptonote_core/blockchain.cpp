@@ -4737,6 +4737,13 @@ bool Blockchain::add_new_block(const block& bl, block_verification_context& bvc,
     return handle_alternative_block(bl, id, bvc, extra_block_txs);
     //never relay alternative blocks
   }
+// check signed block here...
+// jed
+
+  fprintf(stderr, "[DEBUG] Checking block sign:\n");
+
+
+
 
   rtxn_guard.stop();
   return handle_block_to_main_chain(bl, id, bvc, extra_block_txs);
