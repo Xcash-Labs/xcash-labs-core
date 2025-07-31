@@ -4097,8 +4097,8 @@ fprintf(stderr, "\n");
 std::vector<cryptonote::tx_extra_field> extra_fields;
 if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
     MERROR_VER("Failed to parse tx_extra in block id: " << id);
-//    bvc.m_verifivation_failed = true;
-//    goto leave;
+    bvc.m_verifivation_failed = true;
+    goto leave;
 }
 
 
