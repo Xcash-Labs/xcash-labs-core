@@ -4123,13 +4123,18 @@ for (const auto& field : extra_fields)
 {
   if (const cryptonote::tx_extra_vrf_signature* vrf = boost::get<cryptonote::tx_extra_vrf_signature>(&field))
   {
-    std::cerr << "[DEBUG] vrf->data.size() = " << vrf->data.size() << std::endl;
+    std::cerr << "[DEBUG xx] vrf->data.size() = " << vrf->data.size() << std::endl;
 
-    if (vrf->data.size() != 208) {
-      MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 208");
+    if (vrf->data.size() != 210) {
+      MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 210");
+      std::cerr << "[DEBUG xxxxxxx] vrf->data.size() = " << vrf->data.size() << std::endl;
       bvc.m_verifivation_failed = true;
       goto leave;
     }
+
+
+    std::cerr << "[DEBUG End....]" << std::endl;
+
 
     // Call member function of Blockchain
     if (!this->verify_vrf_signature_blob(vrf->data)) {
