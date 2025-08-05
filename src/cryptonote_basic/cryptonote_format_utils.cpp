@@ -541,7 +541,7 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
-  bool parse_tx_extra__OLD__(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
+  bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
   {
     tx_extra_fields.clear();
 
@@ -564,8 +564,8 @@ namespace cryptonote
 
 
 
-
-bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
+// jed
+bool parse_tx_extra__DEBUG__(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
 {
   tx_extra_fields.clear();
 

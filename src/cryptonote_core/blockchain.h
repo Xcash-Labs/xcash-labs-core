@@ -1375,7 +1375,7 @@ namespace cryptonote
     * checks to verify that the VRF proof and beta are valid for the provided public key
     * and that the block signature matches the block hash.
     *
-    * @param blob the 208-byte VRF data buffer to validate
+    * @param blob the 210-byte VRF data buffer to validate
     * @return true if all fields are valid and the cryptographic checks pass, false otherwise  jed
     */
     bool verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const;
