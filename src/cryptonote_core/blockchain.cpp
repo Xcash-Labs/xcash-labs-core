@@ -4093,79 +4093,41 @@ leave:
     goto leave;
   }
 
-
-
-fprintf(stderr, "\n[DEBUG] Parsing tx_extra (size: %zu bytes):\n", bl.miner_tx.extra.size());
-for (size_t i = 0; i < bl.miner_tx.extra.size(); ++i) {
-  fprintf(stderr, "%02x ", bl.miner_tx.extra[i]);
-  if ((i + 1) % 16 == 0) fprintf(stderr, "\n");
-}
-fprintf(stderr, "\n");
-//std::vector<cryptonote::tx_extra_field> extra_fields;
-//if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
-//    MERROR_VER("Failed to parse tx_extra in block id: " << id);
-//    bvc.m_verifivation_failed = true;
-//    goto leave;
-//}
-
-
-// === BEGIN CUSTOM VRF EXTRA CHECK === jed
-
-std::vector<cryptonote::tx_extra_field> extra_fields;
-if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
-  MERROR_VER("Failed to parse tx_extra in block id: " << id);
-  bvc.m_verifivation_failed = true;
-  goto leave;
-}
-
-bool found_vrf = false;
-for (const auto& field : extra_fields)
-{
-  if (const cryptonote::tx_extra_vrf_signature* vrf = boost::get<cryptonote::tx_extra_vrf_signature>(&field))
-  {
-    std::cerr << "[DEBUG xx] vrf->data.size() = " << vrf->data.size() << std::endl;
-
-    if (vrf->data.size() != 210) {
-      MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 210");
-      std::cerr << "[DEBUG xxxxxxx] vrf->data.size() = " << vrf->data.size() << std::endl;
-      bvc.m_verifivation_failed = true;
-      goto leave;
-    }
-
-
-    std::cerr << "[DEBUG End....]" << std::endl;
-
-
-    // Call member function of Blockchain
-    if (!this->verify_vrf_signature_blob(vrf->data)) {
-      MERROR_VER("Invalid VRF signature in block id: " << id);
-      bvc.m_verifivation_failed = true;
-      goto leave;
-    }
-
-    found_vrf = true;
-    break;
+  // === BEGIN CUSTOM VRF EXTRA CHECK === jed
+  std::vector<cryptonote::tx_extra_field> extra_fields;
+  if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
+    MERROR_VER("Failed to parse tx_extra in block id: " << id);
+    bvc.m_verifivation_failed = true;
+    goto leave;
   }
-}
 
-if (!found_vrf) {
-  MERROR_VER("Missing VRF signature in block id: " << id);
-  bvc.m_verifivation_failed = true;
-  goto leave;
-}
+  bool found_vrf = false;
+  for (const auto& field : extra_fields) {
+    if (const cryptonote::tx_extra_vrf_signature* vrf = boost::get<cryptonote::tx_extra_vrf_signature>(&field)) {
+      if (vrf->data.size() != 210) {
+        MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 210");
+        bvc.m_verifivation_failed = true;
+        goto leave;
+      }
 
-// === END CUSTOM VRF EXTRA CHECK ===
+      // Call member function of Blockchain
+      if (!this->verify_vrf_signature_blob(vrf->data)) {
+        MERROR_VER("Invalid VRF signature in block id: " << id);
+        bvc.m_verifivation_failed = true;
+        goto leave;
+      }
 
+      found_vrf = true;
+      break;
+    }
+  }
 
-
-
-
-
-
-
-
-
-
+  if (!found_vrf) {
+    MERROR_VER("Missing VRF signature in block id: " << id);
+    bvc.m_verifivation_failed = true;
+    goto leave;
+  }
+  // === END CUSTOM VRF EXTRA CHECK ===
 
   TIME_MEASURE_FINISH(t2);
   //check proof of work
@@ -4754,13 +4716,6 @@ bool Blockchain::add_new_block(const block& bl, block_verification_context& bvc,
     return handle_alternative_block(bl, id, bvc, extra_block_txs);
     //never relay alternative blocks
   }
-// check signed block here...
-// jed
-
-  fprintf(stderr, "[DEBUG] Checking block sign:\n");
-
-
-
 
   rtxn_guard.stop();
   return handle_block_to_main_chain(bl, id, bvc, extra_block_txs);
