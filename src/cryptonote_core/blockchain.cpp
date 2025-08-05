@@ -3985,7 +3985,7 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const
 {
-  std::cerr << "[DEBUG] blob.size() = " << vrf->data.size() << std::endl;
+  std::cerr << "[DEBUG] blob.size() = " << blob.size() << std::endl;
   if (blob.size() != 210)
   {
     MERROR("VRF blob size mismatch: expected 210, got " << blob.size());
