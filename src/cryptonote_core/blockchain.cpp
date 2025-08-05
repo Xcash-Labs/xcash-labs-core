@@ -3985,6 +3985,7 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const
 {
+  std::cerr << "[DEBUG] blob.size() = " << vrf->data.size() << std::endl;
   if (blob.size() != 210)
   {
     MERROR("VRF blob size mismatch: expected 210, got " << blob.size());
@@ -4100,17 +4101,17 @@ for (size_t i = 0; i < bl.miner_tx.extra.size(); ++i) {
   if ((i + 1) % 16 == 0) fprintf(stderr, "\n");
 }
 fprintf(stderr, "\n");
-std::vector<cryptonote::tx_extra_field> extra_fields;
-if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
-    MERROR_VER("Failed to parse tx_extra in block id: " << id);
-    bvc.m_verifivation_failed = true;
-    goto leave;
-}
+//std::vector<cryptonote::tx_extra_field> extra_fields;
+//if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
+//    MERROR_VER("Failed to parse tx_extra in block id: " << id);
+//    bvc.m_verifivation_failed = true;
+//    goto leave;
+//}
 
 
-
+mined block failed verification
 // === BEGIN CUSTOM VRF EXTRA CHECK === jed
-/*
+
 std::vector<cryptonote::tx_extra_field> extra_fields;
 if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
   MERROR_VER("Failed to parse tx_extra in block id: " << id);
@@ -4123,13 +4124,15 @@ for (const auto& field : extra_fields)
 {
   if (const cryptonote::tx_extra_vrf_signature* vrf = boost::get<cryptonote::tx_extra_vrf_signature>(&field))
   {
+    std::cerr << "[DEBUG] vrf->data.size() = " << vrf->data.size() << std::endl;
+
     if (vrf->data.size() != 208) {
       MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 208");
       bvc.m_verifivation_failed = true;
       goto leave;
     }
 
-    // ✅ Call member function of Blockchain
+    // Call member function of Blockchain
     if (!this->verify_vrf_signature_blob(vrf->data)) {
       MERROR_VER("Invalid VRF signature in block id: " << id);
       bvc.m_verifivation_failed = true;
@@ -4146,7 +4149,7 @@ if (!found_vrf) {
   bvc.m_verifivation_failed = true;
   goto leave;
 }
-  */
+
 // === END CUSTOM VRF EXTRA CHECK ===
 
 
