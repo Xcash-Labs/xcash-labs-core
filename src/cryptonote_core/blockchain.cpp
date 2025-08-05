@@ -4109,7 +4109,6 @@ fprintf(stderr, "\n");
 //}
 
 
-mined block failed verification
 // === BEGIN CUSTOM VRF EXTRA CHECK === jed
 
 std::vector<cryptonote::tx_extra_field> extra_fields;
