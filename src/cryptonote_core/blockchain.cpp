@@ -3993,7 +3993,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   }
 
   const uint8_t* data = blob.data();
-
   const uint8_t* vrf_proof     = data;              // [0..79]
   const uint8_t* vrf_beta      = data + 80;         // [80..143]
   const uint8_t* vrf_pubkey    = data + 144;        // [144..175]
@@ -4015,14 +4014,11 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   for (int i = 0; i < 32; ++i)
     vote_hash_str << std::hex << std::setw(2) << std::setfill('0') << (int)vote_hash[i];
 
-
-
   uint64_t height = get_current_blockchain_height();
   std::cerr << "[DEBUG] Current block height: " << height << std::endl;
 
   crypto::hash prev_hash = get_block_id_by_height(height - 1);
   std::cerr << "[DEBUG] Previous block hash: " << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
-
 
   std::cerr << "VRF Proof:      " << proof_str.str() << std::endl;
   std::cerr << "VRF Beta:       " << beta_str.str() << std::endl;
@@ -4031,21 +4027,16 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   std::cerr << "Winning Vote:   " << static_cast<int>(*winning_vote) << std::endl;
   std::cerr << "Vote Hash:      " << vote_hash_str.str() << std::endl;
 
-
-
-std::ostringstream o;
-o << "{\r\n"
-  << "  \"message_settings\": \"BLOCK_TO_DPOPS_VERIFY\",\r\n"
-  << "  \"vrf_proof\": \"" << proof_str.str() << "\",\r\n"
-  << "  \"vrf_beta\": \"" << beta_str.str() << "\",\r\n"
-  << "  \"vrf_pubkey\": \"" << pubkey_str.str() << "\",\r\n"
-  << "  \"vote_hash\": \"" << vote_hash_str.str() << "\",\r\n"
-  << "  \"height\": " << height << ",\r\n"
-  << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
-  << "}";
-
-
-
+  std::ostringstream o;
+  o << "{\r\n"
+    << "  \"message_settings\": \"BLOCK_TO_DPOPS_VERIFY\",\r\n"
+    << "  \"vrf_proof\": \"" << proof_str.str() << "\",\r\n"
+    << "  \"vrf_beta\": \"" << beta_str.str() << "\",\r\n"
+    << "  \"vrf_pubkey\": \"" << pubkey_str.str() << "\",\r\n"
+    << "  \"vote_hash\": \"" << vote_hash_str.str() << "\",\r\n"
+    << "  \"height\": " << height << ",\r\n"
+    << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
+    << "}";
 
   // 🔐 Optional: validate vote_hash, vrf_beta, etc. here
 
