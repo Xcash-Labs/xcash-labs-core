@@ -4015,6 +4015,16 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   for (int i = 0; i < 32; ++i)
     vote_hash_str << std::hex << std::setw(2) << std::setfill('0') << (int)vote_hash[i];
 
+
+
+  uint64_t height = get_current_blockchain_height();
+  std::cerr << "[DEBUG] Current block height: " << height << std::endl;
+
+  crypto::hash prev_hash;
+  crypto::hash prev_hash = get_block_id_by_height(height - 1);
+  std::cerr << "[DEBUG] Previous block hash: " << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
+
+
   std::cerr << "VRF Proof:      " << proof_str.str() << std::endl;
   std::cerr << "VRF Beta:       " << beta_str.str() << std::endl;
   std::cerr << "VRF PubKey:     " << pubkey_str.str() << std::endl;
@@ -4022,20 +4032,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   std::cerr << "Winning Vote:   " << static_cast<int>(*winning_vote) << std::endl;
   std::cerr << "Vote Hash:      " << vote_hash_str.str() << std::endl;
 
-
-
-
-  uint64_t height = get_current_blockchain_height();
-  std::cerr << "[DEBUG] Current block height: " << height << std::endl;
-
-  crypto::hash prev_hash;
-  if (get_block_id_by_height(height - 1, prev_hash)) {
-    std::cerr << "[DEBUG] Previous block hash: "
-              << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
-  } else {
-    std::cerr << "[ERROR] Failed to retrieve previous block hash at height "
-              << (height - 1) << std::endl;
-  }
 
 
 
