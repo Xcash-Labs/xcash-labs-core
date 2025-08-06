@@ -4028,14 +4028,19 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   uint64_t height = get_current_blockchain_height();
   std::cerr << "[DEBUG] Current block height: " << height << std::endl;
 
-  crypto::hash prev_hash;
-  if (get_block_hash_from_height(height - 1, prev_hash)) {
-    std::cerr << "[DEBUG] Previous block hash: " << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
+  if (get_block_id_by_height(height - 1, prev_hash)) {
+    std::cerr << "[DEBUG] Previous block hash: "
+              << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
+  } else {
+    std::cerr << "[ERROR] Failed to retrieve previous block hash at height "
+              << (height - 1) << std::endl;
   }
 
 
 
-  
+
+
+
   // 🔐 Optional: validate vote_hash, vrf_beta, etc. here
 
   return true;
