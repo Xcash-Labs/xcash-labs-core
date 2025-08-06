@@ -3983,22 +3983,20 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 
 //  jed
 
-bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const
-{
+bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const {
   std::cerr << "[DEBUG] blob.size() = " << blob.size() << std::endl;
-  if (blob.size() != 210)
-  {
+  if (blob.size() != 210) {
     MERROR("VRF blob size mismatch: expected 210, got " << blob.size());
     return false;
   }
 
   const uint8_t* data = blob.data();
-  const uint8_t* vrf_proof     = data;              // [0..79]
-  const uint8_t* vrf_beta      = data + 80;         // [80..143]
-  const uint8_t* vrf_pubkey    = data + 144;        // [144..175]
-  const uint8_t* total_votes   = data + 176;        // [176]
-  const uint8_t* winning_vote  = data + 177;        // [177]
-  const uint8_t* vote_hash     = data + 178;        // [178..209]
+  const uint8_t* vrf_proof = data;           // [0..79]
+  const uint8_t* vrf_beta = data + 80;       // [80..143]
+  const uint8_t* vrf_pubkey = data + 144;    // [144..175]
+  const uint8_t* total_votes = data + 176;   // [176]
+  const uint8_t* winning_vote = data + 177;  // [177]
+  const uint8_t* vote_hash = data + 178;     // [178..209]
 
   std::ostringstream proof_str, beta_str, pubkey_str, vote_hash_str;
 
@@ -4041,17 +4039,40 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   std::string json = o.str();
   std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
-  std::cerr << "Rbuffer:      " << rbuffer << std::endl;
+  std::string message_settings;
+  int status = 0;
+  std::string status_text;
+  std::string vote_hash;
 
-//  return true;
-    return false;
+  std::istringstream stream(rbuffer);
+  std::string token;
+  std::vector<std::string> parts;
+
+  while (std::getline(stream, token, '|')) {
+    parts.push_back(token);
+  }
+
+  if (parts.size() >= 4) {
+    message_settings = parts[0];
+    status = std::stoi(parts[1]);
+    status_text = parts[2];
+    vote_hash = parts[3];
+
+    std::cout << "[DEBUG] message_settings: " << message_settings << std::endl;
+    std::cout << "[DEBUG] status: " << status << std::endl;
+    std::cout << "[DEBUG] status_text: " << status_text << std::endl;
+    std::cout << "[DEBUG] vote_hash: " << vote_hash << std::endl;
+
+    if (status == 1) {
+      return false;    // testing
+    }
+
+  } else {
+    std::cerr << "[ERROR] Invalid response format: " << rbuffer << std::endl;
+  }
+
+  return false;
 }
-
-
-
-
-
-
 
 //------------------------------------------------------------------
 //      Needs to validate the block and acquire each transaction from the
