@@ -4020,7 +4020,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   uint64_t height = get_current_blockchain_height();
   std::cerr << "[DEBUG] Current block height: " << height << std::endl;
 
-  crypto::hash prev_hash;
   crypto::hash prev_hash = get_block_id_by_height(height - 1);
   std::cerr << "[DEBUG] Previous block hash: " << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
 
@@ -4034,6 +4033,16 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
 
 
+std::ostringstream o;
+o << "{\r\n"
+  << "  \"message_settings\": \"BLOCK_TO_DPOPS_VERIFY\",\r\n"
+  << "  \"vrf_proof\": \"" << proof_str.str() << "\",\r\n"
+  << "  \"vrf_beta\": \"" << beta_str.str() << "\",\r\n"
+  << "  \"vrf_pubkey\": \"" << pubkey_str.str() << "\",\r\n"
+  << "  \"vote_hash\": \"" << vote_hash_str.str() << "\",\r\n"
+  << "  \"height\": " << height << ",\r\n"
+  << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
+  << "}";
 
 
 
