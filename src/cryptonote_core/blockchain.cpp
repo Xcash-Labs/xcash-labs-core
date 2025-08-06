@@ -4029,7 +4029,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   std::ostringstream o;
   o << "{\r\n"
-    << "  \"message_settings\": \"BLOCK_TO_DPOPS_VERIFY\",\r\n"
+    << "  \"message_settings\": \"XCASHD_TO_DPOPS_VERIFY\",\r\n"
     << "  \"vrf_proof\": \"" << proof_str.str() << "\",\r\n"
     << "  \"vrf_beta\": \"" << beta_str.str() << "\",\r\n"
     << "  \"vrf_pubkey\": \"" << pubkey_str.str() << "\",\r\n"
@@ -4038,9 +4038,13 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
     << "}";
 
-  // 🔐 Optional: validate vote_hash, vrf_beta, etc. here
+  std::string json = o.str();
+  std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
-  return true;
+  std::cerr << "Rbuffer:      " << rbuffer << std::endl;
+
+//  return true;
+    return false;
 }
 
 
