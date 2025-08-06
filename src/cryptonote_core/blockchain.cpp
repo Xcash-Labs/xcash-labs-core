@@ -4042,7 +4042,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   std::string message_settings;
   int status = 0;
   std::string status_text;
-  std::string vote_hash;
+  std::string vote_hash_text;
 
   std::istringstream stream(rbuffer);
   std::string token;
@@ -4056,12 +4056,12 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     message_settings = parts[0];
     status = std::stoi(parts[1]);
     status_text = parts[2];
-    vote_hash = parts[3];
+    vote_hash_text = parts[3];
 
     std::cout << "[DEBUG] message_settings: " << message_settings << std::endl;
     std::cout << "[DEBUG] status: " << status << std::endl;
     std::cout << "[DEBUG] status_text: " << status_text << std::endl;
-    std::cout << "[DEBUG] vote_hash: " << vote_hash << std::endl;
+    std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
     if (status == 1) {
       return false;    // testing
