@@ -3977,12 +3977,7 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
   return res;
 }
 
-
-
-
-
-//  jed
-
+// === BEGIN CUSTOM VRF EXTRA VALIDATION === jed
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const {
   std::cerr << "[DEBUG] blob.size() = " << blob.size() << std::endl;
   if (blob.size() != 210) {
@@ -4065,8 +4060,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     std::cout << "[DEBUG] status_text: " << status_text << std::endl;
     std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
-    if (vote_hash_text != sent_vote_hash) {
-      MWARNING("Vote hash mismatch! Sent: " << sent_vote_hash << ", Received: " << vote_hash_text);
+    if (vote_hash_text != vote_hash_str) {
+      MWARNING("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
       return false;
     }
 
