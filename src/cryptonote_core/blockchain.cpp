@@ -3993,25 +3993,25 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   const uint8_t* winning_vote = data + 177;  // [177]
   const uint8_t* vote_hash = data + 178;     // [178..209]
 
-  std::ostringstream proof_str, beta_str, pubkey_str, vote_hash_str;
+  // Helper to convert a byte array to hex string
+  static std::string to_hex(const uint8_t* data, size_t length) {
+    std::ostringstream oss;
+    oss << std::hex;
+    for (size_t i = 0; i < length; ++i) {
+      oss << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
+    }
+    return oss.str();
+  }
 
-  for (int i = 0; i < 80; ++i)
-    proof_str << std::hex << std::setw(2) << std::setfill('0') << (int)vrf_proof[i];
-
-  for (int i = 0; i < 64; ++i)
-    beta_str << std::hex << std::setw(2) << std::setfill('0') << (int)vrf_beta[i];
-
-  for (int i = 0; i < 32; ++i)
-    pubkey_str << std::hex << std::setw(2) << std::setfill('0') << (int)vrf_pubkey[i];
-
-  for (int i = 0; i < 32; ++i)
-    vote_hash_str << std::hex << std::setw(2) << std::setfill('0') << (int)vote_hash[i];
+  // Usage:
+  std::string proof_str = to_hex(vrf_proof, 80);
+  std::string beta_str = to_hex(vrf_beta, 64);
+  std::string pubkey_str = to_hex(vrf_pubkey, 32);
+  std::string vote_hash_str = to_hex(vote_hash, 32);
 
   uint64_t height = get_current_blockchain_height();
-  std::cerr << "[DEBUG] Current block height: " << height << std::endl;
 
   crypto::hash prev_hash = get_block_id_by_height(height - 1);
-  std::cerr << "[DEBUG] Previous block hash: " << epee::string_tools::pod_to_hex(prev_hash) << std::endl;
 
   std::cerr << "VRF Proof:      " << proof_str.str() << std::endl;
   std::cerr << "VRF Beta:       " << beta_str.str() << std::endl;
@@ -4061,7 +4061,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
     if (vote_hash_text != vote_hash_str.str()) {
-      MWARNING("Vote hash mismatch! Sent: " << vote_hash_str.str() << ", Received: " << vote_hash_text);
+      MWARNING("Vote hash mismatch");
       return false;
     }
 
