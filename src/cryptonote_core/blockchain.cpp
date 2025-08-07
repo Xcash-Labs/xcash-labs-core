@@ -4038,6 +4038,10 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   std::string json = o.str();
   std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+  if (!rbuffer.empty() && rbuffer[0] == '0') {
+    MWARNING("Network issue with DPOPS process");
+    return false;
+  }
 
   std::string message_settings;
   int status = 0;
@@ -4052,23 +4056,27 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     parts.push_back(token);
   }
 
-  if (parts.size() >= 4) {
-    message_settings = parts[0];
-    status = std::stoi(parts[1]);
-    status_text = parts[2];
-    vote_hash_text = parts[3];
+  if (parts.size() >= 3) {
+    status = std::stoi(parts[0]);
+    status_text = parts[1];
+    vote_hash_text = parts[2];
 
-    std::cout << "[DEBUG] message_settings: " << message_settings << std::endl;
     std::cout << "[DEBUG] status: " << status << std::endl;
     std::cout << "[DEBUG] status_text: " << status_text << std::endl;
     std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
+    if (vote_hash_text != sent_vote_hash) {
+      MWARNING("Vote hash mismatch! Sent: " << sent_vote_hash << ", Received: " << vote_hash_text);
+      return false;
+    }
+
     if (status == 1) {
-      return false;    // testing
+      return false;  // testing
     }
 
   } else {
     std::cerr << "[ERROR] Invalid response format: " << rbuffer << std::endl;
+    MWARNING("Invalid response format from DPOPS");
   }
 
   return false;
