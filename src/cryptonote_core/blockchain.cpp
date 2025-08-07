@@ -3978,6 +3978,16 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
 }
 
 // === BEGIN CUSTOM VRF EXTRA VALIDATION === jed
+// Helper to convert a byte array to hex string
+static std::string to_hex(const uint8_t* data, size_t length) {
+  std::ostringstream oss;
+  oss << std::hex;
+  for (size_t i = 0; i < length; ++i) {
+    oss << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
+  }
+  return oss.str();
+}
+
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const {
   std::cerr << "[DEBUG] blob.size() = " << blob.size() << std::endl;
   if (blob.size() != 210) {
@@ -3992,16 +4002,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   const uint8_t* total_votes = data + 176;   // [176]
   const uint8_t* winning_vote = data + 177;  // [177]
   const uint8_t* vote_hash = data + 178;     // [178..209]
-
-  // Helper to convert a byte array to hex string
-  static std::string to_hex(const uint8_t* data, size_t length) {
-    std::ostringstream oss;
-    oss << std::hex;
-    for (size_t i = 0; i < length; ++i) {
-      oss << std::setw(2) << std::setfill('0') << static_cast<int>(data[i]);
-    }
-    return oss.str();
-  }
 
   // Usage:
   std::string proof_str = to_hex(vrf_proof, 80);
@@ -4076,6 +4076,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   return false;
 }
+// === END CUSTOM VRF EXTRA VALIDATION ===
 
 //------------------------------------------------------------------
 //      Needs to validate the block and acquire each transaction from the
