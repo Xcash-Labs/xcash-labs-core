@@ -4061,7 +4061,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
     if (vote_hash_text != vote_hash_str) {
-      MWARNING("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
+      MWARNING("Vote hash mismatch! Sent: " << vote_hash_str.str() << ", Received: " << vote_hash_text);
       return false;
     }
 
