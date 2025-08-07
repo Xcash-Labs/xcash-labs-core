@@ -3987,7 +3987,7 @@ static std::string to_hex(const uint8_t* data, size_t length) {
   }
   return oss.str();
 }
-
+/*
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const {
   std::cerr << "[DEBUG] blob.size() = " << blob.size() << std::endl;
   if (blob.size() != 210) {
@@ -4076,6 +4076,98 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   return false;
 }
+*/
+
+
+bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const {
+  std::cerr << "[DEBUG] blob.size() = " << blob.size() << std::endl;
+  if (blob.size() != 210) {
+    MERROR("VRF blob size mismatch: expected 210, got " << blob.size());
+    return false;
+  }
+
+  const uint8_t* data = blob.data();
+  const uint8_t* vrf_proof = data;           // [0..79]
+  const uint8_t* vrf_beta = data + 80;       // [80..143]
+  const uint8_t* vrf_pubkey = data + 144;    // [144..175]
+  const uint8_t* total_votes = data + 176;   // [176]
+  const uint8_t* winning_vote = data + 177;  // [177]
+  const uint8_t* vote_hash = data + 178;     // [178..209]
+
+  // Convert each field to hex
+  std::string proof_str = to_hex(vrf_proof, 80);
+  std::string beta_str = to_hex(vrf_beta, 64);
+  std::string pubkey_str = to_hex(vrf_pubkey, 32);
+  std::string vote_hash_str = to_hex(vote_hash, 32);
+
+  uint64_t height = get_current_blockchain_height();
+  crypto::hash prev_hash = get_block_id_by_height(height - 1);
+
+  std::cerr << "VRF Proof:      " << proof_str << std::endl;
+  std::cerr << "VRF Beta:       " << beta_str << std::endl;
+  std::cerr << "VRF PubKey:     " << pubkey_str << std::endl;
+  std::cerr << "Total Votes:    " << static_cast<int>(*total_votes) << std::endl;
+  std::cerr << "Winning Vote:   " << static_cast<int>(*winning_vote) << std::endl;
+  std::cerr << "Vote Hash:      " << vote_hash_str << std::endl;
+
+  std::ostringstream o;
+  o << "{\r\n"
+    << "  \"message_settings\": \"XCASHD_TO_DPOPS_VERIFY\",\r\n"
+    << "  \"vrf_proof\": \"" << proof_str << "\",\r\n"
+    << "  \"vrf_beta\": \"" << beta_str << "\",\r\n"
+    << "  \"vrf_pubkey\": \"" << pubkey_str << "\",\r\n"
+    << "  \"vote_hash\": \"" << vote_hash_str << "\",\r\n"
+    << "  \"height\": " << height << ",\r\n"
+    << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
+    << "}";
+
+  std::string json = o.str();
+  std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+  if (!rbuffer.empty() && rbuffer[0] == '0') {
+    MWARNING("Network issue with DPOPS process");
+    return false;
+  }
+
+  std::string message_settings;
+  int status = 0;
+  std::string status_text;
+  std::string vote_hash_text;
+
+  std::istringstream stream(rbuffer);
+  std::string token;
+  std::vector<std::string> parts;
+
+  while (std::getline(stream, token, '|')) {
+    parts.push_back(token);
+  }
+
+  if (parts.size() >= 3) {
+    status = std::stoi(parts[0]);
+    status_text = parts[1];
+    vote_hash_text = parts[2];
+
+    std::cout << "[DEBUG] status: " << status << std::endl;
+    std::cout << "[DEBUG] status_text: " << status_text << std::endl;
+    std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
+
+    if (vote_hash_text != vote_hash_str) {
+      MWARNING("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
+      return false;
+    }
+
+    if (status == 1) {
+      return false;  // testing
+    }
+
+  } else {
+    std::cerr << "[ERROR] Invalid response format: " << rbuffer << std::endl;
+    MWARNING("Invalid response format from DPOPS");
+  }
+
+  return false;
+}
+
+
 // === END CUSTOM VRF EXTRA VALIDATION ===
 
 //------------------------------------------------------------------
