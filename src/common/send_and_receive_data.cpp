@@ -24,7 +24,6 @@ std::string send_and_receive_data(std::string IP_address,std::string data2, int 
     c.connect(IP_address, SEND_DATA_PORT, connection_timeout);
     
     // send the message and read the response
-    std::cout << "Data2: " << data2 << std::endl;
     c.write_line(data2, send_and_receive_data_timeout);
     response_string = c.read_until('}', send_and_receive_data_timeout);
   }
