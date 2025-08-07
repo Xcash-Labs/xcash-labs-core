@@ -4103,12 +4103,12 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   uint64_t height = get_current_blockchain_height();
   crypto::hash prev_hash = get_block_id_by_height(height - 1);
 
-  std::cerr << "VRF Proof:      " << proof_str << std::endl;
-  std::cerr << "VRF Beta:       " << beta_str << std::endl;
-  std::cerr << "VRF PubKey:     " << pubkey_str << std::endl;
-  std::cerr << "Total Votes:    " << static_cast<int>(*total_votes) << std::endl;
-  std::cerr << "Winning Vote:   " << static_cast<int>(*winning_vote) << std::endl;
-  std::cerr << "Vote Hash:      " << vote_hash_str << std::endl;
+//  std::cerr << "VRF Proof:      " << proof_str << std::endl;
+//  std::cerr << "VRF Beta:       " << beta_str << std::endl;
+//  std::cerr << "VRF PubKey:     " << pubkey_str << std::endl;
+//  std::cerr << "Total Votes:    " << static_cast<int>(*total_votes) << std::endl;
+//  std::cerr << "Winning Vote:   " << static_cast<int>(*winning_vote) << std::endl;
+//  std::cerr << "Vote Hash:      " << vote_hash_str << std::endl;
 
   std::ostringstream o;
   o << "{\r\n"
@@ -4146,9 +4146,9 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     status_text = parts[1];
     vote_hash_text = parts[2];
 
-    std::cout << "[DEBUG] status: " << status << std::endl;
-    std::cout << "[DEBUG] status_text: " << status_text << std::endl;
-    std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
+//    std::cout << "[DEBUG] status: " << status << std::endl;
+//    std::cout << "[DEBUG] status_text: " << status_text << std::endl;
+//    std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
     if (vote_hash_text != vote_hash_str) {
       MWARNING("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
@@ -4156,11 +4156,10 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     }
 
     if (status == 1) {
-      return false;  // testing
+      return true;
     }
 
   } else {
-    std::cerr << "[ERROR] Invalid response format: " << rbuffer << std::endl;
     MWARNING("Invalid response format from DPOPS");
   }
 
