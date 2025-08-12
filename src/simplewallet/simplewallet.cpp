@@ -2273,19 +2273,19 @@ bool simple_wallet::public_nodes(const std::vector<std::string> &args)
 
 bool simple_wallet::welcome(const std::vector<std::string> &args)
 {
-  message_writer() << tr("Welcome to Monero, the private cryptocurrency.");
+  message_writer() << tr("Welcome to XCASH, the private cryptocurrency.");
   message_writer() << "";
-  message_writer() << tr("Monero, like Bitcoin, is a cryptocurrency. That is, it is digital money.");
+  message_writer() << tr("XCASH, like Bitcoin, is a cryptocurrency. That is, it is digital money.");
   message_writer() << tr("Unlike Bitcoin, your XCash transactions and balance stay private and are not visible to the world by default.");
   message_writer() << tr("However, you have the option of making those available to select parties if you choose to.");
   message_writer() << "";
-  message_writer() << tr("Monero protects your privacy on the blockchain, and while XCash strives to improve all the time,");
+  message_writer() << tr("XCASH protects your privacy on the blockchain, and while XCash strives to improve all the time,");
   message_writer() << tr("no privacy technology can be 100% perfect, XCash included.");
-  message_writer() << tr("Monero cannot protect you from malware, and it may not be as effective as we hope against powerful adversaries.");
+  message_writer() << tr("XCASH cannot protect you from malware, and it may not be as effective as we hope against powerful adversaries.");
   message_writer() << tr("Flaws in XCash may be discovered in the future, and attacks may be developed to peek under some");
   message_writer() << tr("of the layers of privacy XCash provides. Be safe and practice defense in depth.");
   message_writer() << "";
-  message_writer() << tr("Welcome to XCash and financial privacy. For more information see https://GetMonero.org");
+  message_writer() << tr("Welcome to XCash and financial privacy. For more information see https://xcashlabs.org");
   return true;
 }
 
@@ -3118,7 +3118,7 @@ std::string get_current_block_verifiers_list()
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
-};
+  };
 
   // Variables
   std::string string = "";
@@ -3369,7 +3369,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   SCOPED_WALLET_UNLOCK();
 
   // get the current block verifiers list
-  if ((string = get_current_block_verifiers_list()) == "")
+  if ((string = get_current_block_verifiers_list()) == "0")
   {
     fail_msg_writer() << tr("Failed to register the delegate, no response from DPOPS");
     return true; 
@@ -3378,9 +3378,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 //  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
   total_delegates = std::count(string.begin(), string.end(), '|');
 
-  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
+  if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT)
   {
-    total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
   }
 
   if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
@@ -3494,8 +3494,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     return true; 
   }
 
+  std::cout << "[DEBUG] Entering Loop" << std::endl;     
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
     data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+    std::cout << "[DEBUG]data3: " << data3 << std::endl; 
+    
+
     if (data3 == "Registered the delegate") {
       count3++;
     } else {
@@ -5769,7 +5773,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
     check_background_mining(password);
 
   if (welcome)
-    message_writer(console_color_yellow, true) << tr("If you are new to Monero, type \"welcome\" for a brief overview.");
+    message_writer(console_color_yellow, true) << tr("If you are new to XCASH, type \"welcome\" for a brief overview.");
 
   m_last_activity_time = time(NULL);
   return true;
@@ -11785,7 +11789,7 @@ void simple_wallet::list_mms_messages(const std::vector<mms::message> &messages)
 void simple_wallet::list_signers(const std::vector<mms::authorized_signer> &signers)
 {
   message_writer() << boost::format("%2s %-20s %-s") % tr("#") % tr("Label") % tr("Transport Address");
-  message_writer() << boost::format("%2s %-20s %-s") % "" % tr("Auto-Config Token") % tr("Monero Address");
+  message_writer() << boost::format("%2s %-20s %-s") % "" % tr("Auto-Config Token") % tr("XCASH Address");
   for (size_t i = 0; i < signers.size(); ++i)
   {
     const mms::authorized_signer &signer = signers[i];
