@@ -3169,54 +3169,111 @@ void sync_minutes_and_seconds(const int SETTINGS)
   return;
 }
 
-std::string get_current_block_verifiers_list()
+
+
+
+
+std::string simple_wallet::get_current_block_verifiers_list()
 {
-  // structures
-  struct network_data_nodes_list {
-    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
-    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
+  // Structures
+  struct network_data_nodes_list_t {
+    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
+    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
   };
 
   // Variables
-  std::string string = "";
-  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  std::size_t count = 0;
-  int random_network_data_node;
-  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
+  std::string response;                 // holds the last response
+  network_data_nodes_list_t ndn;        // filled by the macro below
+  size_t attempts = 0;
+  int network_data_nodes_tried[NETWORK_DATA_NODES_AMOUNT];
 
   // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\"\r\n}"
 
   // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT; // must populate 'ndn'
 
-  // send the message to a random network data node
-  for (count = 0; string.find("|") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
+  // Initialize tried array to 0
+  std::fill(std::begin(network_data_nodes_tried),
+            std::end(network_data_nodes_tried), 0);
+
+  // Helper to pick an unused random index [0 .. NETWORK_DATA_NODES_AMOUNT-1]
+  auto pick_random_unused_index = [&]() -> int {
+    if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
+    int idx;
+    do {
+      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    } while (network_data_nodes_tried[idx] != 0);
+    network_data_nodes_tried[idx] = 1;
+    return idx;
+  };
+
+  // Try up to N different network data nodes (no repeats)
+  for (attempts = 0; attempts < NETWORK_DATA_NODES_AMOUNT; ++attempts)
   {
-    // check if they need to reset the network_data_nodes_array
-    if (network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT-1] != 0)
+    const int idx = pick_random_unused_index();
+    if (idx < 0) break; // safety
+
+    const std::string& host = ndn.network_data_nodes_IP_address[idx];
+
+    // Send request
+    response = send_and_receive_data(host, MESSAGE);
+
+    // Give the network a tiny breather (keep original pacing)
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // --- Basic transport-level checks (treat "0" and "0|..." as errors) ---
     {
-      std::fill(network_data_nodes_array, network_data_nodes_array+NETWORK_DATA_NODES_AMOUNT, 0);
+      // Skip leading whitespace
+      size_t p = response.find_first_not_of(" \t\r\n");
+      if (p == std::string::npos) {
+        continue; // all whitespace -> error
+      }
+      // "0" or "0|..." from remote = error
+      if (response.compare(p, 1, "0") == 0) {
+        if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) {
+          continue; // try another node
+        }
+      }
+      // If it doesn't look like JSON, skip it
+      if (response[p] != '{') {
+        continue;
+      }
     }
 
-    do
-    {
-      // get a random network data node
-      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
-    } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
+    // --- Validate presence of the expected field ---
+    const std::string KEY = "\"block_verifiers_IP_address_list\"";
+    size_t key_pos = response.find(KEY);
+    if (key_pos == std::string::npos) {
+      // Malformed or unexpected payload; try another node
+      continue;
+    }
 
-    network_data_nodes_array[count] = random_network_data_node;
+    // Quick sanity-check that the value exists and is quoted
+    size_t colon = response.find(':', key_pos + KEY.size());
+    if (colon == std::string::npos) continue;
 
-    // get the block verifiers list from the network data node
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],MESSAGE);
+    size_t quote_open = response.find('"', colon + 1);
+    if (quote_open == std::string::npos) continue;
+    ++quote_open;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    size_t quote_close = response.find('"', quote_open);
+    if (quote_close == std::string::npos) continue;
+
+    // Looks good — return the full response JSON
+    return response;
   }
 
-  return count == NETWORK_DATA_NODES_AMOUNT || string.find("\"block_verifiers_IP_address_list\": \"") == std::string::npos ? "" : string;
+  // If we got here, all attempts failed.
+  return std::string("0");
 
   #undef MESSAGE
 }
+
+
+
+
+
 
 bool simple_wallet::vote(const std::vector<std::string>& args)
 {
@@ -3378,266 +3435,214 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   #undef PARAMETER_AMOUNT
 }
 
+
+
+
+
+
+
 bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 {
   // Variables
-  std::string public_address = "";
+  std::string public_address;
   tools::wallet2::transfer_container transfers;
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
-  std::string string = "";
-  std::string data2 = "";
-  std::string data3 = ""; 
+  std::string response_json;
+  std::string senddata;
+  std::string rbuffer;
+  std::string status_text;
+  size_t reply_count = 0;
+  size_t seed_count = 0;
+  size_t total_delegates = 0;
+  size_t total_delegates_valid_amount = 0;
+  uint64_t current_block_height = 0;
 
-  std::string rbuffer = "";
-  std::string status_text ="";
-  int reply_count = 0;
-
-  std::size_t count; 
-  std::size_t count2;
-  std::size_t count3;
-  std::size_t seed_count;
-  std::size_t total_delegates;
-  std::size_t total_delegates_valid_amount;
-  uint64_t current_block_height;
-
-  // define macros
   #define PARAMETER_AMOUNT 3
 
-  try
-  {
-  // error check
-  if (args.size() != PARAMETER_AMOUNT)
-  {
-    fail_msg_writer() << tr("Failed to register the delegate\nInvalid parameters");
-    return true;
-  }  
-  if (m_wallet->key_on_device())
-  {
-    fail_msg_writer() << tr("Failed to register the delegate\nCommand not supported by HW wallet");
-    return true;
-  }
-  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
-  {
-    fail_msg_writer() << tr("Register request failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot be used.");
-    return true;
-  }
-  if (!try_connect_to_daemon())
-  {
-    fail_msg_writer() << tr("Failed to register the delegate\nFailed to connect to the daemon");
-    return true;
-  }
+  try {
+    // error check
+    if (args.size() != PARAMETER_AMOUNT) {
+      fail_msg_writer() << tr("Failed to register the delegate\nInvalid parameters");
+      return true;
+    }
+    if (m_wallet->key_on_device()) {
+      fail_msg_writer() << tr("Failed to register the delegate\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
+      fail_msg_writer() << tr("Register request failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot be used.");
+      return true;
+    }
+    if (!try_connect_to_daemon()) {
+      fail_msg_writer() << tr("Failed to register the delegate\nFailed to connect to the daemon");
+      return true;
+    }
 
-  // ask for the password
-  SCOPED_WALLET_UNLOCK();
+    // ask for the password
+    SCOPED_WALLET_UNLOCK();
 
-  // get the current block verifiers list
-  if ((string = get_current_block_verifiers_list()) == "0")
-  {
-    fail_msg_writer() << tr("Failed to register the delegate, no response from DPOPS");
-    return true; 
-  }
+    // get the current block verifiers list
+    response_json = get_current_block_verifiers_list();
+    if (response_json == "0") {
+      fail_msg_writer() << tr("Failed to get current block verifiers list: no valid response from any network data node.");
+      return true;
+    }
 
-//  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  total_delegates = std::count(string.begin(), string.end(), '|');
+    // --- Parse IP list safely (your improved messages preserved) ---
+    size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
+    if (start == std::string::npos) {
+      fail_msg_writer() << tr("Failed to register the delegate: missing 'block_verifiers_IP_address_list' field");
+      return true;  // keep CLI loop alive
+    }
 
-  if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT)
-  {
-    total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
-  }
+    // Find ':' then first quote, then closing quote (avoid magic +34 if you like)
+    size_t colon = response_json.find(':', start);
+    if (colon == std::string::npos) {
+      fail_msg_writer() << tr("Failed to register the delegate: malformed IP address list (missing colon)");
+      return true;
+    }
+    start = response_json.find('"', colon + 1);  // opening quote
+    if (start == std::string::npos) {
+      fail_msg_writer() << tr("Failed to register the delegate: malformed IP address list (no opening quote)");
+      return true;
+    }
+    ++start;
+    size_t end = response_json.find('"', start); // closing quote
+    if (end == std::string::npos) {
+      fail_msg_writer() << tr("Failed to register the delegate: malformed IP address list (no closing quote)");
+      return true;
+    }
 
-  if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
-    fail_msg_writer() << tr("Failed to register the delegate, minimum number of delegates not online");
-    return true;
-  }
+    // Extract just the list of IPs
+    std::string ip_list = response_json.substr(start, end - start);
 
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
+    // Split by '|'
+    {
+      std::istringstream ss(ip_list);
+      std::string ip;
+      total_delegates = 0;
+      while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+        if (!ip.empty()) {
+          block_verifiers_IP_address[total_delegates++] = ip;
+        }
+      }
+    }
 
-  // initialize the current_block_verifiers_list struct
-  //for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  //{
-  //  count3 = string.find("|",count2);
-  //  block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-  //  count2 = count3 + 1;
-  //}
+    if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+      total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
+    }
+    if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
+      fail_msg_writer() << tr("Failed to register the delegate, minimum number of delegates not online");
+      return true;
+    }
 
-  size_t start = string.find("\"block_verifiers_IP_address_list\":");
-  if (start == std::string::npos) return false;
+    // Quorum AFTER we know total_delegates
+    total_delegates_valid_amount = static_cast<size_t>(
+      std::ceil(static_cast<double>(total_delegates) *
+                static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
-  // Find the opening quote of the value
-  start = string.find("\"", start + 34);  // move past the key
-  if (start == std::string::npos) return false;
-  start += 1;
+    // get the wallet transfers (ensures wallet data is populated)
+    m_wallet->get_transfers(transfers);
 
-  // Find the closing quote
-  size_t end = string.find("\"", start);
-  if (end == std::string::npos) return false;
-
-  // Extract just the list of IPs
-  std::string ip_list = string.substr(start, end - start);
-
-  // Split by '|'
-  std::istringstream ss(ip_list);
-  std::string ip;
-  total_delegates = 0;
-
-  while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_AMOUNT) {
-    block_verifiers_IP_address[total_delegates++] = ip;
-  }
-
-  // get the wallet transfers
-  m_wallet->get_transfers(transfers);
-
-  // get the wallets public address
-  auto print_address_sub = [this, &transfers, &public_address]() {
-    bool used = std::find_if(
-                    transfers.begin(), transfers.end(),
-                    [this](const tools::wallet2::transfer_details &td) {
-                      return td.m_subaddr_index == cryptonote::subaddress_index{0, 0};
-                    }) != transfers.end();
+    // primary subaddress as public address
     public_address = m_wallet->get_subaddress_as_str({0, 0});
-  };
-  print_address_sub();
-
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
-    return true;
-  }
-
-  // get the current block height
-  current_block_height = m_wallet->get_blockchain_current_height();
-
-  // create the data
-  // data2 = "NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE|" + args[0] + "|" + args[1] + "|" + args[2] + "|" + public_address + "|";
-
-  // 1) Create JSON excluding the signature
-  time_t registration_time = time(NULL);
-  std::ostringstream o;
-  o << "{\r\n"
-    << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
-    << "  \"delegate_name\": \"" << args[0] << "\",\r\n"
-    << "  \"delegate_IP\": \"" << args[1] << "\",\r\n"
-    << "  \"delegate_public_key\": \"" << args[2] << "\",\r\n"
-    << "  \"public_address\": \"" << public_address << "\",\r\n"
-    << "  \"registration_timestamp\": " << registration_time << "\r\n"
-    << "}";
-
-  std::string unsigned_json = o.str();
-
-  // 2) Sign the full JSON
-  std::string signature = m_wallet->sign(
-      unsigned_json,
-      tools::wallet2::sign_with_spend_key,
-      {0, 0});
-
-  // 3) Parse unsigned_json to locate the closing brace position
-  auto insert_pos = unsigned_json.rfind('}');
-  if (insert_pos == std::string::npos) {
-    throw std::runtime_error("Malformed JSON: no closing brace");
-  }
-
-  // 4) Construct final JSON with signature
-  std::ostringstream final;
-  final << unsigned_json.substr(0, insert_pos);
-  final << ",\"signature\": \"" << signature << "\"}";  // add signature and close object
-
-  senddata = final.str();
-
-  INITIALIZE_NETWORK_DATA_NODES_LIST;
-
-  int seed_count = 0;
-  for (int count = 0; count < total_delegates; ++count) {
-    if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
-      seed_count++;
+    if (public_address.length() != XCASH_WALLET_LENGTH ||
+        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+      return true;
     }
-  }
 
-  if (seed_count < (NETWORK_DATA_NODES_AMOUNT -1)) {
-    fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
-    return true; 
-  }
+    // current block height (kept; useful for future logging)
+    current_block_height = m_wallet->get_blockchain_current_height();
+    (void)current_block_height;
 
+    // Build unsigned JSON
+    time_t registration_time = time(NULL);
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
+      << "  \"delegate_name\": \"" << args[0] << "\",\r\n"
+      << "  \"delegate_IP\": \"" << args[1] << "\",\r\n"
+      << "  \"delegate_public_key\": \"" << args[2] << "\",\r\n"
+      << "  \"public_address\": \"" << public_address << "\",\r\n"
+      << "  \"registration_timestamp\": " << registration_time << "\r\n"
+      << "}";
 
-  bool ok;
-  for (count = 0; count < total_delegates; ++count) {
-    const char *host = block_verifiers_IP_address[count];
-    rbuffer = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-    ok = false;
-    ok = parse_dpops_response(rbuffer, status_text);
-    std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
-    if (ok) {
-      ++reply_count;
+    std::string unsigned_json = o.str();
+
+    // Sign the full JSON
+    std::string signature = m_wallet->sign(
+        unsigned_json,
+        tools::wallet2::sign_with_spend_key,
+        {0, 0});
+
+    // Insert signature into JSON
+    auto insert_pos = unsigned_json.rfind('}');
+    if (insert_pos == std::string::npos) {
+      fail_msg_writer() << tr("Failed to register the delegate: malformed JSON");
+      return true;
     }
-  }
+    std::ostringstream final;
+    final << unsigned_json.substr(0, insert_pos)
+          << ",\"signature\": \"" << signature << "\"}";
+    senddata = final.str();
 
-  bool local_ok = false;
-  rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-  local_ok = parse_dpops_response(rbuffer, status_text);
-  if (local_ok) {
-    ++reply_count;
-  }
+    // Ensure enough seed delegates are online
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
 
-  // Decide success:
-  // If you require ALL delegates + self to succeed:
-  const int min_required = total_delegates;  // adjust if you later want a quorum
+    seed_count = 0;
+    for (size_t i = 0; i < total_delegates; ++i) {
+      if (!block_verifiers_IP_address[i].empty() &&
+          std::find(network_data_nodes_list.begin(),
+                    network_data_nodes_list.end(),
+                    block_verifiers_IP_address[i]) != network_data_nodes_list.end()) {
+        ++seed_count;
+      }
+    }
 
-  if (reply_count >= total_delegates_valid_amount) {
-    message_writer(console_color_green, false) << "The delegate has been registered successfully";
-  } else {
-    // Summary
-    fail_msg_writer() << tr("Delegate registration encountered errors");
-    fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
-    fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
+    if (seed_count < (NETWORK_DATA_NODES_AMOUNT - 1)) {
+      fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
+      return true; 
+    }
 
-    // If you still want to exit early on error state:
-    return true;
-  }
+    // Send to all online delegates
+    for (size_t i = 0; i < total_delegates; ++i) {
+      if (block_verifiers_IP_address[i].empty()) continue;
+      const char *host = block_verifiers_IP_address[i].c_str();
+      rbuffer = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
+      bool ok = parse_dpops_response(rbuffer, status_text);
+      std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
+      if (ok) {
+        ++reply_count;
+      }
+    }
 
+    // Also try local node (not counted in quorum, just informational)
+    bool local_ok = false;
+    rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+    local_ok = parse_dpops_response(rbuffer, status_text);
 
-
-
-  std::cout << "[DEBUG] Entering Loop" << std::endl;     
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
-    data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-
-
-
-
-    std::cout << "[DEBUG]data3: " << data3 << std::endl; 
-    
-
-    if (data3 == "Registered the delegate") {
-      count3++;
+    if (reply_count >= total_delegates_valid_amount) {
+      message_writer(console_color_green, false) << "The delegate has been registered successfully";
     } else {
-      if (count3 == 0) {
-        fail_msg_writer() << tr("Failed to register the delegate");
-      } else {
-        fail_msg_writer() << tr("Delegate registration process encountered errors: not all delegates responded successfully");
-      }
-      if (!data3.empty()) {
-        fail_msg_writer() << data3;
-      }
-      fail_msg_writer() << tr("Failed at node: ") << block_verifiers_IP_address[count];
+      fail_msg_writer() << tr("Delegate registration encountered errors");
+      fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
+      fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
       return true;
     }
   }
-
-  // send to self
-  data3 = send_and_receive_data("127.0.0.1", data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-  if (data3 != "Registered the delegate") {
-    fail_msg_writer() << tr("Failed to register the delegate on local node");
+  catch (const std::exception& e) {
+    fail_msg_writer() << tr("Failed to register the delegate: ") << e.what();
+    return true;
+  }
+  catch (...) {
+    fail_msg_writer() << tr("Failed to register the delegate");
     return true;
   }
 
-  message_writer(console_color_green, false) << "The delegate has been registered successfully";
-
-  } catch (...) {
-    fail_msg_writer() << tr("Failed to register the delegate");
-  }
-
   return true;
-
-#undef PARAMETER_AMOUNT
+  #undef PARAMETER_AMOUNT
 }
 
 bool simple_wallet::delegate_update(const std::vector<std::string>& args)
@@ -3742,7 +3747,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     sync_minutes_and_seconds(0);
 
     // get the current block verifiers list
-    if ((string = get_current_block_verifiers_list()) == "")
+    if ((string = get_current_block_verifiers_list()) == "0")
     {
       fail_msg_writer() << tr("Failed to update the delegates information\n");
       return true; 
