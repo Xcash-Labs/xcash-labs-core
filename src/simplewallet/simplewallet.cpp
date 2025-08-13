@@ -3131,9 +3131,7 @@ bool parse_dpops_response(const std::string &rbuffer,
   return true;
 }
 
-
-
-
+// Might not need this
 
 void sync_minutes_and_seconds(const int SETTINGS)
 {
@@ -3170,10 +3168,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
 }
 
 
-
-
-
-std::string simple_wallet::get_current_block_verifiers_list()
+std::string get_current_block_verifiers_list()
 {
   // Structures
   struct network_data_nodes_list_t {
