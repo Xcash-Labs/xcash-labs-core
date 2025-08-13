@@ -3170,29 +3170,27 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
 std::string get_current_block_verifiers_list()
 {
-  // Structures
-  struct network_data_nodes_list_t {
+  // The macro expects this exact struct name + variable name
+  struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
-  };
+  } network_data_nodes_list;
 
   // Variables
-  std::string response;                 // holds the last response
-  network_data_nodes_list_t ndn;        // filled by the macro below
+  std::string response;
   size_t attempts = 0;
   int network_data_nodes_tried[NETWORK_DATA_NODES_AMOUNT];
 
-  // define macros
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\"\r\n}"
 
-  // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT; // must populate 'ndn'
+  // Populate seed list via macro (relies on the variable name above)
+  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
-  // Initialize tried array to 0
+  // mark all as untried
   std::fill(std::begin(network_data_nodes_tried),
             std::end(network_data_nodes_tried), 0);
 
-  // Helper to pick an unused random index [0 .. NETWORK_DATA_NODES_AMOUNT-1]
+  // Pick unused random index [0..N-1]
   auto pick_random_unused_index = [&]() -> int {
     if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
     int idx;
@@ -3203,63 +3201,51 @@ std::string get_current_block_verifiers_list()
     return idx;
   };
 
-  // Try up to N different network data nodes (no repeats)
   for (attempts = 0; attempts < NETWORK_DATA_NODES_AMOUNT; ++attempts)
   {
     const int idx = pick_random_unused_index();
-    if (idx < 0) break; // safety
+    if (idx < 0) return "0"; // no available seeds
 
-    const std::string& host = ndn.network_data_nodes_IP_address[idx];
+    const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
 
-    // Send request
     response = send_and_receive_data(host, MESSAGE);
-
-    // Give the network a tiny breather (keep original pacing)
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    // --- Basic transport-level checks (treat "0" and "0|..." as errors) ---
-    {
-      // Skip leading whitespace
-      size_t p = response.find_first_not_of(" \t\r\n");
-      if (p == std::string::npos) {
-        continue; // all whitespace -> error
-      }
-      // "0" or "0|..." from remote = error
-      if (response.compare(p, 1, "0") == 0) {
-        if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) {
-          continue; // try another node
-        }
-      }
-      // If it doesn't look like JSON, skip it
-      if (response[p] != '{') {
-        continue;
+    // --- Transport/error checks: fail immediately on any error ---
+    size_t p = response.find_first_not_of(" \t\r\n");
+    if (p == std::string::npos) return "0";  // all whitespace
+
+    // "0" or "0|..." -> explicit error from remote
+    if (response.compare(p, 1, "0") == 0) {
+      if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) {
+        return "0";
       }
     }
 
-    // --- Validate presence of the expected field ---
+    // Must look like JSON
+    if (response[p] != '{') return "0";
+
+    // --- Must have the expected field, with a quoted value ---
     const std::string KEY = "\"block_verifiers_IP_address_list\"";
     size_t key_pos = response.find(KEY);
-    if (key_pos == std::string::npos) {
-      // Malformed or unexpected payload; try another node
-      continue;
-    }
+    if (key_pos == std::string::npos) return "0";
 
-    // Quick sanity-check that the value exists and is quoted
     size_t colon = response.find(':', key_pos + KEY.size());
-    if (colon == std::string::npos) continue;
+    if (colon == std::string::npos) return "0";
 
     size_t quote_open = response.find('"', colon + 1);
-    if (quote_open == std::string::npos) continue;
+    if (quote_open == std::string::npos) return "0";
     ++quote_open;
 
     size_t quote_close = response.find('"', quote_open);
-    if (quote_close == std::string::npos) continue;
+    if (quote_close == std::string::npos) return "0";
 
-    // Looks good — return the full response JSON
+    // Success: return the JSON
     return response;
   }
 
-  // If we got here, all attempts failed.
+  // Shouldn't reach here with the immediate returns above,
+  // but keep a guard return.
   return std::string("0");
 
   #undef MESSAGE
