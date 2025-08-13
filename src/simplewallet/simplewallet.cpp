@@ -3171,7 +3171,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
 
 
-std::string get_current_block_verifiers_list_NEW(const std::string& public_address)
+std::string get_current_block_verifiers_list()
 {
   // The macro expects this exact struct name + variable name
   struct network_data_nodes_list {
@@ -3190,6 +3190,17 @@ std::string get_current_block_verifiers_list_NEW(const std::string& public_addre
   const size_t MIN_FAILURES_BEFORE_GIVEUP =
       (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
 
+  // get the wallet transfers (ensures wallet data is populated)
+  m_wallet->get_transfers(transfers);
+
+  // primary subaddress as public address
+  public_address = m_wallet->get_subaddress_as_str({0, 0});
+  if (public_address.length() != XCASH_WALLET_LENGTH ||
+      public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+    return true;
+  }
+
   std::ostringstream o;
   o << "{\r\n"
     << "  \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n"
@@ -3207,8 +3218,8 @@ std::string get_current_block_verifiers_list_NEW(const std::string& public_addre
   // Insert signature into JSON
   auto insert_pos = unsigned_json.rfind('}');
   if (insert_pos == std::string::npos) {
-      fail_msg_writer() << tr("Failed to register the delegate: malformed JSON");
-      return true;
+    MDEBUG("Failed to register the delegate: malformed JSON");
+    return std::string("0");
   }
   std::ostringstream final;
   final << unsigned_json.substr(0, insert_pos)
@@ -3290,110 +3301,10 @@ std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 
   // No valid response after exhausting nodes (or not enough nodes)
-  return std::string("0");
-
-  #undef MESSAGE
+  return std::string("0"); 
 }
 
-std::string get_current_block_verifiers_list()
-{
-  // The macro expects this exact struct name + variable name
-  struct network_data_nodes_list {
-    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
-    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
-  } network_data_nodes_list;
 
-  // Variables
-  std::string response;
-  size_t attempts = 0;
-  size_t failures = 0;
-  int network_data_nodes_tried[NETWORK_DATA_NODES_AMOUNT];
-
-  // Try at least two nodes (or fewer if there aren't two configured)
-  const size_t MIN_FAILURES_BEFORE_GIVEUP =
-      (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
-
-  #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\"\r\n}"
-
-  // Populate seed list via macro (relies on the variable name above)
-  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
-  // mark all as untried
-  std::fill(std::begin(network_data_nodes_tried),
-            std::end(network_data_nodes_tried), 0);
-
-  // Pick unused random index [0..N-1]
-  auto pick_random_unused_index = [&]() -> int {
-    if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
-    int idx;
-    do {
-      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-    } while (network_data_nodes_tried[idx] != 0);
-    network_data_nodes_tried[idx] = 1;
-    return idx;
-  };
-
-  for (attempts = 0; attempts < NETWORK_DATA_NODES_AMOUNT; ++attempts)
-  {
-    const int idx = pick_random_unused_index();
-    if (idx < 0) break; // no more unique nodes to try
-
-    const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-
-//    response = send_and_receive_data(host, MESSAGE);
-    response = send_and_receive_data("46.202.89.18", MESSAGE);
-
-std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    // (Optional) log the raw response
-    fail_msg_writer() << response;
-
-    // ---- Validate response ----
-    bool ok = true;
-
-    size_t p = response.find_first_not_of(" \t\r\n");
-    if (p == std::string::npos) ok = false;                      // all whitespace
-    else if (response.compare(p, 1, "0") == 0) {                 // "0" or "0|..."
-      if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) ok = false;
-    }
-    else if (response[p] != '{') ok = false;                     // must look like JSON
-    else {
-      const std::string KEY = "\"block_verifiers_IP_address_list\"";
-      size_t key_pos = response.find(KEY);
-      if (key_pos == std::string::npos) ok = false;
-      else {
-        size_t colon = response.find(':', key_pos + KEY.size());
-        if (colon == std::string::npos) ok = false;
-        else {
-          size_t q1 = response.find('"', colon + 1);
-          if (q1 == std::string::npos) ok = false;
-          else {
-            ++q1;
-            size_t q2 = response.find('"', q1);
-            if (q2 == std::string::npos) ok = false;
-          }
-        }
-      }
-    }
-
-    if (ok) {
-      return response; // success on this node
-    }
-
-    // failure on this node
-    ++failures;
-    if (failures >= MIN_FAILURES_BEFORE_GIVEUP) {
-      return std::string("0"); // give up after at least two failed nodes
-    }
-
-    // otherwise, try another node
-  }
-
-  // No valid response after exhausting nodes (or not enough nodes)
-  return std::string("0");
-
-  #undef MESSAGE
-}
 
 
 
@@ -3607,27 +3518,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // ask for the password
     SCOPED_WALLET_UNLOCK();
 
-    // get the wallet transfers (ensures wallet data is populated)
-    m_wallet->get_transfers(transfers);
-
-    // primary subaddress as public address
-    public_address = m_wallet->get_subaddress_as_str({0, 0});
-    if (public_address.length() != XCASH_WALLET_LENGTH ||
-        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
-      return true;
-    }
-
-
-
-
-
-
-
-
-
     // get the current block verifiers list
-    response_json = get_current_block_verifiers_list_NEW(public_address);
+    response_json = get_current_block_verifiers_list();
     if (response_json == "0") {
       fail_msg_writer() << tr("Failed to get current block verifiers list: no valid response from any network data node.");
       return true;
@@ -3686,23 +3578,16 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       std::ceil(static_cast<double>(total_delegates) *
                 static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
-
-
-
-
-
-
-// move to above
     // get the wallet transfers (ensures wallet data is populated)
-//    m_wallet->get_transfers(transfers);
+    m_wallet->get_transfers(transfers);
 
     // primary subaddress as public address
-//    public_address = m_wallet->get_subaddress_as_str({0, 0});
-//    if (public_address.length() != XCASH_WALLET_LENGTH ||
-//        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-//      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
-//      return true;
-//    }
+    public_address = m_wallet->get_subaddress_as_str({0, 0});
+    if (public_address.length() != XCASH_WALLET_LENGTH ||
+        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+      return true;
+    }
 
     // current block height (kept; useful for future logging)
     current_block_height = m_wallet->get_blockchain_current_height();
