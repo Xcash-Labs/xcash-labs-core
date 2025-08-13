@@ -3179,7 +3179,12 @@ std::string get_current_block_verifiers_list()
   // Variables
   std::string response;
   size_t attempts = 0;
+  size_t failures = 0;
   int network_data_nodes_tried[NETWORK_DATA_NODES_AMOUNT];
+
+  // Try at least two nodes (or fewer if there aren't two configured)
+  const size_t MIN_FAILURES_BEFORE_GIVEUP =
+      (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
 
   #define MESSAGE "{\r\n \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\"\r\n}"
 
@@ -3204,53 +3209,65 @@ std::string get_current_block_verifiers_list()
   for (attempts = 0; attempts < NETWORK_DATA_NODES_AMOUNT; ++attempts)
   {
     const int idx = pick_random_unused_index();
-    if (idx < 0) return "0"; // no available seeds
+    if (idx < 0) break; // no more unique nodes to try
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
 
-    response = send_and_receive_data(host, MESSAGE);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    fail_msg_writer() << response;  
+//    response = send_and_receive_data(host, MESSAGE);
+    response = send_and_receive_data("46.202.89.18", MESSAGE);
 
-    // --- Transport/error checks: fail immediately on any error ---
+std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // (Optional) log the raw response
+    fail_msg_writer() << response;
+
+    // ---- Validate response ----
+    bool ok = true;
+
     size_t p = response.find_first_not_of(" \t\r\n");
-    if (p == std::string::npos) return "0";  // all whitespace
-
-    // "0" or "0|..." -> explicit error from remote
-    if (response.compare(p, 1, "0") == 0) {
-      if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) {
-        return "0";
+    if (p == std::string::npos) ok = false;                      // all whitespace
+    else if (response.compare(p, 1, "0") == 0) {                 // "0" or "0|..."
+      if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) ok = false;
+    }
+    else if (response[p] != '{') ok = false;                     // must look like JSON
+    else {
+      const std::string KEY = "\"block_verifiers_IP_address_list\"";
+      size_t key_pos = response.find(KEY);
+      if (key_pos == std::string::npos) ok = false;
+      else {
+        size_t colon = response.find(':', key_pos + KEY.size());
+        if (colon == std::string::npos) ok = false;
+        else {
+          size_t q1 = response.find('"', colon + 1);
+          if (q1 == std::string::npos) ok = false;
+          else {
+            ++q1;
+            size_t q2 = response.find('"', q1);
+            if (q2 == std::string::npos) ok = false;
+          }
+        }
       }
     }
 
-    // Must look like JSON
-    if (response[p] != '{') return "0";
+    if (ok) {
+      return response; // success on this node
+    }
 
-    // --- Must have the expected field, with a quoted value ---
-    const std::string KEY = "\"block_verifiers_IP_address_list\"";
-    size_t key_pos = response.find(KEY);
-    if (key_pos == std::string::npos) return "0";
+    // failure on this node
+    ++failures;
+    if (failures >= MIN_FAILURES_BEFORE_GIVEUP) {
+      return std::string("0"); // give up after at least two failed nodes
+    }
 
-    size_t colon = response.find(':', key_pos + KEY.size());
-    if (colon == std::string::npos) return "0";
-
-    size_t quote_open = response.find('"', colon + 1);
-    if (quote_open == std::string::npos) return "0";
-    ++quote_open;
-
-    size_t quote_close = response.find('"', quote_open);
-    if (quote_close == std::string::npos) return "0";
-
-    // Success: return the JSON
-    return response;
+    // otherwise, try another node
   }
 
-  // Shouldn't reach here with the immediate returns above,
-  // but keep a guard return.
+  // No valid response after exhausting nodes (or not enough nodes)
   return std::string("0");
 
   #undef MESSAGE
 }
+
 
 
 
