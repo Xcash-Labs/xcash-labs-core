@@ -3210,6 +3210,7 @@ std::string get_current_block_verifiers_list()
 
     response = send_and_receive_data(host, MESSAGE);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    fail_msg_writer() << tr(response)
 
     // --- Transport/error checks: fail immediately on any error ---
     size_t p = response.find_first_not_of(" \t\r\n");
