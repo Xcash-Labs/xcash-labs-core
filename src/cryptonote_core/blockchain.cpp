@@ -4031,7 +4031,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   std::string json = o.str();
   std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-  if (!rbuffer.empty() && rbuffer[0] == '0') {
+  if ((rbuffer.size() == 1 && rbuffer[0] == '0') || rbuffer.empty()) {
     MWARNING("Network issue with DPOPS process");
     return false;
   }
@@ -4053,10 +4053,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     status = std::stoi(parts[0]);
     status_text = parts[1];
     vote_hash_text = parts[2];
-
-//    std::cout << "[DEBUG] status: " << status << std::endl;
-//    std::cout << "[DEBUG] status_text: " << status_text << std::endl;
-//    std::cout << "[DEBUG] vote_hash_text: " << vote_hash_text << std::endl;
 
     if (vote_hash_text != vote_hash_str) {
       MWARNING("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);

@@ -3078,6 +3078,63 @@ bool simple_wallet::set_enable_multisig(const std::vector<std::string> &args/* =
 // jed
 
 
+static inline void rstrip_chars(std::string &s, const char *chars = " \r\n|") {
+  while (!s.empty() && std::strchr(chars, s.back())) s.pop_back();
+}
+
+// Accepts: "status|status_text" (trailing '|' / whitespace tolerated)
+// Returns true iff status == 1. Logs MERROR on any failure.
+bool parse_dpops_response(const std::string &rbuffer,
+                          std::string &out_status_text)
+{
+  out_status_text.clear();
+
+  if (rbuffer.empty()) {
+    MERROR("DPOPS response parse error: empty buffer");
+    return false;
+  }
+
+  // Legacy network-error sentinel
+  if (rbuffer.size() == 1 && rbuffer[0] == '0') {
+    MERROR("DPOPS response: network_error sentinel ('0')");
+    return false;
+  }
+
+  const size_t p1 = rbuffer.find('|');
+  if (p1 == std::string::npos) {
+    MERROR("DPOPS response parse error: expected 'status|status_text', got: " << rbuffer);
+    return false;
+  }
+
+  std::string status_str = rbuffer.substr(0, p1);
+  std::string rest       = rbuffer.substr(p1 + 1);
+
+  rstrip_chars(status_str);
+  rstrip_chars(rest);           // trims trailing '|', CR/LF, spaces
+
+  // Ignore any extra fields after status_text if present
+  const size_t extra = rest.find('|');
+  out_status_text = (extra == std::string::npos) ? rest : rest.substr(0, extra);
+  rstrip_chars(out_status_text);
+
+  int st = 0;
+  try { st = std::stoi(status_str); }
+  catch (...) {
+    MERROR("DPOPS response parse error: non-integer status '" << status_str << "'");
+    return false;
+  }
+
+  if (st != 1) {
+    MERROR("DPOPS response status != 1 (status=" << st << ", text='" << out_status_text << "')");
+    return false;
+  }
+  return true;
+}
+
+
+
+
+
 void sync_minutes_and_seconds(const int SETTINGS)
 {
   // Variables
@@ -3330,6 +3387,11 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   std::string string = "";
   std::string data2 = "";
   std::string data3 = ""; 
+
+  std::string rbuffer = "";
+  std::string status_text ="";
+  int reply_count = 0;
+
   std::size_t count; 
   std::size_t count2;
   std::size_t count3;
@@ -3478,7 +3540,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   final << unsigned_json.substr(0, insert_pos);
   final << ",\"signature\": \"" << signature << "\"}";  // add signature and close object
 
-  data2 = final.str();
+  senddata = final.str();
 
   INITIALIZE_NETWORK_DATA_NODES_LIST;
 
@@ -3494,9 +3556,53 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     return true; 
   }
 
+
+  bool ok;
+  for (count = 0; count < total_delegates; ++count) {
+    const char *host = block_verifiers_IP_address[count];
+    rbuffer = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+    ok = false;
+    ok = parse_dpops_response(rbuffer, status_text);
+    std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
+    if (ok) {
+      ++reply_count;
+    }
+  }
+
+  bool local_ok = false;
+  rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+  local_ok = parse_dpops_response(rbuffer, status_text);
+  if (local_ok) {
+    ++reply_count;
+  }
+
+  // Decide success:
+  // If you require ALL delegates + self to succeed:
+  const int min_required = total_delegates;  // adjust if you later want a quorum
+
+  if (reply_count >= total_delegates_valid_amount) {
+    message_writer(console_color_green, false) << "The delegate has been registered successfully";
+  } else {
+    // Summary
+    fail_msg_writer() << tr("Delegate registration encountered errors");
+    fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
+    fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
+
+    // If you still want to exit early on error state:
+    return true;
+  }
+
+
+
+
+
   std::cout << "[DEBUG] Entering Loop" << std::endl;     
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
     data3 = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+
+
+
+
     std::cout << "[DEBUG]data3: " << data3 << std::endl; 
     
 
