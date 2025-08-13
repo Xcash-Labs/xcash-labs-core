@@ -260,7 +260,6 @@ namespace cryptonote
     bool public_nodes(const std::vector<std::string>& args);
     bool welcome(const std::vector<std::string>& args);
     bool version(const std::vector<std::string>& args);
-    std::string simple_wallet::get_current_block_verifiers_list();
     bool vote(const std::vector<std::string>& args);
     bool delegate_register(const std::vector<std::string>& args);
     bool delegate_update(const std::vector<std::string>& args);
