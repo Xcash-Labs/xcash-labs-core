@@ -3199,7 +3199,6 @@ std::string get_current_block_verifiers_list()
   if (public_address.length() != XCASH_WALLET_LENGTH ||
       public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
     MDEBUG("Failed to register the delegate, Invalid public address. Only XCA addresses are allowed.");
-    return true;
   }
 
   std::ostringstream o;
