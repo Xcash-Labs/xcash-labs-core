@@ -3172,7 +3172,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
 
 
-std::string simple_wallet::get_current_block_verifiers_list()
+std::string get_current_block_verifiers_list()
 {
   // The macro expects this exact struct name + variable name
   struct network_data_nodes_list {
@@ -3198,7 +3198,7 @@ std::string simple_wallet::get_current_block_verifiers_list()
   public_address = m_wallet->get_subaddress_as_str({0, 0});
   if (public_address.length() != XCASH_WALLET_LENGTH ||
       public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-    fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
+    MDEBUG("Failed to register the delegate, Invalid public address. Only XCA addresses are allowed.");
     return true;
   }
 
