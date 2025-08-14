@@ -3230,10 +3230,7 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
     if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-
-    // Send
-//    std::string response = send_and_receive_data(host, senddata);
-    std::string response = send_and_receive_data("46.202.89.18", senddata);
+    std::string response = send_and_receive_data(host, senddata);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // ---- Validate response ----
@@ -3612,7 +3609,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       rbuffer = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
       bool ok = parse_dpops_response(rbuffer, status_text);
-      std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
+      // std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
       if (ok) {
         ++reply_count;
       }
@@ -3622,6 +3619,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     bool local_ok = false;
     rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
     local_ok = parse_dpops_response(rbuffer, status_text);
+    std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
 
     if (reply_count >= total_delegates_valid_amount) {
       message_writer(console_color_green, false) << "The delegate has been registered successfully";
