@@ -3239,11 +3239,11 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
     // ---- Validate response ----
     bool ok = true;
     size_t p = response.find_first_not_of(" \t\r\n");
-    if (p == std::string::npos) ok = false;                                  // whitespace only
-    else if (response.compare(p, 1, "0") == 0) {                              // "0" or "0|..."
+    if (p == std::string::npos) ok = false;
+    else if (response.compare(p, 1, "0") == 0) {
       if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) ok = false;
     }
-    else if (response[p] != '{') ok = false;                                  // must look like JSON
+    else if (response[p] != '{') ok = false;
     else {
       const std::string KEY = "\"block_verifiers_IP_address_list\"";
       size_t key_pos = response.find(KEY);
