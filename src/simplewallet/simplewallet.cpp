@@ -3191,17 +3191,7 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list() {
   const size_t MIN_FAILURES_BEFORE_GIVEUP =
       (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
 
-  // get the wallet transfers (ensures wallet data is populated)
-  m_wallet->get_transfers(transfers);
-
-  // primary subaddress as public address
-  public_address = m_wallet->get_subaddress_as_str({0, 0});
-  if (public_address.length() != XCASH_WALLET_LENGTH ||
-      public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-    MDEBUG("Failed to register the delegate, Invalid public address. Only XCA addresses are allowed.");
-  }
-
-  std::ostringstream o;
+      std::ostringstream o;
   o << "{\r\n"
     << "  \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n"
     << "  \"public_address\": \"" << public_address << "\"\r\n"
@@ -3253,15 +3243,16 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list() {
 
 //    response = send_and_receive_data(host, senddata);
     response = send_and_receive_data("46.202.89.18", senddata);
-
-std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // (Optional) log the raw response
     fail_msg_writer() << response;
 
+
+
+
     // ---- Validate response ----
     bool ok = true;
-
     size_t p = response.find_first_not_of(" \t\r\n");
     if (p == std::string::npos) ok = false;                      // all whitespace
     else if (response.compare(p, 1, "0") == 0) {                 // "0" or "0|..."
@@ -3303,6 +3294,7 @@ std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // No valid response after exhausting nodes (or not enough nodes)
   return std::string("0"); 
 }
+
 
 
 
