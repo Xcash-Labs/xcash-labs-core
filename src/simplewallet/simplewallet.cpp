@@ -3172,93 +3172,78 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
 
 
-std::string cryptonote::simple_wallet::get_current_block_verifiers_list() {
-  
-  // The macro expects this exact struct name + variable name
+
+
+
+
+
+std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
+{
+  // The macro expects this exact struct + variable name
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
   } network_data_nodes_list;
 
-  // Variables
-  std::string senddata;
-  std::string response;
-  size_t attempts = 0;
-  size_t failures = 0;
-  int network_data_nodes_tried[NETWORK_DATA_NODES_AMOUNT];
-
-  // Try at least two nodes (or fewer if there aren't two configured)
-  const size_t MIN_FAILURES_BEFORE_GIVEUP =
-      (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
-
-      std::ostringstream o;
+  // Build unsigned JSON with the wallet’s primary subaddress (no trailing comma!)
+  const std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
+  std::ostringstream o;
   o << "{\r\n"
     << "  \"message_settings\": \"NODE_TO_NETWORK_DATA_NODES_GET_CURRENT_BLOCK_VERIFIERS_LIST\",\r\n"
     << "  \"public_address\": \"" << public_address << "\"\r\n"
     << "}";
+  const std::string unsigned_json = o.str();
 
-  std::string unsigned_json = o.str();
-
-  // Sign the full JSON
-  std::string signature = m_wallet->sign(
+  // If this might run while locked, ensure caller has SCOPED_WALLET_UNLOCK() before calling.
+  const std::string signature = m_wallet->sign(
       unsigned_json,
       tools::wallet2::sign_with_spend_key,
       {0, 0});
 
-  // Insert signature into JSON
-  auto insert_pos = unsigned_json.rfind('}');
+  // Insert "signature" before the final '}'
+  const auto insert_pos = unsigned_json.rfind('}');
   if (insert_pos == std::string::npos) {
-    MDEBUG("Failed to register the delegate: malformed JSON");
-    return std::string("0");
+    return "0";
   }
-  std::ostringstream final;
-  final << unsigned_json.substr(0, insert_pos)
-        << ",\"signature\": \"" << signature << "\"}";
-  senddata = final.str();
+  std::ostringstream out;
+  out << unsigned_json.substr(0, insert_pos)
+      << ",\"signature\":\"" << signature << "\"}";
+  const std::string senddata = out.str();
 
-  // Populate seed list via macro (relies on the variable name above)
+  // Seed list (macro fills the struct above — variable name must match)
   INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
 
-  // mark all as untried
-  std::fill(std::begin(network_data_nodes_tried),
-            std::end(network_data_nodes_tried), 0);
-
-  // Pick unused random index [0..N-1]
-  auto pick_random_unused_index = [&]() -> int {
+  // Try at least two different nodes before giving up (if available)
+  size_t attempts = 0, failures = 0;
+  int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
+  auto pick = [&]() -> int {
     if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
     int idx;
-    do {
-      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-    } while (network_data_nodes_tried[idx] != 0);
-    network_data_nodes_tried[idx] = 1;
+    do { idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT); } while (tried[idx]);
+    tried[idx] = 1;
     return idx;
   };
+  const size_t MIN_FAILURES = (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
 
-  for (attempts = 0; attempts < NETWORK_DATA_NODES_AMOUNT; ++attempts)
-  {
-    const int idx = pick_random_unused_index();
-    if (idx < 0) break; // no more unique nodes to try
+  for (attempts = 0; attempts < NETWORK_DATA_NODES_AMOUNT; ++attempts) {
+    int idx = pick();
+    if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
 
-//    response = send_and_receive_data(host, senddata);
-    response = send_and_receive_data("46.202.89.18", senddata);
+    // Send
+//    std::string response = send_and_receive_data(host, senddata);
+    std::string response = send_and_receive_data("46.202.89.18", senddata);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
-    // (Optional) log the raw response
-    fail_msg_writer() << response;
-
-
-
 
     // ---- Validate response ----
     bool ok = true;
     size_t p = response.find_first_not_of(" \t\r\n");
-    if (p == std::string::npos) ok = false;                      // all whitespace
-    else if (response.compare(p, 1, "0") == 0) {                 // "0" or "0|..."
+    if (p == std::string::npos) ok = false;                                  // whitespace only
+    else if (response.compare(p, 1, "0") == 0) {                              // "0" or "0|..."
       if (p + 1 == response.size() || response.compare(p, 2, "0|") == 0) ok = false;
     }
-    else if (response[p] != '{') ok = false;                     // must look like JSON
+    else if (response[p] != '{') ok = false;                                  // must look like JSON
     else {
       const std::string KEY = "\"block_verifiers_IP_address_list\"";
       size_t key_pos = response.find(KEY);
@@ -3278,27 +3263,13 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list() {
       }
     }
 
-    if (ok) {
-      return response; // success on this node
-    }
+    if (ok) return response;
 
-    // failure on this node
-    ++failures;
-    if (failures >= MIN_FAILURES_BEFORE_GIVEUP) {
-      return std::string("0"); // give up after at least two failed nodes
-    }
-
-    // otherwise, try another node
+    if (++failures >= MIN_FAILURES) return "0";  // give up after 2 bad nodes
   }
 
-  // No valid response after exhausting nodes (or not enough nodes)
-  return std::string("0"); 
+  return "0";
 }
-
-
-
-
-
 
 
 
