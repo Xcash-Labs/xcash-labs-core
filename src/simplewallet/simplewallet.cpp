@@ -3615,27 +3615,11 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
     }
 
-    // Also try local node (not counted in quorum but must be successful)
-    bool local_ok = false;
-    rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-    status_text.clear();
-    local_ok = parse_dpops_response(rbuffer, status_text);
-    std::cout << "[DEBUG] host=localhost rbuffer=" << rbuffer << std::endl;
-
-    if (reply_count >= total_delegates_valid_amount and local_ok) {
-      message_writer(console_color_green, false) << "The delegate has been registered successfully";
+    if (reply_count >= total_delegates_valid_amount) {
+      message_writer(console_color_green, false) << "The delegate has been registered successfully./nTo Complete the registration, restart the delegate to ";
     } else {
       fail_msg_writer() << tr("Delegate registration encountered errors");
       fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
-      fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
-      if (!local_ok) {
-        if (status_text.empty()) {
-          fail_msg_writer() << tr("Possible network issue with DPOPS process");
-        } else {
-          fail_msg_writer() << status_text;
-        }
-      }
-
       return true;
     }
   }
