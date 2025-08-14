@@ -3172,8 +3172,8 @@ void sync_minutes_and_seconds(const int SETTINGS)
 
 
 
-std::string get_current_block_verifiers_list()
-{
+std::string cryptonote::simple_wallet::get_current_block_verifiers_list() {
+  
   // The macro expects this exact struct name + variable name
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];

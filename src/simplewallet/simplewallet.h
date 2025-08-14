@@ -84,6 +84,7 @@ namespace cryptonote
     bool process_command(const std::vector<std::string> &args);
     std::string get_commands_str();
     std::string get_command_usage(const std::vector<std::string> &args);
+    std::string get_current_block_verifiers_list();
   private:
 
     enum ResetType { ResetNone, ResetSoft, ResetHard, ResetSoftKeepKI };
