@@ -3616,7 +3616,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     }
 
     if (reply_count >= total_delegates_valid_amount) {
-      message_writer(console_color_green, false) << "The delegate has been registered successfully./nTo Complete the registration, restart the delegate.";
+      message_writer(console_color_green, false) << "The delegate has been registered successfully.\nTo Complete the registration, restart the delegate.";
     } else {
       fail_msg_writer() << tr("Delegate registration encountered errors");
       fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
