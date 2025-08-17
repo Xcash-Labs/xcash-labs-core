@@ -4036,6 +4036,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     return false;
   }
 
+/*
   std::string message_settings;
   int status = 0;
   std::string status_text;
@@ -4066,10 +4067,52 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   } else {
     MWARNING("Invalid response format from DPOPS");
   }
+*/
+
+  int status = 0;
+  std::string status_text;
+  std::string vote_hash_text;
+
+  std::istringstream stream(rbuffer);
+  std::string token;
+  std::vector<std::string> parts;
+
+  while (std::getline(stream, token, '|')) {
+    parts.push_back(token);
+  }
+
+  if (parts.size() >= 2) {
+    // robust parse of status
+    try {
+      status = std::stoi(parts[0]);
+    } catch (...) {
+      MWARNING("Invalid status value in response: " << parts[0]);
+      return false;
+    }
+
+    status_text = parts[1];
+
+    // third part optional
+    if (parts.size() >= 3) {
+      vote_hash_text = parts[2];
+
+      // Only compare when we *expect* a hash and we actually got one
+      if (!vote_hash_str.empty() && !vote_hash_text.empty() && vote_hash_text != vote_hash_str) {
+        MWARNING("Vote hash mismatch! Sent: " << vote_hash_str
+                                              << ", Received: " << vote_hash_text);
+        return false;
+      }
+    }
+
+    return (status == 1);
+  } else {
+    MWARNING("Invalid response format from DPOPS: " << rbuffer);
+    return false;
+  }
 
   return false;
 }
-
+ 
 
 // === END CUSTOM VRF EXTRA VALIDATION ===
 
