@@ -4002,6 +4002,9 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   const uint8_t* winning_vote = data + 177;  // [177]
   const uint8_t* vote_hash = data + 178;     // [178..209]
 
+  (void)total_votes;
+  (void)winning_vote
+
   // Convert each field to hex
   std::string proof_str = to_hex(vrf_proof, 80);
   std::string beta_str = to_hex(vrf_beta, 64);
@@ -4033,7 +4036,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
   if ((rbuffer.size() == 1 && rbuffer[0] == '0') || rbuffer.empty()) {
     MERROR("Critical: DPOPS unresponsive. Shutting down xcashd.");
-    m_core.request_stop();
+    std::raise(SIGTERM);  
     return false;
   }
 
