@@ -45,8 +45,10 @@
 #define CURRENT_TRANSACTION_VERSION 2
 #define CURRENT_BLOCK_MAJOR_VERSION 1
 #define CURRENT_BLOCK_MINOR_VERSION 0
-#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT 60 * 60 * 2
-#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE 10
+//#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT 60 * 60 * 2
+#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT (DIFFICULTY_TARGET_V2 * 60) // ~1h @ 60s target
+//#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE 10
+#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE 20
 
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW 60
 
@@ -88,12 +90,15 @@
 
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 
-#define DIFFICULTY_TARGET_V2 120 // seconds
+//#define DIFFICULTY_TARGET_V2 120 // seconds
+#define DIFFICULTY_TARGET_V2 60  // for dpops
+
 #define DIFFICULTY_TARGET_V1 60  // seconds - before first fork
-#define DIFFICULTY_WINDOW 720    // blocks
+//#define DIFFICULTY_WINDOW 720  // blocks
+#define DIFFICULTY_WINDOW 1440   // 1440 @ 60s ≈ 1 day of samples
 #define DIFFICULTY_LAG 15        // !!!
 #define DIFFICULTY_CUT 60        // timestamps to cut after sorting
-#define DIFFICULTY_BLOCKS_COUNT DIFFICULTY_WINDOW + DIFFICULTY_LAG
+#define DIFFICULTY_BLOCKS_COUNT (DIFFICULTY_WINDOW + DIFFICULTY_LAG)
 
 // Mine amount equal to the current outstanding supply
 #define OUTSUPPLY_BLOCK_HEIGHT 1
@@ -101,10 +106,11 @@
 #define XCASH_SIGN_DATA_PREFIX "SigV2" // The prefix for  for the signed data for public transactions
 
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 DIFFICULTY_TARGET_V1 *CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
-#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V2 DIFFICULTY_TARGET_V2 *CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
+#define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V2 (DIFFICULTY_TARGET_V2 * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS)
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS 1
 
-#define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN DIFFICULTY_TARGET_V1 // just alias; used by tests
+//#define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN DIFFICULTY_TARGET_V1 // just alias; used by tests
+#define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN DIFFICULTY_TARGET_V2 // just alias; used by tests
 
 #define BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT 10000  // by default, blocks ids count in synchronizing
 #define BLOCKS_IDS_SYNCHRONIZING_MAX_COUNT 25000      // max blocks ids count in synchronizing
@@ -333,7 +339,7 @@ namespace config
   #define BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE 0.70 // The amount of block verifiers in a percentage that need to vote true for the part of the round to be valid.
   #define HF_BLOCK_HEIGHT_PROOF_OF_STAKE 2 // The first block of the X-CASH proof of stake
   #define BUFFER_SIZE_RESERVE_PROOF 25000 // The maximum length of a reserve proof
-  #define BLOCK_TIME 2 // the block time in minutes
+  #define BLOCK_TIME 1 // the block time in minutes
 
   namespace testnet
   {
