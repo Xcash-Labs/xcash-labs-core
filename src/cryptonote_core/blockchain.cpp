@@ -3999,11 +3999,11 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
   const uint8_t* vrf_beta = data + 80;       // [80..143]
   const uint8_t* vrf_pubkey = data + 144;    // [144..175]
   const uint8_t* total_votes = data + 176;   // [176]
-  const uint8_t* winning_vote = data + 177;  // [177]
+  const uint8_t* winning_votes = data + 177;  // [177]
   const uint8_t* vote_hash = data + 178;     // [178..209]
 
   (void)total_votes;
-  (void)winning_vote
+  (void)winning_votes;
 
   // Convert each field to hex
   std::string proof_str = to_hex(vrf_proof, 80);
