@@ -3078,6 +3078,9 @@ bool simple_wallet::set_enable_multisig(const std::vector<std::string> &args/* =
 // jed
 
 
+
+
+
 static inline void rstrip_chars(std::string &s, const char *chars = " \r\n|") {
   while (!s.empty() && std::strchr(chars, s.back())) s.pop_back();
 }
@@ -3587,31 +3590,45 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // Ensure enough seed delegates are online
     INITIALIZE_NETWORK_DATA_NODES_LIST;
 
-    seed_count = 0;
-    for (size_t i = 0; i < total_delegates; ++i) {
-      if (!block_verifiers_IP_address[i].empty() &&
-          std::find(network_data_nodes_list.begin(),
-                    network_data_nodes_list.end(),
-                    block_verifiers_IP_address[i]) != network_data_nodes_list.end()) {
-        ++seed_count;
-      }
-    }
+    const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
 
-    if (seed_count < (NETWORK_DATA_NODES_AMOUNT - 1)) {
+    seed_count = std::count_if(
+        block_verifiers_IP_address.begin(),
+        block_verifiers_IP_address.begin() + total_delegates,
+        [&](const std::string &host) {
+          return !host.empty() && seed_set.count(host) != 0;
+        });
+
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;        
+    if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
       return true; 
     }
 
-    // Send to all online delegates
+    // Send to first online seed node and all online delegates
+    bool seed_committed = false;  // flip true after the first seed replies OK
     for (size_t i = 0; i < total_delegates; ++i) {
       if (block_verifiers_IP_address[i].empty()) continue;
-      const char *host = block_verifiers_IP_address[i].c_str();
-      rbuffer = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
-      bool ok = parse_dpops_response(rbuffer, status_text);
+      const std::string &host = block_verifiers_IP_address[i];
+      const bool is_seed = (seed_set.count(host) != 0);
+
+      // If a seed has already committed, we *count* other seeds as success without sending
+      if (is_seed && seed_committed) {
+        ++reply_count;  // count assumed success
+        continue;
+      }
+
+      // Otherwise send (all non-seeds always send; seeds send until first success)
+      std::string rbuffer = send_and_receive_data(
+          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+
       std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
+
+      const bool ok = parse_dpops_response(rbuffer, status_text);
       if (ok) {
         ++reply_count;
+        if (is_seed) seed_committed = true;  // seed found and successful 
       }
     }
 
