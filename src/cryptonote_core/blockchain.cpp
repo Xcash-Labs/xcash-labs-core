@@ -4034,6 +4034,9 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   std::string json = o.str();
   std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+
+  std::cerr << "**********rbuffer:      " << rbuffer << std::endl;
+
   if ((rbuffer.size() == 1 && rbuffer[0] == '0') || rbuffer.empty()) {
     MERROR("Critical: DPOPS unresponsive. Shutting down xcashd.");
     std::raise(SIGTERM);  
