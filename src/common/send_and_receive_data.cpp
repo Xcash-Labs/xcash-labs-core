@@ -11,7 +11,7 @@
 #include "send_and_receive_data.h"
 
 
-std::string send_and_receive_data(std::string IP_address,std::string data2, int send_or_receive_socket_data_timeout_settings)
+std::string send_and_receive_data__OLD__(std::string IP_address,std::string data2, int send_or_receive_socket_data_timeout_settings)
 {
   // Variables
   std::string response_string;
@@ -33,6 +33,183 @@ std::string send_and_receive_data(std::string IP_address,std::string data2, int 
   }
   return response_string;
 }
+
+
+
+
+
+
+
+
+
+// Drop-in replacement:
+//  - SEND: raw payload (no length prefix)
+//  - RECV: expect 4-byte big-endian length, then exact payload
+//
+// Requires: <sys/socket.h> <netdb.h> <unistd.h> <fcntl.h> <arpa/inet.h>
+//           <errno.h> <string.h> <time.h> <string> <vector> <algorithm>
+
+std::string send_and_receive_data(std::string IP_address,
+                                  std::string data2,
+                                  int send_or_receive_socket_data_timeout_settings)
+{
+  static constexpr size_t kMaxRespBytes = 256 * 1024; // guardrail
+  const int connect_timeout_ms = CONNECTION_TIMEOUT_SETTINGS;
+  const int io_timeout_ms      = send_or_receive_socket_data_timeout_settings;
+
+  auto now_ms = []() -> long long {
+    struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (long long)ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
+  };
+
+  auto wait_writable = [&](int fd, long long deadline_ms) -> bool {
+    while (true) {
+      long long remain = deadline_ms - now_ms();
+      if (remain <= 0) return false;
+      struct timeval tv{ (int)(remain/1000), (int)((remain%1000)*1000) };
+      fd_set wfds; FD_ZERO(&wfds); FD_SET(fd, &wfds);
+      int rc = select(fd+1, nullptr, &wfds, nullptr, &tv);
+      if (rc > 0) return true;
+      if (rc == 0) return false;
+      if (errno == EINTR) continue;
+      return false;
+    }
+  };
+  auto wait_readable = [&](int fd, long long deadline_ms) -> bool {
+    while (true) {
+      long long remain = deadline_ms - now_ms();
+      if (remain <= 0) return false;
+      struct timeval tv{ (int)(remain/1000), (int)((remain%1000)*1000) };
+      fd_set rfds; FD_ZERO(&rfds); FD_SET(fd, &rfds);
+      int rc = select(fd+1, &rfds, nullptr, nullptr, &tv);
+      if (rc > 0) return true;
+      if (rc == 0) return false;
+      if (errno == EINTR) continue;
+      return false;
+    }
+  };
+
+  auto send_all = [&](int fd, const void* buf, size_t len, long long deadline_ms) -> std::string {
+    const uint8_t* p = static_cast<const uint8_t*>(buf);
+    size_t sent = 0;
+    while (sent < len) {
+      if (!wait_writable(fd, deadline_ms)) return "0|WRITE_TIMEOUT";
+      ssize_t n = ::send(fd, p + sent, len - sent,
+#ifdef MSG_NOSIGNAL
+                         MSG_NOSIGNAL
+#else
+                         0
+#endif
+      );
+      if (n > 0) { sent += (size_t)n; continue; }
+      if (n < 0 && errno == EINTR) continue;
+      return "0|WRITE_FAIL";
+    }
+    return ""; // ok
+  };
+
+  auto recv_exact = [&](int fd, void* buf, size_t len, long long deadline_ms, bool prefix=false) -> std::string {
+    uint8_t* p = static_cast<uint8_t*>(buf);
+    size_t got = 0;
+    while (got < len) {
+      if (!wait_readable(fd, deadline_ms)) return prefix ? "0|READ_TIMEOUT_PREFIX" : "0|READ_TIMEOUT";
+      ssize_t n = ::recv(fd, p + got, len - got, 0);
+      if (n > 0) { got += (size_t)n; continue; }
+      if (n == 0) return "0|PEER_CLOSED";
+      if (n < 0 && errno == EINTR) continue;
+      return prefix ? "0|READ_FAIL_PREFIX" : "0|READ_FAIL";
+    }
+    return ""; // ok
+  };
+
+  // ---- resolve & connect (nonblocking with timeout) ----
+  int sock = -1;
+  addrinfo hints{}; hints.ai_socktype = SOCK_STREAM; hints.ai_family = AF_UNSPEC;
+  addrinfo* res = nullptr;
+  char portstr[16]; snprintf(portstr, sizeof portstr, "%d", SEND_DATA_PORT);
+
+  if (getaddrinfo(IP_address.c_str(), portstr, &hints, &res) != 0)
+    return "0|DNS_FAIL";
+
+  for (addrinfo* rp = res; rp; rp = rp->ai_next) {
+    sock = ::socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (sock < 0) continue;
+
+    int flags = fcntl(sock, F_GETFL, 0);
+    if (flags >= 0) fcntl(sock, F_SETFL, flags | O_NONBLOCK);
+
+    int rc = ::connect(sock, rp->ai_addr, rp->ai_addrlen);
+    if (rc < 0 && errno != EINPROGRESS) { ::close(sock); sock = -1; continue; }
+
+    long long deadline = now_ms() + connect_timeout_ms;
+    if (!wait_writable(sock, deadline)) { ::close(sock); sock = -1; continue; }
+
+    int err = 0; socklen_t elen = sizeof(err);
+    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &err, &elen) < 0 || err != 0) {
+      ::close(sock); sock = -1; continue;
+    }
+
+    // back to blocking
+    if (flags >= 0) fcntl(sock, F_SETFL, flags);
+    break;
+  }
+  freeaddrinfo(res);
+  if (sock < 0) return "0|CONNECT_TIMEOUT";
+
+  // Optional: set R/W timeouts too (select already enforces deadlines)
+  struct timeval tv;
+  tv.tv_sec  = io_timeout_ms / 1000;
+  tv.tv_usec = (io_timeout_ms % 1000) * 1000;
+  setsockopt(sock, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+  setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+
+  // ---- SEND: raw payload ----
+  {
+    long long write_deadline = now_ms() + io_timeout_ms;
+    if (auto e = send_all(sock, data2.data(), data2.size(), write_deadline); !e.empty()) {
+      ::close(sock);
+      return e;
+    }
+  }
+
+  // ---- RECV: 4-byte big-endian length, then payload ----
+  long long read_deadline = now_ms() + io_timeout_ms;
+
+  uint32_t be_len = 0;
+  if (auto e = recv_exact(sock, &be_len, sizeof(be_len), read_deadline, /*prefix*/true); !e.empty()) {
+    ::close(sock);
+    return e;
+  }
+  uint32_t reply_len = ntohl(be_len);
+  if (reply_len == 0) { ::close(sock); return "0|BAD_LENGTH_0"; }
+  if (reply_len > kMaxRespBytes) { ::close(sock); return "0|TOO_LARGE"; }
+
+  std::string response_string(reply_len, '\0');
+  if (auto e = recv_exact(sock, &response_string[0], reply_len, read_deadline); !e.empty()) {
+    ::close(sock);
+    return e;
+  }
+
+  ::close(sock);
+  return response_string;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 namespace xcash_net {
 // Function to send a message and receive a reply from a single server asynchronously
