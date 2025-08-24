@@ -3592,6 +3592,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
 
+    for (int count = 0; count < total_delegates; ++count) {
+      if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
+        seed_count++;
+      }
+    }
+
     seed_count = std::count_if(
         block_verifiers_IP_address.begin(),
         block_verifiers_IP_address.begin() + total_delegates,
