@@ -41,7 +41,27 @@ std::string send_and_receive_data__OLD__(std::string IP_address,std::string data
 
 
 
+/*
+0|DNS_FAIL:<text> — resolver message from gai_strerror
 
+0|SOCKET_FAIL — couldn’t create a socket (numeric fast-path)
+
+0|BAD_IPV4 — invalid IPv4 literal
+
+0|CONNECT_TIMEOUT — timed out waiting for connect
+
+0|CONNECT_ERR:<errno> — connect failed (e.g., 111 = ECONNREFUSED)
+
+0|WRITE_TIMEOUT / 0|WRITE_FAIL — sending request failed
+
+0|READ_TIMEOUT_PREFIX / 0|READ_FAIL_PREFIX — couldn’t read the 4-byte length
+
+0|BAD_LENGTH_0 — server replied zero length
+
+0|TOO_LARGE — reply exceeds guardrail
+
+0|READ_TIMEOUT / 0|READ_FAIL / 0|PEER_CLOSED — couldn’t read the body
+*/
 
 // Drop-in replacement:
 //  - SEND: raw payload (no length prefix)

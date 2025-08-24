@@ -3988,38 +3988,26 @@ static std::string to_hex(const uint8_t* data, size_t length) {
   return oss.str();
 }
 
-bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) const {
-  if (blob.size() != 210) {
-    MERROR("VRF blob size mismatch: expected 210, got " << blob.size());
-    return false;
-  }
-
+bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std::string& msg) const
+{
+  msg.clear();
   const uint8_t* data = blob.data();
-  const uint8_t* vrf_proof = data;           // [0..79]
-  const uint8_t* vrf_beta = data + 80;       // [80..143]
-  const uint8_t* vrf_pubkey = data + 144;    // [144..175]
-  const uint8_t* total_votes = data + 176;   // [176]
-  const uint8_t* winning_votes = data + 177;  // [177]
-  const uint8_t* vote_hash = data + 178;     // [178..209]
+  const uint8_t* vrf_proof   = data + 0;    // [0..79]  (80 bytes)
+  const uint8_t* vrf_beta    = data + 80;   // [80..143] (64 bytes)
+  const uint8_t* vrf_pubkey  = data + 144;  // [144..175] (32 bytes)
+  const uint8_t* total_votes = data + 176;  // [176]
+  const uint8_t* winning_votes = data + 177;// [177]
+  const uint8_t* vote_hash   = data + 178;  // [178..209] (32 bytes)
+  (void)total_votes; (void)winning_votes;
 
-  (void)total_votes;
-  (void)winning_votes;
-
-  // Convert each field to hex
-  std::string proof_str = to_hex(vrf_proof, 80);
-  std::string beta_str = to_hex(vrf_beta, 64);
-  std::string pubkey_str = to_hex(vrf_pubkey, 32);
+  std::string proof_str     = to_hex(vrf_proof, 80);
+  std::string beta_str      = to_hex(vrf_beta, 64);
+  std::string pubkey_str    = to_hex(vrf_pubkey, 32);
   std::string vote_hash_str = to_hex(vote_hash, 32);
 
+  // 2) Safe prev hash lookup
   uint64_t height = get_current_blockchain_height();
-  crypto::hash prev_hash = get_block_id_by_height(height - 1);
-
-//  std::cerr << "VRF Proof:      " << proof_str << std::endl;
-//  std::cerr << "VRF Beta:       " << beta_str << std::endl;
-//  std::cerr << "VRF PubKey:     " << pubkey_str << std::endl;
-//  std::cerr << "Total Votes:    " << static_cast<int>(*total_votes) << std::endl;
-//  std::cerr << "Winning Vote:   " << static_cast<int>(*winning_vote) << std::endl;
-//  std::cerr << "Vote Hash:      " << vote_hash_str << std::endl;
+  crypto::hash prev_hash = height ? get_block_id_by_height(height - 1) : crypto::null_hash;
 
   std::ostringstream o;
   o << "{\r\n"
@@ -4033,58 +4021,71 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
     << "}";
 
   std::string json = o.str();
-  std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+  std::string rbuffer = send_and_receive_data("127.0.0.1", json,
+                          SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
-  std::cerr << "**********rbuffer:      " << rbuffer << std::endl;
+  std::cerr << "**********rbuffer: " << rbuffer << std::endl;
 
-  if ((rbuffer.size() == 1 && rbuffer[0] == '0') || rbuffer.empty()) {
-    MERROR("Critical: DPOPS unresponsive. Shutting down xcashd.");
-    std::raise(SIGTERM);  
+  // Transport-layer errors come back as "0|REASON..."
+  if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
+    msg = std::string("TRANSPORT:") + rbuffer.substr(2);
+    MERROR("DPOPS transport error: " << msg);
+    return false;
+  }
+  if (rbuffer.empty()) { // shouldn’t happen with length-prefix, keep as belt+suspenders
+    msg = "TRANSPORT:BUG_EMPTY";
+    MERROR("Empty reply from DPOPS (unexpected)");
     return false;
   }
 
+  // Parse "status|text|optional_vote_hash"
   int status = 0;
-  std::string status_text;
-  std::string vote_hash_text;
+  std::string status_text, vote_hash_text;
 
   std::istringstream stream(rbuffer);
   std::string token;
   std::vector<std::string> parts;
+  while (std::getline(stream, token, '|')) parts.push_back(token);
 
-  while (std::getline(stream, token, '|')) {
-    parts.push_back(token);
-  }
-
-  if (parts.size() >= 2) {
-    // robust parse of status
-    try {
-      status = std::stoi(parts[0]);
-    } catch (...) {
-      MWARNING("Invalid status value in response: " << parts[0]);
-      return false;
-    }
-
-    status_text = parts[1];
-
-    // third part optional
-    if (parts.size() >= 3) {
-      vote_hash_text = parts[2];
-
-      // Only compare when we *expect* a hash and we actually got one
-      if (!vote_hash_str.empty() && !vote_hash_text.empty() && vote_hash_text != vote_hash_str) {
-        MWARNING("Vote hash mismatch! Sent: " << vote_hash_str
-                                              << ", Received: " << vote_hash_text);
-        return false;
-      }
-    }
-
-    return (status == 1);
-  } else {
+  if (parts.size() < 2) {
+    msg = "BAD_FORMAT";
     MWARNING("Invalid response format from DPOPS: " << rbuffer);
     return false;
   }
 
-  return false;
+  try {
+    status = std::stoi(parts[0]);
+  } catch (...) {
+    msg = "BAD_STATUS";
+    MWARNING("Invalid status value in response: " << parts[0]);
+    return false;
+  }
+
+  // 3) Optional tiny trim to avoid CR/LF surprises
+  auto trim = [](std::string& s){
+    while (!s.empty() && (s.back()=='\r' || s.back()=='\n' || s.back()==' ' || s.back()=='\t')) s.pop_back();
+    size_t i = 0; while (i < s.size() && (s[i]=='\r'||s[i]=='\n'||s[i]==' '||s[i]=='\t')) ++i;
+    if (i) s.erase(0, i);
+  };
+
+  status_text = parts[1]; trim(status_text);
+  if (parts.size() >= 3) {
+    vote_hash_text = parts[2]; trim(vote_hash_text);
+    if (!vote_hash_str.empty() && !vote_hash_text.empty() && vote_hash_text != vote_hash_str) {
+      msg = "VOTE_HASH_MISMATCH";
+      MERROR("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
+      return false;
+    }
+  }
+
+  if (status == 1) {
+    msg = "OK";
+    return true;
+  } else {
+    msg = std::string("DPOPS_NEGATIVE:") + status_text;
+    MWARNING("DPOPS negative verify: " << status_text);
+    return false;
+  }
 }
 // === END CUSTOM VRF EXTRA VALIDATION ===
 
@@ -4149,7 +4150,6 @@ leave:
   }
 
   // === BEGIN CUSTOM VRF EXTRA CHECK === jed
-  MERROR_VER("Starting VRF EXTRA Check........................................");
   std::vector<cryptonote::tx_extra_field> extra_fields;
   if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
     MERROR_VER("Failed to parse tx_extra in block id: " << id);
@@ -4167,10 +4167,21 @@ leave:
       }
 
       // Call member function of Blockchain
-      if (!this->verify_vrf_signature_blob(vrf->data)) {
-        MERROR_VER("Invalid VRF signature in block id: " << id);
-        bvc.m_verifivation_failed = true;
-        goto leave;
+      std::string vrf_msg;
+      if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
+        if (!vrf_msg.empty() && vrf_msg.rfind("TRANSPORT:", 0) == 0) {
+          // Soft / transient issue: do NOT penalize the peer
+          MWARNING("VRF verification deferred due to transport error: " << vrf_msg
+                                                                        << " (block id: " << id << ")");
+          // leave bvc.* at defaults; not added, not failed
+          goto leave;
+        } else {
+          // Hard / semantic failure: mark verification failed
+          MERROR_VER("Invalid VRF signature in block id: " << id
+                                                           << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
+          bvc.m_verifivation_failed = true;
+          goto leave;
+        }
       }
 
       found_vrf = true;
