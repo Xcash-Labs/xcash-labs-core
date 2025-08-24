@@ -4083,8 +4083,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob) con
 
   return false;
 }
- 
-
 // === END CUSTOM VRF EXTRA VALIDATION ===
 
 //------------------------------------------------------------------
@@ -4148,6 +4146,7 @@ leave:
   }
 
   // === BEGIN CUSTOM VRF EXTRA CHECK === jed
+  MERROR_VER("Starting VRF EXTRA Check........................................");
   std::vector<cryptonote::tx_extra_field> extra_fields;
   if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
     MERROR_VER("Failed to parse tx_extra in block id: " << id);
