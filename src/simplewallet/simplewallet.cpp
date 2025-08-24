@@ -3598,13 +3598,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
     }
 
-    seed_count = std::count_if(
-        block_verifiers_IP_address.begin(),
-        block_verifiers_IP_address.begin() + total_delegates,
-        [&](const std::string &host) {
-          return !host.empty() && seed_set.count(host) != 0;
-        });
-
     const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;        
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
