@@ -30,7 +30,7 @@ std::string send_and_receive_data__OLD__(std::string IP_address,std::string data
   catch (std::exception &ex)
   {
     return "0";
-  }
+  } 
   return response_string;
 }
 
@@ -128,6 +128,8 @@ std::string send_and_receive_data(std::string IP_address,
   addrinfo hints{}; hints.ai_socktype = SOCK_STREAM; hints.ai_family = AF_UNSPEC;
   addrinfo* res = nullptr;
   char portstr[16]; snprintf(portstr, sizeof portstr, "%d", SEND_DATA_PORT);
+
+  std::cerr << "**********IP_address:      " << IP_address.c_str() << std::endl;
 
   if (getaddrinfo(IP_address.c_str(), portstr, &hints, &res) != 0)
     return "0|DNS_FAIL";
