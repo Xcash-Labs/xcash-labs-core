@@ -154,7 +154,8 @@ std::string send_and_receive_data(std::string IP_address,
     if (flags >= 0) fcntl(sock, F_SETFL, flags | O_NONBLOCK);
 
     sockaddr_in sa{}; sa.sin_family = AF_INET;
-    sa.sin_port = htons(SEND_DATA_PORT);
+    sa.sin_port = htons((uint16_t)strtoul(SEND_DATA_PORT, nullptr, 10));
+
     if (inet_pton(AF_INET, IP_address.c_str(), &sa.sin_addr) != 1) {
       ::close(sock); return "0|BAD_IPV4";
     }
@@ -176,7 +177,9 @@ std::string send_and_receive_data(std::string IP_address,
     addrinfo hints{}; hints.ai_socktype = SOCK_STREAM; hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICSERV; // port is numeric
     addrinfo* res = nullptr;
-    char portstr[16]; snprintf(portstr, sizeof portstr, "%d", SEND_DATA_PORT);
+    char portstr[16];
+    snprintf(portstr, sizeof portstr, "%s", SEND_DATA_PORT);
+
 
     int gai = getaddrinfo(IP_address.c_str(), portstr, &hints, &res);
     if (gai != 0) return std::string("0|DNS_FAIL:") + gai_strerror(gai);
