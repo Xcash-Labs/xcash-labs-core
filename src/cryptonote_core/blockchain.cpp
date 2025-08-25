@@ -4035,19 +4035,22 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   std::string rbuffer = send_and_receive_data("127.0.0.1", json,
                           SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
-  MINFO("**********rbuffer: " << rbuffer);
+  std::cerr << "******* rbuffer: " << rbuffer << std::endl;
 
   // Transport-layer errors come back as "0|REASON..."
   if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
 
     if(is_ban_code(rbuffer.substr(2))) {
-    msg = std::string("FAILED:") + rbuffer.substr(2);
+      msg = std::string("FAILED:") + rbuffer.substr(2);
     } else {
-    msg = std::string("TRANSPORT:") + rbuffer.substr(2);
+      msg = std::string("TRANSPORT:") + rbuffer.substr(2);
     }
+    
     MERROR("DPOPS transport error: " << msg);
     return false;
+
   }
+
   if (rbuffer.empty()) { // shouldn’t happen with length-prefix, keep as belt+suspenders
     msg = "TRANSPORT:BUG_EMPTY";
     MERROR("Empty reply from DPOPS (unexpected)");
