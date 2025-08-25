@@ -3988,6 +3988,17 @@ static std::string to_hex(const uint8_t* data, size_t length) {
   return oss.str();
 }
 
+static bool is_ban_code(const std::string& code) {
+  return code == "FORBIDDEN_NON_LOCAL" ||
+         code == "BAD_FIELD_LEN_OR_NONHEX" ||
+         code == "HEX_DECODING_FAIL" ||
+         code == "VRF_PUBKEY_MISMATCH" ||
+         code == "VOTE_HASH_MISMATCH" ||
+         code == "INVALID_JSON" ||
+         code == "BAD_FIELDS" ||
+         code == "VERIFY_FAIL";
+}
+
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std::string& msg) const
 {
   msg.clear();
@@ -4028,7 +4039,12 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
 
   // Transport-layer errors come back as "0|REASON..."
   if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
+
+    if(is_ban_code(rbuffer.substr(2))) {
+    msg = std::string("FAILED:") + rbuffer.substr(2);
+    } else {
     msg = std::string("TRANSPORT:") + rbuffer.substr(2);
+    }
     MERROR("DPOPS transport error: " << msg);
     return false;
   }
@@ -4048,7 +4064,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   while (std::getline(stream, token, '|')) parts.push_back(token);
 
   if (parts.size() < 2) {
-    msg = "BAD_FORMAT";
+    msg = "FAILED:BAD_FORMAT";
     MWARNING("Invalid response format from DPOPS: " << rbuffer);
     return false;
   }
@@ -4056,7 +4072,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   try {
     status = std::stoi(parts[0]);
   } catch (...) {
-    msg = "BAD_STATUS";
+    msg = "FAILED:BAD_STATUS";
     MWARNING("Invalid status value in response: " << parts[0]);
     return false;
   }
@@ -4072,7 +4088,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   if (parts.size() >= 3) {
     vote_hash_text = parts[2]; trim(vote_hash_text);
     if (!vote_hash_str.empty() && !vote_hash_text.empty() && vote_hash_text != vote_hash_str) {
-      msg = "VOTE_HASH_MISMATCH";
+      msg = "FAILED:VOTE_HASH_MISMATCH";
       MERROR("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
       return false;
     }
@@ -4082,8 +4098,12 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     msg = "OK";
     return true;
   } else {
-    msg = std::string("DPOPS_NEGATIVE:") + status_text;
-    MWARNING("DPOPS negative verify: " << status_text);
+    if (is_ban_code(status_text)) {
+      msg = "FAILED:" + status_text;
+    } else {
+      msg = "TRANSPORT:" + status_text;
+    }
+    MWARNING("DPOPS failed verification: " << status_text);
     return false;
   }
 }
@@ -4171,14 +4191,11 @@ leave:
       if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
         if (!vrf_msg.empty() && vrf_msg.rfind("TRANSPORT:", 0) == 0) {
           // Soft / transient issue: do NOT penalize the peer
-          MWARNING("VRF verification deferred due to transport error: " << vrf_msg
-                                                                        << " (block id: " << id << ")");
-          // leave bvc.* at defaults; not added, not failed
+          MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
           goto leave;
         } else {
           // Hard / semantic failure: mark verification failed
-          MERROR_VER("Invalid VRF signature in block id: " << id
-                                                           << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
+          MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
           bvc.m_verifivation_failed = true;
           goto leave;
         }

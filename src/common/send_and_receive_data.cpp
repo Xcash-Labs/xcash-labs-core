@@ -3,72 +3,11 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <memory> // For std::shared_ptr
-
+#include <memory>
 
 #include "common/send_and_receive_data.h"
 #include "common/blocking_tcp_client.h"
 #include "send_and_receive_data.h"
-
-
-std::string send_and_receive_data__OLD__(std::string IP_address,std::string data2, int send_or_receive_socket_data_timeout_settings)
-{
-  // Variables
-  std::string response_string;
-  auto connection_timeout = boost::posix_time::milliseconds(CONNECTION_TIMEOUT_SETTINGS);
-  auto send_and_receive_data_timeout = boost::posix_time::milliseconds(send_or_receive_socket_data_timeout_settings);
-
-  try
-  {
-    client c;
-    c.connect(IP_address, SEND_DATA_PORT, connection_timeout);
-    
-    // send the message and read the response
-    c.write_line(data2, send_and_receive_data_timeout);
-    response_string = c.read_until('}', send_and_receive_data_timeout);
-  }
-  catch (std::exception &ex)
-  {
-    return "0";
-  } 
-  return response_string;
-}
-
-
-
-
-
-
-
-
-/*
-0|DNS_FAIL:<text> — resolver message from gai_strerror
-
-0|SOCKET_FAIL — couldn’t create a socket (numeric fast-path)
-
-0|BAD_IPV4 — invalid IPv4 literal
-
-0|CONNECT_TIMEOUT — timed out waiting for connect
-
-0|CONNECT_ERR:<errno> — connect failed (e.g., 111 = ECONNREFUSED)
-
-0|WRITE_TIMEOUT / 0|WRITE_FAIL — sending request failed
-
-0|READ_TIMEOUT_PREFIX / 0|READ_FAIL_PREFIX — couldn’t read the 4-byte length
-
-0|BAD_LENGTH_0 — server replied zero length
-
-0|TOO_LARGE — reply exceeds guardrail
-
-0|READ_TIMEOUT / 0|READ_FAIL / 0|PEER_CLOSED — couldn’t read the body
-*/
-
-// Drop-in replacement:
-//  - SEND: raw payload (no length prefix)
-//  - RECV: expect 4-byte big-endian length, then exact payload
-//
-// Requires: <sys/socket.h> <netdb.h> <unistd.h> <fcntl.h> <arpa/inet.h>
-//           <errno.h> <string.h> <time.h> <string> <vector> <algorithm>
 
 static bool is_ipv4_literal(const std::string& s) {
   struct in_addr a{};
@@ -271,24 +210,6 @@ std::string send_and_receive_data(std::string IP_address,
   ::close(sock);
   return response_string; // success
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 namespace xcash_net {
 // Function to send a message and receive a reply from a single server asynchronously
