@@ -4035,9 +4035,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   std::string rbuffer = send_and_receive_data("127.0.0.1", json,
                           SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
-  std::cerr << "******* rbuffer: " << rbuffer << std::endl;
-  MINFO("MINFO......");
-  MWARNING("MWARNING.......");
+  //std::cerr << "******* rbuffer: " << rbuffer << std::endl;
+  MWARNING("****************rbuffer: " << rbuffer);
 
   // Transport-layer errors come back as "0|REASON..."
   if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
@@ -4196,10 +4195,12 @@ leave:
       if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
         if (!vrf_msg.empty() && vrf_msg.rfind("TRANSPORT:", 0) == 0) {
           // Soft / transient issue: do NOT penalize the peer
+          MWARNING("Soft / transient issue");
           MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
           goto leave;
         } else {
           // Hard / semantic failure: mark verification failed
+          MWARNING("Hard failure");
           MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
           bvc.m_verifivation_failed = true;
           goto leave;
