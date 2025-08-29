@@ -4036,6 +4036,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
                           SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
 
   //std::cerr << "******* rbuffer: " << rbuffer << std::endl;
+  MWARNING("************vrf_pubkey:" << pubkey_str);
   MWARNING("****************rbuffer: " << rbuffer);
 
   // Transport-layer errors come back as "0|REASON..."
