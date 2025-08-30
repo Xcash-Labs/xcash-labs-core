@@ -3176,8 +3176,7 @@ void sync_minutes_and_seconds_new(const int MINUTES, const int SECONDS) {
   using namespace std::chrono;
 
   if (MINUTES >= BLOCK_TIME || SECONDS >= 60 || MINUTES < 0 || SECONDS < 0) {
-    ERROR_PRINT("Invalid sync time: MINUTES must be < BLOCK_TIME and SECONDS < 60");
-    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    fail_msg_writer() << tr("Invalid sync time: MINUTES must be < BLOCK_TIME and SECONDS < 60");
     return;
   }
 
@@ -3363,17 +3362,16 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   m_wallet->get_transfers(transfers);
 
   // get the wallets public address
-    auto print_address_sub = [this, &transfers, &public_address]()
-    {
-      bool used = std::find_if(
-        transfers.begin(), transfers.end(),
-        [this](const tools::wallet2::transfer_details& td) {
-          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
-        }) != transfers.end();
-        public_address = m_wallet->get_subaddress_as_str({0, 0});
-    };
-    print_address_sub();
-  
+  auto print_address_sub = [this, &transfers, &public_address]() {
+    bool used = std::find_if(
+                    transfers.begin(), transfers.end(),
+                    [this](const tools::wallet2::transfer_details &td) {
+                      return td.m_subaddr_index == cryptonote::subaddress_index{0, 0};
+                    }) != transfers.end();
+    public_address = m_wallet->get_subaddress_as_str({0, 0});
+  };
+  print_address_sub();
+
   if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
   {
     fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCA addresses are allowed.");
