@@ -3134,7 +3134,7 @@ bool parse_dpops_response(const std::string &rbuffer,
   return true;
 }
 
-// Might not need this
+
 
 void sync_minutes_and_seconds(const int SETTINGS)
 {
@@ -3171,11 +3171,45 @@ void sync_minutes_and_seconds(const int SETTINGS)
 }
 
 
+// Always waits until the given MINUTES:SECONDS offset within the *next* block cycle
+void sync_minutes_and_seconds_new(const int MINUTES, const int SECONDS) {
+  using namespace std::chrono;
 
+  if (MINUTES >= BLOCK_TIME || SECONDS >= 60 || MINUTES < 0 || SECONDS < 0) {
+    ERROR_PRINT("Invalid sync time: MINUTES must be < BLOCK_TIME and SECONDS < 60");
+    fail_msg_writer() << tr("Failed to send the vote\nInvalid parameters");
+    return;
+  }
 
+  const auto now_sys = system_clock::now();
+  const auto block_len = minutes(BLOCK_TIME);
 
+  // Work in seconds
+  const auto since_epoch = now_sys.time_since_epoch();
+  const auto since_epoch_sec = duration_cast<seconds>(since_epoch);
+  const auto since_epoch_subs = duration_cast<nanoseconds>(since_epoch - since_epoch_sec);
 
+  // Where we are within this block
+  const auto within_block_sec = since_epoch_sec % duration_cast<seconds>(block_len);
+  const auto block_start = now_sys - within_block_sec - since_epoch_subs;
 
+  // Target time in this block
+  const auto target_offset = minutes(MINUTES) + seconds(SECONDS);
+  auto target_sys = block_start + target_offset;
+
+  // If we've already passed the target in this block, shift to the *next* block
+  if (now_sys >= target_sys) {
+    target_sys += block_len;
+  }
+
+  // Sleep using steady_clock so OS time jumps don’t matter
+  const auto sleep_delta = target_sys - now_sys;
+  const auto deadline_steady = steady_clock::now() + duration_cast<steady_clock::duration>(sleep_delta);
+  double secs = duration<double>(sleep_delta).count();
+  message_writer(console_color_yellow, false) << "Sleeping for " << secs << " seconds to sync to target time...";
+  std::this_thread::sleep_until(deadline_steady);
+  return;
+}
 
 
 
@@ -3183,6 +3217,7 @@ void sync_minutes_and_seconds(const int SETTINGS)
 std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
 {
   // The macro expects this exact struct + variable name
+  sync_minutes_and_seconds_new(0, 45);
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
@@ -3605,6 +3640,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     }
 
     // Send to first online seed node and all online delegates
+    sync_minutes_and_seconds_new(0, 45);
     bool seed_committed = false;  // flip true after the first seed replies OK
     for (size_t i = 0; i < total_delegates; ++i) {
       if (block_verifiers_IP_address[i].empty()) continue;
@@ -3620,7 +3656,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
       // Otherwise send (all non-seeds always send; seeds send until first success)
       std::string rbuffer = send_and_receive_data(
-          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
       std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
 
@@ -3633,7 +3669,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     // Also try local node (not counted in quorum but must be successful)
     bool local_ok = false;
-    rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+    rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
     std::cout << "[DEBUG] host=localhost rbuffer=" << rbuffer << std::endl;
@@ -3825,7 +3861,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     // send the data to all block verifiers
     for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
     {
-      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "Updated the delegates information")
+      if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS)) == "Updated the delegates information")
       {
         count2++;
         if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
@@ -3938,7 +3974,7 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
   // send the data to all block verifiers
   for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
   {
-    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS*2)) == "The delegate has been recovered successfully")
+    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS)) == "The delegate has been recovered successfully")
     {
       count2++;
       if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)

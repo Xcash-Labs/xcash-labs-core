@@ -322,7 +322,7 @@ namespace config
   // Network
   #define SEND_DATA_PORT "18283" // The port that is used by all nodes to send and receive data
   #define CONNECTION_TIMEOUT_SETTINGS 1000 // the time in milliseconds for a connection to be created
-  #define SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS 3000 // The time in milliseconds to wait for sending or receving socket data
+  #define SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS 4000 // The time in milliseconds to wait for sending or receving socket data
   #define SEND_OR_RECEIVE_SOCKET_DATA_DOWNLOAD_DATABASE_HASH_TIMEOUT_SETTINGS 60000 // The time in milliseconds to wait for downloading multiple data hashes
   #define SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS 5000 // The minimum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
   #define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time

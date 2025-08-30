@@ -4033,7 +4033,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
 
   std::string json = o.str();
   std::string rbuffer = send_and_receive_data("127.0.0.1", json,
-                          SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
+                          SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
   //std::cerr << "******* rbuffer: " << rbuffer << std::endl;
   MWARNING("************vrf_pubkey:" << pubkey_str);
