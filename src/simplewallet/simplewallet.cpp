@@ -3638,7 +3638,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     }
 
     // Send to first online seed node and all online delegates
-    sync_minutes_and_seconds_new(0, 45);
     bool seed_committed = false;  // flip true after the first seed replies OK
     for (size_t i = 0; i < total_delegates; ++i) {
       if (block_verifiers_IP_address[i].empty()) continue;
