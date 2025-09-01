@@ -4403,219 +4403,217 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   return true;
 }
 
-bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::request& req, 
+bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::request& req,
   wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER::response& res, epee::json_rpc::error& er, const connection_context* ctx) {
-  {
-    // Variables
-    std::string public_address;
-    tools::wallet2::transfer_container transfers;
-    std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT];  // The block verifiers IP address
-    std::string response_json;
-    std::string senddata;
-    std::string rbuffer;
-    std::string status_text;
-    size_t reply_count = 0;
-    size_t seed_count = 0;
-    size_t total_delegates = 0;
-    size_t total_delegates_valid_amount = 0;
+  // Variables
+  std::string public_address;
+  tools::wallet2::transfer_container transfers;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT];  // The block verifiers IP address
+  std::string response_json;
+  std::string senddata;
+  std::string rbuffer;
+  std::string status_text;
+  size_t reply_count = 0;
+  size_t seed_count = 0;
+  size_t total_delegates = 0;
+  size_t total_delegates_valid_amount = 0;
 
-    try {
-      // check if the wallet is open
-      if (!m_wallet) return not_open(er);
+  try {
+    // check if the wallet is open
+    if (!m_wallet) return not_open(er);
 
-      // error check
-      if (m_wallet->key_on_device()) {
-        er.code = WALLET_RPC_ERROR_CODE_HARDWARE_DEVICE;
-        er.message = "Failed to register the delegate";
-        return false;
-      }
-
-      if(m_wallet->watch_only())
-      {
-        er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
-        er.message = "Command not supported by watch-only wallet";
-        return false;
-      }
-
-      CHECK_MULTISIG_ENABLED();
-
-      // get the current block verifiers list
-      response_json = get_current_block_verifiers_list();
-      if (response_json == "0") {
-        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-        er.message = "Invalid address";
-        return false;
-      }
-
-      size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
-      if (start == std::string::npos) {
-        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-        er.message = "Missing block_verifiers_IP_address_list field";
-        return false;
-      }
-
-      // Find ':' then first quote, then closing quote (avoid magic +34 if you like)
-      size_t colon = response_json.find(':', start);
-      if (colon == std::string::npos) {
-        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-        er.message = "Malformed IP address list (missing colon)";
-        return false;
-      }
-      start = response_json.find('"', colon + 1);  // opening quote
-      if (start == std::string::npos) {
-        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-        er.message = "Malformed IP address list (no opening quote)";
-        return false;
-      }
-      ++start;
-      size_t end = response_json.find('"', start);  // closing quote
-      if (end == std::string::npos) {
-        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-        er.message = "Malformed IP address list (no closing quote)";
-        return false;
-      }
-
-      // Extract just the list of IPs
-      std::string ip_list = response_json.substr(start, end - start);
-
-      // Split by '|'
-      {
-        std::istringstream ss(ip_list);
-        std::string ip;
-        total_delegates = 0;
-        while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-          if (!ip.empty()) {
-            block_verifiers_IP_address[total_delegates++] = ip;
-          }
-        }
-      }
-
-      if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-        total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
-      }
-      if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
-        er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
-        er.message = "Minimum number of delegates not online";
-        return false;
-      }
-
-      // Quorum AFTER we know total_delegates
-      total_delegates_valid_amount = static_cast<size_t>(
-          std::ceil(static_cast<double>(total_delegates) *
-                    static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
-
-      // get the wallet transfers (ensures wallet data is populated)
-      m_wallet->get_transfers(transfers);
-
-      // primary subaddress as public address
-      public_address = m_wallet->get_subaddress_as_str({0, 0});
-      if (public_address.length() != XCASH_WALLET_LENGTH ||
-        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-        er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-        er.message = "Only XCA addresses are allowed";
-        return false;
-      }
-
-      // Build unsigned JSON
-      time_t registration_time = time(NULL);
-      std::ostringstream o;
-      o << "{\r\n"
-        << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
-        << "  \"delegate_name\": \"" << req.delegate_name << "\",\r\n"
-        << "  \"delegate_IP\": \"" << req.delegate_IP_address << "\",\r\n"
-        << "  \"delegate_public_key\": \"" << req.delegates_public_key << "\",\r\n"
-        << "  \"public_address\": \"" << public_address << "\",\r\n"
-        << "  \"registration_timestamp\": " << registration_time << "\r\n"
-        << "}";
-
-      std::string unsigned_json = o.str();
-
-      // Sign the full JSON
-      std::string signature = m_wallet->sign(
-          unsigned_json,
-          tools::wallet2::sign_with_spend_key,
-          {0, 0});
-
-      // Insert signature into JSON
-      auto insert_pos = unsigned_json.rfind('}');
-      if (insert_pos == std::string::npos) {
-        er.code = WALLET_RPC_ERROR_CODE_BAD_TRANS;
-        er.message = "Malformed JSON";
-        return false;
-      }
-      std::ostringstream final;
-      final << unsigned_json.substr(0, insert_pos)
-            << ",\"signature\": \"" << signature << "\"}";
-      senddata = final.str();
-
-      // Ensure enough seed delegates are online
-      INITIALIZE_NETWORK_DATA_NODES_LIST;
-
-      const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
-
-      for (size_t count = 0; count < total_delegates; ++count) {
-        if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
-          seed_count++;
-        }
-      }
-
-      const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
-      if (seed_count < required_seeds) {
-        er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
-        er.message = "Minimum number of delegates not online";
-        return false;
-      }
-
-      // Send to first online seed node and all online delegates
-      bool seed_committed = false;  // flip true after the first seed replies OK
-      for (size_t i = 0; i < total_delegates; ++i) {
-        if (block_verifiers_IP_address[i].empty()) continue;
-
-        const std::string& host = block_verifiers_IP_address[i];
-        const bool is_seed = (seed_set.count(host) != 0);
-
-        // If a seed has already committed, we *count* other seeds as success without sending
-        if (is_seed && seed_committed) {
-          ++reply_count;  // count assumed success
-          continue;
-        }
-
-        // Otherwise send (all non-seeds always send; seeds send until first success)
-        std::string rbuffer = send_and_receive_data(
-            host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
-        const bool ok = parse_dpops_response(rbuffer, status_text);
-        if (ok) {
-          ++reply_count;
-          if (is_seed) seed_committed = true;  // seed found and success
-        }
-      }
-
-      // Also try local node (not counted in quorum but must be successful)
-      bool local_ok = false;
-      rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-      status_text.clear();
-      local_ok = parse_dpops_response(rbuffer, status_text);
-
-      if (reply_count >= total_delegates_valid_amount and local_ok) {
-        res.delegate_register_status = "success";
-      } else {
-        er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
-        er.message = "Minimum number of delegates not reached";
-        return false;
-      }
-    } catch (const std::exception& e) {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "Failed to register the delegate";
-      return false;
-    } catch (...) {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    // error check
+    if (m_wallet->key_on_device()) {
+      er.code = WALLET_RPC_ERROR_CODE_HARDWARE_DEVICE;
       er.message = "Failed to register the delegate";
       return false;
     }
 
-    return true;
+    if (m_wallet->watch_only()) {
+      er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
+      er.message = "Command not supported by watch-only wallet";
+      return false;
+    }
+
+    CHECK_MULTISIG_ENABLED();
+
+    // get the current block verifiers list
+    response_json = get_current_block_verifiers_list();
+    if (response_json == "0") {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Invalid address";
+      return false;
+    }
+
+    size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
+    if (start == std::string::npos) {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Missing block_verifiers_IP_address_list field";
+      return false;
+    }
+
+    // Find ':' then first quote, then closing quote (avoid magic +34 if you like)
+    size_t colon = response_json.find(':', start);
+    if (colon == std::string::npos) {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Malformed IP address list (missing colon)";
+      return false;
+    }
+    start = response_json.find('"', colon + 1);  // opening quote
+    if (start == std::string::npos) {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Malformed IP address list (no opening quote)";
+      return false;
+    }
+    ++start;
+    size_t end = response_json.find('"', start);  // closing quote
+    if (end == std::string::npos) {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Malformed IP address list (no closing quote)";
+      return false;
+    }
+
+    // Extract just the list of IPs
+    std::string ip_list = response_json.substr(start, end - start);
+
+    // Split by '|'
+    {
+      std::istringstream ss(ip_list);
+      std::string ip;
+      total_delegates = 0;
+      while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+        if (!ip.empty()) {
+          block_verifiers_IP_address[total_delegates++] = ip;
+        }
+      }
+    }
+
+    if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+      total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
+    }
+    if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
+      er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
+      er.message = "Minimum number of delegates not online";
+      return false;
+    }
+
+    // Quorum AFTER we know total_delegates
+    total_delegates_valid_amount = static_cast<size_t>(
+        std::ceil(static_cast<double>(total_delegates) *
+                  static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
+
+    // get the wallet transfers (ensures wallet data is populated)
+    m_wallet->get_transfers(transfers);
+
+    // primary subaddress as public address
+    public_address = m_wallet->get_subaddress_as_str({0, 0});
+    if (public_address.length() != XCASH_WALLET_LENGTH ||
+        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
+      er.message = "Only XCA addresses are allowed";
+      return false;
+    }
+
+    // Build unsigned JSON
+    time_t registration_time = time(NULL);
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REGISTER_DELEGATE\",\r\n"
+      << "  \"delegate_name\": \"" << req.delegate_name << "\",\r\n"
+      << "  \"delegate_IP\": \"" << req.delegate_IP_address << "\",\r\n"
+      << "  \"delegate_public_key\": \"" << req.delegates_public_key << "\",\r\n"
+      << "  \"public_address\": \"" << public_address << "\",\r\n"
+      << "  \"registration_timestamp\": " << registration_time << "\r\n"
+      << "}";
+
+    std::string unsigned_json = o.str();
+
+    // Sign the full JSON
+    std::string signature = m_wallet->sign(
+        unsigned_json,
+        tools::wallet2::sign_with_spend_key,
+        {0, 0});
+
+    // Insert signature into JSON
+    auto insert_pos = unsigned_json.rfind('}');
+    if (insert_pos == std::string::npos) {
+      er.code = WALLET_RPC_ERROR_CODE_BAD_TRANS;
+      er.message = "Malformed JSON";
+      return false;
+    }
+    std::ostringstream final;
+    final << unsigned_json.substr(0, insert_pos)
+          << ",\"signature\": \"" << signature << "\"}";
+    senddata = final.str();
+
+    // Ensure enough seed delegates are online
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
+
+    const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
+
+    for (size_t count = 0; count < total_delegates; ++count) {
+      if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
+        seed_count++;
+      }
+    }
+
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
+    if (seed_count < required_seeds) {
+      er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
+      er.message = "Minimum number of delegates not online";
+      return false;
+    }
+
+    // Send to first online seed node and all online delegates
+    bool seed_committed = false;  // flip true after the first seed replies OK
+    for (size_t i = 0; i < total_delegates; ++i) {
+      if (block_verifiers_IP_address[i].empty()) continue;
+
+      const std::string& host = block_verifiers_IP_address[i];
+      const bool is_seed = (seed_set.count(host) != 0);
+
+      // If a seed has already committed, we *count* other seeds as success without sending
+      if (is_seed && seed_committed) {
+        ++reply_count;  // count assumed success
+        continue;
+      }
+
+      // Otherwise send (all non-seeds always send; seeds send until first success)
+      std::string rbuffer = send_and_receive_data(
+          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+
+      const bool ok = parse_dpops_response(rbuffer, status_text);
+      if (ok) {
+        ++reply_count;
+        if (is_seed) seed_committed = true;  // seed found and success
+      }
+    }
+
+    // Also try local node (not counted in quorum but must be successful)
+    bool local_ok = false;
+    rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    local_ok = parse_dpops_response(rbuffer, status_text);
+
+    if (reply_count >= total_delegates_valid_amount and local_ok) {
+      res.delegate_register_status = "success";
+    } else {
+      er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
+      er.message = "Minimum number of delegates not reached";
+      return false;
+    }
+  } catch (const std::exception& e) {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to register the delegate";
+    return false;
+  } catch (...) {
+    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+    er.message = "Failed to register the delegate";
+    return false;
   }
+
+  return true;
+}
 
   bool wallet_rpc_server::on_delegate_update(const wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::response& res, epee::json_rpc::error& er, const connection_context* ctx) {
     // Variables
