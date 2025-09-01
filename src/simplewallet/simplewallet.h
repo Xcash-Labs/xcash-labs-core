@@ -264,6 +264,7 @@ namespace cryptonote
     bool vote(const std::vector<std::string>& args);
     bool delegate_register(const std::vector<std::string>& args);
     bool delegate_update(const std::vector<std::string>& args);
+    bool delegate_recover(const std::vector<std::string>& args);
     bool vote_status(const std::vector<std::string>& args);
     bool revote(const std::vector<std::string>& args);
     bool on_unknown_command(const std::vector<std::string>& args);
