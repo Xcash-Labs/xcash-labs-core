@@ -3448,7 +3448,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   size_t seed_count = 0;
   size_t total_delegates = 0;
   size_t total_delegates_valid_amount = 0;
-  uint64_t current_block_height = 0;
 
   #define PARAMETER_AMOUNT 3
 
@@ -3543,10 +3542,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCA addresses are allowed.");
       return true;
     }
-
-    // current block height (kept; useful for future logging)
-    current_block_height = m_wallet->get_blockchain_current_height();
-    (void)current_block_height;
 
     // Build unsigned JSON
     time_t registration_time = time(NULL);
