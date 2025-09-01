@@ -4174,7 +4174,7 @@ void sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
   return;
 }
 
-std::string get_current_block_verifiers_list() {
+std::string wallet_rpc_server::get_current_block_verifiers_list() {
   // The macro expects this exact struct + variable name
   sync_minutes_and_seconds(0, 45);
   struct network_data_nodes_list {
@@ -4425,7 +4425,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
 
       // error check
       if (m_wallet->key_on_device()) {
-        er.code = WALLET_RPC_ERROR_CODE_KEYS_ON_DEVICE;
+        er.code = WALLET_RPC_ERROR_CODE_HARDWARE_DEVICE;
         er.message = "Failed to register the delegate";
         return false;
       }
