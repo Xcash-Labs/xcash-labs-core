@@ -3134,45 +3134,8 @@ bool parse_dpops_response(const std::string &rbuffer,
   return true;
 }
 
-
-
-void sync_minutes_and_seconds(const int SETTINGS)
-{
-  // Variables
-  std::time_t current_date_and_time;
-  std::tm* current_UTC_date_and_time;
-
-  if (SETTINGS == 0)
-  {
-    message_writer(console_color_yellow, false) << "Waiting until the next valid data interval, this will be less than 5 minutes. Please leave the wallet open until this time and you receive a confirmation";
-
-    do
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      current_date_and_time = std::time(0);
-      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
-    } while (current_UTC_date_and_time->tm_min % BLOCK_TIME != 2 && current_UTC_date_and_time->tm_min % BLOCK_TIME != 3); 
-  }
-  else
-  {
-    message_writer(console_color_yellow, false) << "Sending the vote at the beginning of the hour. Please leave the wallet open until this time and you receive a confirmation";
-
-    do
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(200));
-      current_date_and_time = std::time(0);
-      current_UTC_date_and_time = std::gmtime(&current_date_and_time);
-    } while (current_UTC_date_and_time->tm_min != 3); 
-  }
-
-  // wait a random amount of time, so all messages from delegates that have been waiting dont get sent at the same time
-  std::this_thread::sleep_for(std::chrono::milliseconds(rand() % (SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS - SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS + 1) + SOCKET_CONNECTION_MINIMUM_BUFFER_SETTINGS));
-  return;
-}
-
-
 // Always waits until the given MINUTES:SECONDS offset within the *next* block cycle
-void sync_minutes_and_seconds_new(const int MINUTES, const int SECONDS) {
+void sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
   using namespace std::chrono;
 
   if (MINUTES >= BLOCK_TIME || SECONDS >= 60 || MINUTES < 0 || SECONDS < 0) {
@@ -3210,13 +3173,10 @@ void sync_minutes_and_seconds_new(const int MINUTES, const int SECONDS) {
   return;
 }
 
-
-
-
 std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
 {
   // The macro expects this exact struct + variable name
-  sync_minutes_and_seconds_new(0, 45);
+  sync_minutes_and_seconds(0, 45);
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
@@ -3397,7 +3357,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   }
 
   // wait until the next valid data time
-  sync_minutes_and_seconds(1);
+  //sync_minutes_and_seconds(1);
 
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
@@ -3521,11 +3481,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       return true;
     }
 
-    // --- Parse IP list safely (your improved messages preserved) ---
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
       fail_msg_writer() << tr("Failed to register the delegate: missing 'block_verifiers_IP_address_list' field");
-      return true;  // keep CLI loop alive
+      return true;
     }
 
     // Find ':' then first quote, then closing quote (avoid magic +34 if you like)
@@ -3655,12 +3614,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       std::string rbuffer = send_and_receive_data(
           host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
-      std::cout << "[DEBUG] host=" << host << " rbuffer=" << rbuffer << std::endl;
-
       const bool ok = parse_dpops_response(rbuffer, status_text);
       if (ok) {
         ++reply_count;
-        if (is_seed) seed_committed = true;  // seed found and successful 
+        if (is_seed) seed_committed = true;  // seed found and success
+      } else {
+        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << rbuffer;
       }
     }
 
@@ -3669,22 +3628,16 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
-    std::cout << "[DEBUG] host=localhost rbuffer=" << rbuffer << std::endl;
-
+    if (!ok) {
+      fail_msg_writer() << tr("[ERR] delegate ") << host << " " << rbuffer;
+    }
+    
     if (reply_count >= total_delegates_valid_amount and local_ok) {
       message_writer(console_color_green, false) << "The delegate has been registered successfully";
     } else {
       fail_msg_writer() << tr("Delegate registration encountered errors");
       fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
       fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
-      if (!local_ok) {
-        if (status_text.empty()) {
-          fail_msg_writer() << tr("Possible network issue with DPOPS process");
-        } else {
-          fail_msg_writer() << status_text;
-        }
-      }
-
       return true;
     }
   }
@@ -3800,7 +3753,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string>& args)
     SCOPED_WALLET_UNLOCK();
 
     // wait until the next valid data time
-    sync_minutes_and_seconds(0);
+    //sync_minutes_and_seconds(0);
 
     // get the current block verifiers list
     if ((string = get_current_block_verifiers_list()) == "0")
@@ -3938,7 +3891,7 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
   SCOPED_WALLET_UNLOCK();
 
   // wait until the next valid data time
-  sync_minutes_and_seconds(0);
+  //sync_minutes_and_seconds(0);
 
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
@@ -4261,7 +4214,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   }
 
   // wait until the next valid data time
-  sync_minutes_and_seconds(1);
+  //sync_minutes_and_seconds(1);
 
   // get the current block verifiers list
   if ((string = get_current_block_verifiers_list()) == "")
