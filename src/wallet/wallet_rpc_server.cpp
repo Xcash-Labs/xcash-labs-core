@@ -4553,7 +4553,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
 
       const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
 
-      for (int count = 0; count < total_delegates; ++count) {
+      for (size_t count = 0; count < total_delegates; ++count) {
         if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
           seed_count++;
         }
