@@ -3966,6 +3966,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       const std::string &host = block_verifiers_IP_address[i];
       if (host.empty()) continue;
 
+      fail_msg_writer() << tr("delegate: ") << host;
+      
       const bool is_seed = (seed_set.count(host) != 0);
 
       if (is_seed && seed_committed) {
@@ -3974,6 +3976,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       }
 
       std::string r = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+
+      fail_msg_writer() << tr("[ALL] delegate ") << host << " " << status_text;
+
       status_text.clear();
       const bool ok = parse_dpops_response(r, status_text);
       if (ok) {
