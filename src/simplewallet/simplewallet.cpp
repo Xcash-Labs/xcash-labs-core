@@ -3680,41 +3680,29 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       out.reserve(s.size() + 8);
       for (char c : s) {
         switch (c) {
-          case '\"':
-            out += "\\\"";
-            break;
-          case '\\':
-            out += "\\\\";
-            break;
-          case '\b':
-            out += "\\b";
-            break;
-          case '\f':
-            out += "\\f";
-            break;
-          case '\n':
-            out += "\\n";
-            break;
-          case '\r':
-            out += "\\r";
-            break;
-          case '\t':
-            out += "\\t";
-            break;
+          case '\"': out += "\\\""; break;
+          case '\\': out += "\\\\"; break;
+          case '\b': out += "\\b";  break;
+          case '\f': out += "\\f";  break;
+          case '\n': out += "\\n";  break;
+          case '\r': out += "\\r";  break;
+          case '\t': out += "\\t";  break;
           default:
             if (static_cast<unsigned char>(c) < 0x20) {
               char buf[7];
               std::snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c);
               out += buf;
-            } else
+            } else {
               out += c;
+            }
         }
       }
       return out;
     };
 
     auto trim_quotes = [](std::string v) {
-      if (v.size() >= 2 && ((v.front() == '"' && v.back() == '"') || (v.front() == '\'' && v.back() == '\'')))
+      if (v.size() >= 2 &&
+          ((v.front() == '"' && v.back() == '"') || (v.front() == '\'' && v.back() == '\'')))
         return v.substr(1, v.size() - 2);
       return v;
     };
@@ -3764,17 +3752,84 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       return true;
     };
 
-    // ---- Parse args strictly as field=value tokens ----
+    // ---- Coalesce tokens so field="multi word value" stays intact even if CLI split/stripped quotes ----
+    auto coalesce_pairs = [](const std::vector<std::string>& in) {
+      std::vector<std::string> out;
+      out.reserve(in.size());
+      for (size_t i = 0; i < in.size(); ++i) {
+        const std::string& t = in[i];
+        const auto eq = t.find('=');
+
+        // If there's no '=', just pass through (will be flagged later)
+        if (eq == std::string::npos || eq == t.size() - 1) {
+          out.push_back(t);
+          continue;
+        }
+
+        // Split into key and value start
+        const std::string key = t.substr(0, eq);
+        std::string val = t.substr(eq + 1);
+
+        // Detect an opening quote right after '='
+        char q = 0;
+        if (!val.empty() && (val.front() == '"' || val.front() == '\'')) {
+          q = val.front();
+        }
+
+        // If no starting quote, or already properly quoted in the same token, keep as-is
+        if (!q) {
+          out.push_back(t);
+          continue;
+        }
+
+        // If this token already ends with the same quote, keep as-is
+        if (val.size() >= 2 && val.back() == q) {
+          out.push_back(t);
+          continue;
+        }
+
+        // Otherwise, consume tokens until we find a closing quote
+        std::string merged = t;
+        bool closed = false;
+        while (++i < in.size()) {
+          merged += ' ';
+          merged += in[i];
+          if (!in[i].empty() && in[i].back() == q) {
+            closed = true;
+            break;
+          }
+        }
+        // Even if not closed, push merged; we'll flag unterminated quotes later.
+        out.push_back(std::move(merged));
+      }
+      return out;
+    };
+
+    // ---- Parse args strictly as field=value tokens (with coalesced quoted values) ----
+    const auto tokens = coalesce_pairs(args);
     std::vector<std::pair<std::string, std::string>> updates;
-    updates.reserve(args.size());
-    for (const auto &tok : args) {
+    updates.reserve(tokens.size());
+
+    for (const auto &tok : tokens) {
       const auto eq = tok.find('=');
       if (eq == std::string::npos || eq == 0 || eq == tok.size() - 1) {
         fail_msg_writer() << tr("Invalid parameter format. Use field=value (quote the value if it contains spaces).");
         return true;
       }
       std::string key = tok.substr(0, eq);
-      std::string val = trim_quotes(tok.substr(eq + 1));
+      std::string val = tok.substr(eq + 1);
+
+      // Check for unterminated quotes (e.g., value starts with quote but never closes)
+      if (val.size() >= 1 && (val.front() == '"' || val.front() == '\'')) {
+        char q = val.front();
+        if (val.size() < 2 || val.back() != q) {
+          fail_msg_writer() << tr("Invalid parameter: unterminated quoted value for '") << key << "'.";
+          return true;
+        }
+      }
+
+      val = trim_quotes(std::move(val));
+
       if (!validate_pair(key, val)) return true;
       updates.emplace_back(std::move(key), std::move(val));
     }
