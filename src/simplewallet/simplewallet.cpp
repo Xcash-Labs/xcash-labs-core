@@ -3614,7 +3614,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         ++reply_count;
         if (is_seed) seed_committed = true;  // seed found and success
       } else {
-        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << rbuffer;
+        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
       }
     }
 
@@ -3624,7 +3624,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
     if (!local_ok) {
-      fail_msg_writer() << tr("[ERR] local delegate ") << rbuffer;
+      fail_msg_writer() << tr("[ERR] local delegate ") << status_text;
     }
     
     if (reply_count >= total_delegates_valid_amount and local_ok) {
@@ -3980,7 +3980,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         ++reply_count;
         if (is_seed) seed_committed = true;
       } else {
-        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << r;
+        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
       }
     }
 
@@ -3990,7 +3990,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
     if (!local_ok) {
-      fail_msg_writer() << tr("[ERR] local delegate ") << rbuffer;
+      fail_msg_writer() << tr("[ERR] local delegate ") << status_text;
     }
 
     // ---- Decide success ----
