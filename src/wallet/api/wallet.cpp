@@ -2948,9 +2948,6 @@ std::string WalletImpl::delegate_register(const std::string &delegate_name,
   return "Failed to register the delegate";
 }
 
-
-
-// ****
 std::string WalletImpl::delegate_update(const std::string &item, const std::string &value) {
   // Variables
   std::string parameters;
@@ -3158,14 +3155,6 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
 
   return "Failed to update the delegate";
 }
-
-// *****
-
-
-
-
-
-
 
 std::string WalletImpl::delegate_recover(const std::string &domain_name) {
   // Variables
