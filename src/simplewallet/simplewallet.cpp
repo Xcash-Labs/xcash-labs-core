@@ -3739,34 +3739,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
       } else if (key == "delegate_fee") {
-        // Basic size guard
-        if (val.size() > 32) {
-          fail_msg_writer() << tr("Invalid 'delegate_fee'. Too many characters.");
-          return false;
-        }
-        // Disallow scientific notation to keep storage consistent
-        if (val.find_first_of("eE") != std::string::npos) {
-          fail_msg_writer() << tr("Invalid 'delegate_fee'. Use plain decimals (e.g., 10.554).");
-          return false;
-        }
-        // Optional: cap precision to 6 decimals
-        if (auto dot = val.find('.'); dot != std::string::npos && val.size() - dot - 1 > 6) {
-          fail_msg_writer() << tr("'delegate_fee' supports up to 6 decimals.");
-          return false;
-        }
-
-        errno = 0;
-        char *end = nullptr;
-        const double d = std::strtod(val.c_str(), &end);
-
-        // Must be a finite number, fully consumed
-        if (errno != 0 || end == val.c_str() || *end != '\0' || !std::isfinite(d)) {
-          fail_msg_writer() << tr("Invalid 'delegate_fee'. Must be a number (e.g., 10.554).");
-          return false;
-        }
-        // Clamp to 0..100 (percent)
-        if (d < 0.0 || d > 100.0) {
-          fail_msg_writer() << tr("'delegate_fee' must be between 0 and 100.");
+        if (val.size() > 10) {
+          fail_msg_writer() << tr("Invalid 'delegate_fee'. Max length 10");
           return false;
         }
       } else if (key == "server_specs") {
@@ -3944,27 +3918,10 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       << "  \"updates\": {\r\n";
 
     for (size_t i = 0; i < updates.size(); ++i) {
-      const auto &k = updates[i].first;
-      const auto &v = updates[i].second;
-
-      if (k == "delegate_fee") {
-        errno = 0;
-        char *end = nullptr;
-        double d = std::strtod(v.c_str(), &end);
-        if (errno != 0 || end == v.c_str() || *end != '\0' || !std::isfinite(d)) {
-          fail_msg_writer() << tr("Invalid 'delegate_fee' while encoding JSON.");
-          return true;
-        }
-        // emit as a number (no quotes)
-        o << "    \"" << k << "\": " << v;
-      } else {
-        o << "    \"" << k << "\": \"" << json_escape(v) << "\"";
-      }
-
+      o << "    \"" << updates[i].first << "\": \"" << json_escape(updates[i].second) << "\"";
       if (i + 1 < updates.size()) o << ",";
       o << "\r\n";
     }
-
     o << "  }\r\n"
       << "}";
 
