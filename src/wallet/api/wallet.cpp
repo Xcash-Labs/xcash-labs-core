@@ -3094,23 +3094,16 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
           << ",\"signature\": \"" << signature << "\"}";
     const std::string senddata = final.str();
 
-    // ---- Seed set (explicit; avoids container assumptions) ----
-    const std::unordered_set<std::string> seed_set = {
-      NETWORK_DATA_NODE_IP_ADDRESS_1,
-      NETWORK_DATA_NODE_IP_ADDRESS_2,
-      NETWORK_DATA_NODE_IP_ADDRESS_3,
-      NETWORK_DATA_NODE_IP_ADDRESS_4,
-      NETWORK_DATA_NODE_IP_ADDRESS_5
-    };
+    // Initialize from macro
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
 
-    // Count seeds present among the current delegates
-    seed_count = 0;
-    for (size_t i = 0; i < total_delegates; ++i) {
-      if (!block_verifiers_IP_address[i].empty() &&
-          seed_set.count(block_verifiers_IP_address[i]) != 0) {
-        ++seed_count;
+    // Helper: check if an IP is a seed node
+    auto is_seed = [&](const std::string &ip) {
+      for (size_t i = 0; i < NETWORK_DATA_NODES_AMOUNT; ++i) {
+        if (ip == network_data_nodes_list[i]) return true;
       }
-    }
+      return false;
+    };
 
     const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
     if (seed_count < required_seeds) {
@@ -3155,6 +3148,14 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
 
   return "Failed to update the delegate";
 }
+
+// *****
+
+
+
+
+
+
 
 std::string WalletImpl::delegate_recover(const std::string &domain_name) {
   // Variables
