@@ -2948,33 +2948,31 @@ std::string WalletImpl::delegate_register(const std::string &delegate_name,
   return "Failed to register the delegate";
 }
 
+
+
+// ****
 std::string WalletImpl::delegate_update(const std::string &item, const std::string &value) {
   // Variables
-  std::string parameters = "";
-  std::string public_address = "";
+  std::string parameters;
+  std::string public_address;
   tools::wallet2::transfer_container transfers;
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT];  // The block verifiers IP address
-  std::string string = "";
-  std::string data2 = "";
-  std::string data3 = "";
-  std::size_t count;
-  std::size_t count2;
-  std::size_t count3;
-  std::size_t total_delegates;
-  std::size_t total_delegates_valid_amount;
-  std::string errorInfo = ":";
-  uint64_t current_block_height;
+  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT];
+  std::string response_json;
+  size_t total_delegates = 0;
+  size_t total_delegates_valid_amount = 0;
+  size_t reply_count = 0;
+  size_t seed_count = 0;
 
   try {
-    // check if the second paramter is multiple words and combine them
-    if (item == "about" || item == "team" || item == "server_specs") {
-      parameters = value;
-    }
-    // check if the item to update is a valid item
-    if (item != "IP_address" && item != "about" && item != "website" && item != "team" && item != "shared_delegate_status" && item != "delegate_fee" && item != "server_specs") {
+    // Multi-word fields use 'parameters'
+    if (item == "about" || item == "team" || item == "server_specs") parameters = value;
+
+    // ---- Validate field & value (mirror legacy constraints) ----
+    if (item != "IP_address" && item != "about" && item != "website" && item != "team" &&
+        item != "shared_delegate_status" && item != "delegate_fee" && item != "server_specs") {
       return "Failed to update the delegates information\nInvalid item. Valid items are: IP_address, about, website, team, shared_delegate_status, delegate_fee and server_specs";
     }
-    if (item == "IP_address" && (value.length() > 255 || value.find(":") != std::string::npos)) {
+    if (item == "IP_address" && (value.length() > 255 || value.find(':') != std::string::npos)) {
       return "Failed to update the delegates information\nInvalid IP_address. An IP address must be in IPV4 format, or a domain name and the length must be less then 255";
     }
     if (item == "about" && parameters.length() > 1024) {
@@ -2996,80 +2994,178 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
       return "Failed to update the delegates information\nInvalid server_specs. server_specs length must be less than 255";
     }
 
-    // wait until the next valid data time
-    // sync_minutes_and_seconds(0);
-
-    // get the current block verifiers list
-    if ((string = get_current_block_verifiers_list()) == "") {
-      return "Failed to update the delegates information with timeout";
+    // ---- Get verifiers list ----
+    response_json = get_current_block_verifiers_list();
+    if (response_json == "0") {
+      return "Failed to get current block verifiers list: no valid response from any network data node.";
     }
 
-    total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-    if (total_delegates > BLOCK_VERIFIERS_AMOUNT) {
-      total_delegates = BLOCK_VERIFIERS_AMOUNT;
+    // ---- Extract IP list (parse actual list) ----
+    size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
+    if (start == std::string::npos) {
+      return "Failed to update the delegate: missing 'block_verifiers_IP_address_list' field";
     }
-    total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-
-    // initialize the current_block_verifiers_list struct
-    for (count = 0, count2 = string.find("block_verifiers_IP_address_list") + 35, count3 = 0; count < total_delegates; count++) {
-      count3 = string.find("|", count2);
-      block_verifiers_IP_address[count] = string.substr(count2, count3 - count2);
-      count2 = count3 + 1;
+    size_t colon = response_json.find(':', start);
+    if (colon == std::string::npos) {
+      return "Failed to update the delegate: malformed IP address list (missing colon)";
     }
-
-    // get the wallet transfers
-    m_wallet->get_transfers(transfers);
-
-    // get the wallets public address
-    auto print_address_sub = [this, &transfers, &public_address]() {
-      bool used = std::find_if(
-                      transfers.begin(), transfers.end(),
-                      [this](const tools::wallet2::transfer_details &td) {
-                        return td.m_subaddr_index == cryptonote::subaddress_index{0, 0};
-                      }) != transfers.end();
-      public_address = m_wallet->get_subaddress_as_str({0, 0});
-    };
-    print_address_sub();
-
-    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      return "Failed to update the delegate\nInvalid public address. Only XCA addresses are allowed";
+    start = response_json.find('"', colon + 1);
+    if (start == std::string::npos) {
+      return "Failed to update the delegate: malformed IP address list (no opening quote)";
+    }
+    ++start;
+    size_t end = response_json.find('"', start);
+    if (end == std::string::npos) {
+      return "Failed to update the delegate: malformed IP address list (no closing quote)";
     }
 
-    // get the current block height
-    current_block_height = m_wallet->get_blockchain_current_height();
+    std::string ip_list = response_json.substr(start, end - start);
 
-    // create the data
-    data2 = parameters != "" ? "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + item + "|" + parameters + "|" + public_address + "|" : "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" + item + "|" + value + "|" + public_address + "|";
-
-    // sign the data
-    data3 = m_wallet->sign(data2);
-
-    data2 += data3 + "|";
-
-    // send the data to all block verifiers
-    for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++) {
-      std::string result = send_and_receive_data(block_verifiers_IP_address[count], data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS * 2);
-      if (result == "Updated the delegates information") {
-        count2++;
-        errorInfo += block_verifiers_IP_address[count] + "__Success" + "|";
-        if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_5) {
-          count3++;
-        }
-      } else {
-        errorInfo += block_verifiers_IP_address[count] + "__" + result + "|";
+    // Split by '|' and load into array
+    {
+      std::istringstream ss(ip_list);
+      std::string ip;
+      total_delegates = 0;
+      while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+        if (!ip.empty()) block_verifiers_IP_address[total_delegates++] = ip;
       }
     }
 
-    // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
-    if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT - 1))) {
+    if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
+      return "Failed to update the delegate, minimum number of delegates not online";
+    }
+
+    total_delegates_valid_amount = static_cast<size_t>(
+        std::ceil(static_cast<double>(total_delegates) *
+                  static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
+
+    // ---- Wallet state & public address ----
+    m_wallet->get_transfers(transfers); // (kept for consistency if needed elsewhere)
+    public_address = m_wallet->get_subaddress_as_str({0, 0});
+    if (public_address.length() != XCASH_WALLET_LENGTH ||
+        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      return "Failed to update the delegate\nInvalid public address. Only XCA addresses are allowed";
+    }
+
+    // ---- Build unsigned JSON (new wire format, send value as string) ----
+    auto json_escape = [](const std::string &s) {
+      std::string out; out.reserve(s.size() + 8);
+      for (char c : s) {
+        switch (c) {
+          case '\"': out += "\\\""; break;
+          case '\\': out += "\\\\"; break;
+          case '\b': out += "\\b";  break;
+          case '\f': out += "\\f";  break;
+          case '\n': out += "\\n";  break;
+          case '\r': out += "\\r";  break;
+          case '\t': out += "\\t";  break;
+          default:
+            if ((unsigned char)c < 0x20) { char buf[7]; std::snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c); out += buf; }
+            else out += c;
+        }
+      }
+      return out;
+    };
+
+    const time_t ts = time(NULL);
+    const std::string &val_to_send = parameters.empty() ? value : parameters; // one pair per call
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n"
+      << "  \"public_address\": \"" << public_address << "\",\r\n"
+      << "  \"timestamp\": " << ts << ",\r\n"
+      << "  \"updates\": {\r\n"
+      << "    \"" << item << "\": \"" << json_escape(val_to_send) << "\"\r\n"
+      << "  }\r\n"
+      << "}";
+
+    std::string unsigned_json = o.str();
+
+    // ---- Sign full JSON ----
+    std::string signature = m_wallet->sign(
+        unsigned_json,
+        tools::wallet2::sign_with_spend_key,
+        {0, 0});
+
+    // Attach signature at root
+    auto insert_pos = unsigned_json.rfind('}');
+    if (insert_pos == std::string::npos) {
+      return "Failed to update the delegate: malformed JSON";
+    }
+    std::ostringstream final;
+    final << unsigned_json.substr(0, insert_pos)
+          << ",\"signature\": \"" << signature << "\"}";
+    const std::string senddata = final.str();
+
+    // ---- Seed set (explicit; avoids container assumptions) ----
+    const std::unordered_set<std::string> seed_set = {
+      NETWORK_DATA_NODE_IP_ADDRESS_1,
+      NETWORK_DATA_NODE_IP_ADDRESS_2,
+      NETWORK_DATA_NODE_IP_ADDRESS_3,
+      NETWORK_DATA_NODE_IP_ADDRESS_4,
+      NETWORK_DATA_NODE_IP_ADDRESS_5
+    };
+
+    // Count seeds present among the current delegates
+    seed_count = 0;
+    for (size_t i = 0; i < total_delegates; ++i) {
+      if (!block_verifiers_IP_address[i].empty() &&
+          seed_set.count(block_verifiers_IP_address[i]) != 0) {
+        ++seed_count;
+      }
+    }
+
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
+    if (seed_count < required_seeds) {
+      return "Failed to update the delegate, not enough seed delegates online";
+    }
+
+    // ---- Send (new protocol only: success iff reply starts with "1|") ----
+    auto is_success = [](const std::string& r) -> bool {
+      return r.size() >= 2 && r[0] == '1' && r[1] == '|';
+    };
+
+    bool seed_committed = false;
+    reply_count = 0;
+
+    for (size_t i = 0; i < total_delegates; ++i) {
+      const std::string &host = block_verifiers_IP_address[i];
+      if (host.empty()) continue;
+
+      const bool is_seed = (seed_set.count(host) != 0);
+
+      if (is_seed && seed_committed) {
+        ++reply_count;            // replica semantics: after first seed commit, count rest
+        continue;
+      }
+
+      std::string r = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+      if (is_success(r)) {
+        ++reply_count;
+        if (is_seed) seed_committed = true;
+      }
+      // (optional) else: collect r for diagnostics
+    }
+
+    if (reply_count >= total_delegates_valid_amount) {
       return "Success";
     }
   } catch (const std::exception &e) {
     LOG_ERROR("Failed to update the delegate: " << e.what());
+  } catch (...) {
+    return "Failed to update the delegate";
   }
 
-  return "Failed to update the delegate" + errorInfo;
+  return "Failed to update the delegate";
 }
+
+// *****
+
+
+
+
+
+
 
 std::string WalletImpl::delegate_recover(const std::string &domain_name) {
   // Variables
@@ -3221,6 +3317,13 @@ std::string WalletImpl::vote_status() {
 
   return "Failed to recover the delegate" + errorInfo;
 }
+
+
+
+
+
+
+
 
 std::string WalletImpl::revote() {
   // structures
