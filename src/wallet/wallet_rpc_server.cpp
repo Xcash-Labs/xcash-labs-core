@@ -4081,7 +4081,7 @@ bool wallet_rpc_server::on_get_version(const wallet_rpc::COMMAND_RPC_GET_VERSION
 }
 //------------------------------------------------------------------------------------------------------------------------------
 
-// *************************************************************** jed
+//  jed
 static inline void rstrip_chars(std::string& s, const char* chars = " \r\n|") {
   while (!s.empty() && std::strchr(chars, s.back())) s.pop_back();
 }
@@ -4615,8 +4615,6 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
   return true;
 }
 
-// *********
-
 bool wallet_rpc_server::on_delegate_update(
     const wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::request& req,
     wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE::response& res,
@@ -4826,18 +4824,6 @@ bool wallet_rpc_server::on_delegate_update(
     return false;
   }
 }
-
-
-// *********
-
-
-
-
-
-
-
-
-
 
   bool wallet_rpc_server::on_delegate_recover(const wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::request& req, wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER::response& res, epee::json_rpc::error& er, const connection_context* ctx) {
     // Variables
