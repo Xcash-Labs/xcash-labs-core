@@ -3436,10 +3436,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
           << ",\"signature\": \"" << signature << "\"}";
     senddata = final.str();
 
-    std::ostringstream final;
-    final << unsigned_json.substr(0, insert_pos) << ",\"signature\": \"" << signature << "\"}";
-    senddata = final.str();
-
     // Ensure enough seed delegates are online
     INITIALIZE_NETWORK_DATA_NODES_LIST;
 
