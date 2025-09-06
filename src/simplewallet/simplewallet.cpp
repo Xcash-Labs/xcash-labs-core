@@ -3303,12 +3303,14 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // Parse amount
-    const std::string& amount_arg = args[1];
+    std::string amount_arg = args[1];
     uint64_t vote_amount = 0;
+
     if (amount_arg == "all") {
-      vote_amount = m_wallet->unlocked_balance(); // spendable
+      // Use only unlocked balance of account 0
+      vote_amount = m_wallet->unlocked_balance(0, true, nullptr, nullptr);
       if (vote_amount == 0) {
-        fail_msg_writer() << tr("No unlocked balance available for voting");
+        fail_msg_writer() << tr("No unlocked balance available in account 0 for voting");
         return true;
       }
     } else {
@@ -3321,8 +3323,8 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
         fail_msg_writer() << tr("Vote amount must be greater than 0");
         return true;
       }
-      if (atomic > m_wallet->unlocked_balance()) {
-        fail_msg_writer() << tr("Vote amount exceeds unlocked balance");
+      if (atomic > m_wallet->unlocked_balance(0, true, nullptr, nullptr)) {
+        fail_msg_writer() << tr("Vote amount exceeds unlocked balance in account 0");
         return true;
       }
       vote_amount = atomic;
