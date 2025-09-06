@@ -3429,10 +3429,9 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       return true;
     }
     if (reserve_proof.size() > BUFFER_SIZE_RESERVE_PROOF) {
-      const std::string self_addr = m_wallet->get_subaddress_as_str({0, 0});
-      fail_msg_writer() << tr("Reserve proof is too large (") << reserve_proof.size() << " > " << max_proof_bytes << " bytes).";
+      fail_msg_writer() << tr("Reserve proof is too large (") << reserve_proof.size() << " > " << BUFFER_SIZE_RESERVE_PROOF << " bytes).";
       message_writer() << tr("Your wallet is likely fragmented. Consolidate first:");
-      message_writer() << "  sweep_all " << self_addr;
+      message_writer() << "  sweep_all " << public_address;
       message_writer() << tr("Wait for outputs to unlock, then re-run the vote.");
       return true;
     }
