@@ -3302,15 +3302,35 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       return true;
     }
 
-    // Parse amount
+    // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
+    static constexpr uint64_t MIN_VOTE_XCA = 2'000'000ULL;
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCA * COIN;  // COIN = atomic units per XCA
+
     std::string amount_arg = args[1];
     uint64_t vote_amount = 0;
 
-    if (amount_arg == "all") {
-      // Use only unlocked balance of account 0
-      vote_amount = m_wallet->unlocked_balance(0, true, nullptr, nullptr);
-      if (vote_amount == 0) {
-        fail_msg_writer() << tr("No unlocked balance available in account 0 for voting");
+    // Cache unlocked balance (account 0, strict)
+    const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
+
+    // Wallet-level minimum gate
+    if (unlocked0 < MIN_VOTE_ATOMIC) {
+      fail_msg_writer() << tr("You need at least 2,000,000 XCA unlocked in account 0 to vote");
+      return true;
+    }
+
+    // normalize "all"
+    auto tolower_str = [](std::string s) {
+      std::transform(s.begin(), s.end(), s.begin(),
+                     [](unsigned char c) { return (unsigned char)std::tolower(c); });
+      return s;
+    };
+
+    if (tolower_str(amount_arg) == "all") {
+      vote_amount = unlocked0;
+
+      // Per-vote minimum
+      if (vote_amount < MIN_VOTE_ATOMIC) {
+        fail_msg_writer() << tr("Each vote must be at least 2,000,000 XCA");
         return true;
       }
     } else {
@@ -3323,8 +3343,13 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
         fail_msg_writer() << tr("Vote amount must be greater than 0");
         return true;
       }
-      if (atomic > m_wallet->unlocked_balance(0, true, nullptr, nullptr)) {
+      if (atomic > unlocked0) {
         fail_msg_writer() << tr("Vote amount exceeds unlocked balance in account 0");
+        return true;
+      }
+      // Per-vote minimum
+      if (atomic < MIN_VOTE_ATOMIC) {
+        fail_msg_writer() << tr("Each vote must be at least 2,000,000 XCA");
         return true;
       }
       vote_amount = atomic;
@@ -3403,8 +3428,12 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to create the reserve proof for the vote");
       return true;
     }
-    if (reserve_proof.length() > BUFFER_SIZE_RESERVE_PROOF) {
-      fail_msg_writer() << tr("Failed to send the vote\nReserve proof is over the maximum length");
+    if (reserve_proof.size() > BUFFER_SIZE_RESERVE_PROOF) {
+      const std::string self_addr = m_wallet->get_subaddress_as_str({0, 0});
+      fail_msg_writer() << tr("Reserve proof is too large (") << reserve_proof.size() << " > " << max_proof_bytes << " bytes).";
+      message_writer() << tr("Your wallet is likely fragmented. Consolidate first:");
+      message_writer() << "  sweep_all " << self_addr;
+      message_writer() << tr("Wait for outputs to unlock, then re-run the vote.");
       return true;
     }
 
