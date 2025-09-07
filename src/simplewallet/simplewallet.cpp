@@ -3437,9 +3437,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // Build unsigned JSON
-    time_t registration_time = time(NULL);
     const std::string vote_amount_str = std::to_string(vote_amount); // atomic units as string
-
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF\",\r\n"
