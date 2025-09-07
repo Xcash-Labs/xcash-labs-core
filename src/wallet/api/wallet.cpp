@@ -3064,13 +3064,11 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
       return out;
     };
 
-    const time_t ts = time(NULL);
     const std::string &val_to_send = parameters.empty() ? value : parameters; // one pair per call
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n"
       << "  \"public_address\": \"" << public_address << "\",\r\n"
-      << "  \"timestamp\": " << ts << ",\r\n"
       << "  \"updates\": {\r\n"
       << "    \"" << item << "\": \"" << json_escape(val_to_send) << "\"\r\n"
       << "  }\r\n"
@@ -3148,14 +3146,6 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
 
   return "Failed to update the delegate";
 }
-
-// *****
-
-
-
-
-
-
 
 std::string WalletImpl::delegate_recover(const std::string &domain_name) {
   // Variables

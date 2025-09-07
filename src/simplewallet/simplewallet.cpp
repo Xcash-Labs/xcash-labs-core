@@ -3444,11 +3444,10 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     o << "{\r\n"
       << "  \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF\",\r\n"
       << "  \"delegate_name_or_address\": \"" << args[0] << "\",\r\n"
-      << "  \"vote_amount\": \"" << vote_amount_str << "\",\n" 
+      << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n" 
       << "  \"reserve_proof\": \"" << reserve_proof << "\",\r\n"
-      << "  \"public_address\": \"" << public_address << "\",\r\n"
-      << "  \"registration_timestamp\": " << registration_time << "\r\n"
-      << "}";      
+      << "  \"public_address\": \"" << public_address << "\"\r\n"
+      << "}";
 
     std::string unsigned_json = o.str();
 
@@ -4013,12 +4012,10 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     }
 
     // ---- Build unsigned JSON with ALL updates ----
-    const time_t ts = time(NULL);
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n"
       << "  \"public_address\": \"" << public_address << "\",\r\n"
-      << "  \"timestamp\": " << ts << ",\r\n"
       << "  \"updates\": {\r\n";
 
     for (size_t i = 0; i < updates.size(); ++i) {
