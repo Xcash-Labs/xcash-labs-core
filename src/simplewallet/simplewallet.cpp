@@ -2562,22 +2562,13 @@ bool simple_wallet::set_ask_password(const std::vector<std::string> &args/* = st
 
 bool simple_wallet::set_unit(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
-  const std::string &unit = args[1];
+  // Always use "xcash" with the configured display decimal point
   unsigned int decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
 
-  if (unit == "monero")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT;
-  else if (unit == "millinero")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 3;
-  else if (unit == "micronero")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 6;
-  else if (unit == "nanonero")
-    decimal_point = CRYPTONOTE_DISPLAY_DECIMAL_POINT - 9;
-  else if (unit == "piconero")
-    decimal_point = 0;
-  else
+  // Optional: you can check that the user actually typed "xcash"
+  if (args.size() > 1 && args[1] != "xcash")
   {
-    fail_msg_writer() << tr("invalid unit");
+    fail_msg_writer() << tr("invalid unit, only 'xcash' is supported");
     return true;
   }
 
@@ -3437,14 +3428,16 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // Build unsigned JSON
-    const std::string vote_amount_str = std::to_string(vote_amount); // atomic units as string
+    time_t vote_time = time(NULL);
+    const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_ADD_RESERVE_PROOF\",\r\n"
       << "  \"delegate_name_or_address\": \"" << args[0] << "\",\r\n"
-      << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n" 
+      << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n"
       << "  \"reserve_proof\": \"" << reserve_proof << "\",\r\n"
-      << "  \"public_address\": \"" << public_address << "\"\r\n"
+      << "  \"public_address\": \"" << public_address << "\",\r\n"
+      << "  \"vote_timestamp\": " << vote_time << "\r\n"
       << "}";
 
     std::string unsigned_json = o.str();
