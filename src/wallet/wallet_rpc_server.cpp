@@ -4793,7 +4793,7 @@ bool wallet_rpc_server::on_delegate_update(
       << "  }\r\n"
       << "}";
 
-    const std::string unsigned_json = o.str()
+    const std::string unsigned_json = o.str();
 
     // ---- Sign full JSON ----
     std::string signature = m_wallet->sign(
