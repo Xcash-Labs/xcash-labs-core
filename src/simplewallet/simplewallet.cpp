@@ -4003,10 +4003,12 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     }
 
     // ---- Build unsigned JSON with ALL updates ----
+    time_t registration_time = time(NULL);
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n"
       << "  \"public_address\": \"" << public_address << "\",\r\n"
+      << "  \"registration_timestamp\": " << registration_time << ",\r\n"
       << "  \"updates\": {\r\n";
 
     for (size_t i = 0; i < updates.size(); ++i) {

@@ -4761,19 +4761,36 @@ bool wallet_rpc_server::on_delegate_update(
       return false;
     }
 
-    // --- Height for pre-HF rule ---
-    const uint64_t current_block_height = m_wallet->get_blockchain_current_height();
+    // ---- Build unsigned JSON with updates ----
+    time_t registration_time = time(NULL);
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n"
+      << "  \"public_address\": \"" << json_escape(public_address) << "\",\r\n"
+      << "  \"registration_timestamp\": " << registration_time << ",\r\n"
+      << "  \"updates\": {\r\n"
+      << "    \"" << req.item << "\": \"" << json_escape(req.value) << "\"\r\n"
+      << "  }\r\n"
+      << "}";
 
-    // --- Build + sign payload ---
-    std::string data2 = "NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE|" +
-                        req.item + "|" + req.value + "|" + public_address + "|";
-    std::string signature = m_wallet->sign(data2, tools::wallet2::sign_with_spend_key, {0, 0});
-    if (signature.empty()) {
-      er.code = WALLET_RPC_ERROR_CODE_BAD_TRANS;
-      er.message = "Failed to sign update payload";
-      return false;
+    const std::string unsigned_json = o.str()
+
+    // ---- Sign full JSON ----
+    std::string signature = m_wallet->sign(
+        unsigned_json,
+        tools::wallet2::sign_with_spend_key,
+        {0, 0});
+
+    // ---- Insert signature ----
+    auto insert_pos = unsigned_json.rfind('}');
+    if (insert_pos == std::string::npos) {
+      fail_msg_writer() << tr("Failed to update the delegate: malformed JSON");
+      return true;
     }
-    data2 += signature + "|";
+    std::ostringstream final;
+    final << unsigned_json.substr(0, insert_pos)
+          << ",\"signature\": \"" << signature << "\"}";
+    senddata = final.str();
 
     // --- Seed list via macro ---
     INITIALIZE_NETWORK_DATA_NODES_LIST;

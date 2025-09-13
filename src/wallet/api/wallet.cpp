@@ -3064,11 +3064,13 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
       return out;
     };
 
+    time_t registration_time = time(NULL);
     const std::string &val_to_send = parameters.empty() ? value : parameters; // one pair per call
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_UPDATE_DELEGATE\",\r\n"
       << "  \"public_address\": \"" << public_address << "\",\r\n"
+      << "  \"registration_timestamp\": " << registration_time << ",\r\n"
       << "  \"updates\": {\r\n"
       << "    \"" << item << "\": \"" << json_escape(val_to_send) << "\"\r\n"
       << "  }\r\n"
