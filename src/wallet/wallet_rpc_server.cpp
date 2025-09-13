@@ -4761,6 +4761,26 @@ bool wallet_rpc_server::on_delegate_update(
       return false;
     }
 
+    // ---- Build unsigned JSON (new wire format, send value as string) ----
+    auto json_escape = [](const std::string &s) {
+      std::string out; out.reserve(s.size() + 8);
+      for (char c : s) {
+        switch (c) {
+          case '\"': out += "\\\""; break;
+          case '\\': out += "\\\\"; break;
+          case '\b': out += "\\b";  break;
+          case '\f': out += "\\f";  break;
+          case '\n': out += "\\n";  break;
+          case '\r': out += "\\r";  break;
+          case '\t': out += "\\t";  break;
+          default:
+            if ((unsigned char)c < 0x20) { char buf[7]; std::snprintf(buf, sizeof(buf), "\\u%04x", (unsigned char)c); out += buf; }
+            else out += c;
+        }
+      }
+      return out;
+    };
+
     // ---- Build unsigned JSON with updates ----
     time_t registration_time = time(NULL);
     std::ostringstream o;
@@ -4821,8 +4841,7 @@ bool wallet_rpc_server::on_delegate_update(
     }
 
     // More specific failure codes:
-    if (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE &&
-        accepted_seeds < (NETWORK_DATA_NODES_AMOUNT - 1)) {
+    if (accepted_seeds < (NETWORK_DATA_NODES_AMOUNT - 1)) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
       er.message = "Minimum number of seed nodes not online";
       return false;
