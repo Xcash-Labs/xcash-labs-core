@@ -4622,6 +4622,8 @@ bool wallet_rpc_server::on_delegate_update(
     const connection_context* ctx)
 {
   try {
+    std::string senddata;
+
     // --- Wallet checks ---
     if (!m_wallet) return not_open(er);
 
@@ -4841,7 +4843,8 @@ bool wallet_rpc_server::on_delegate_update(
     }
 
     // More specific failure codes:
-    if (accepted_seeds < (NETWORK_DATA_NODES_AMOUNT - 1)) {
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
+    if (accepted_seeds < required_seeds) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
       er.message = "Minimum number of seed nodes not online";
       return false;
