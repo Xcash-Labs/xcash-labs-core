@@ -4830,7 +4830,7 @@ bool wallet_rpc_server::on_delegate_update(
 
     for (const auto& ip : verifier_ips) {
       const std::string reply =
-          send_and_receive_data(ip.c_str(), data2, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+          send_and_receive_data(ip.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       if (reply == "Updated the delegates information") {
         ++accepted_total;
         if (is_seed(ip)) ++accepted_seeds;
