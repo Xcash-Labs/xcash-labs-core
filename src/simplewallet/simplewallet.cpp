@@ -3700,6 +3700,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
 
       // Otherwise send (all non-seeds always send; seeds send until first success)
+
+      fail_msg_writer() << tr("Sending to ip: ") << host.c_str();
+
       std::string rbuffer = send_and_receive_data(
           host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
