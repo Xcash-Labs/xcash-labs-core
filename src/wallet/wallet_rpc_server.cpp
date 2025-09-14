@@ -4343,9 +4343,6 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       return false;
     }
 
-    // wait until the next valid data time
-    // sync_minutes_and_seconds(1);
-
     // get the current block verifiers list
     if ((string = get_current_block_verifiers_list()) == "") {
       er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
@@ -4578,7 +4575,7 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
         continue;
       }
 
-      // Otherwise send (all non-seeds always send; seeds send until first success)
+      // Otherwise send (all non-seeds always send; fail on seed node error)
       std::string rbuffer = send_and_receive_data(
           host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
@@ -4586,6 +4583,12 @@ bool wallet_rpc_server::on_delegate_register(const wallet_rpc::COMMAND_RPC_DELEG
       if (ok) {
         ++reply_count;
         if (is_seed) seed_committed = true;  // seed found and success
+      } else {
+        if (is_seed) {
+          er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
+          er.message = "Failed to update seed delegate";
+          return false;
+        }
       }
     }
 
@@ -4623,6 +4626,7 @@ bool wallet_rpc_server::on_delegate_update(
 {
   try {
     std::string senddata;
+    std::string status_text;
 
     // --- Wallet checks ---
     if (!m_wallet) return not_open(er);
@@ -4828,9 +4832,15 @@ bool wallet_rpc_server::on_delegate_update(
     size_t accepted_total = 0;
     size_t accepted_seeds = 0;
 
+// jed
+
     for (const auto& ip : verifier_ips) {
       const std::string reply =
           send_and_receive_data(ip.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+
+
+
+      
       if (reply == "Updated the delegates information") {
         ++accepted_total;
         if (is_seed(ip)) ++accepted_seeds;

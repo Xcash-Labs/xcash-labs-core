@@ -2927,6 +2927,10 @@ std::string WalletImpl::delegate_register(const std::string &delegate_name,
       if (ok) {
         ++reply_count;
         if (is_seed) seed_committed = true;
+      } else {
+        if (is_seed) {
+          return "Failed to register the delegate, unable to updated seed node";
+        }
       }
     }
 
@@ -2955,6 +2959,7 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
   tools::wallet2::transfer_container transfers;
   std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT];
   std::string response_json;
+  std::string status_text;
   size_t total_delegates = 0;
   size_t total_delegates_valid_amount = 0;
   size_t reply_count = 0;
@@ -3130,12 +3135,22 @@ std::string WalletImpl::delegate_update(const std::string &item, const std::stri
       }
 
       std::string r = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-      if (is_success(r)) {
+      status_text.clear();
+      local_ok = parse_dpops_response(r, status_text);
+
+      if (ok) {
         ++reply_count;
         if (is_seed) seed_committed = true;
+      } else {
+        if (is_seed) {
+          return "Failed to register the delegate, unable to updated seed nodes";
+        }
       }
-      // (optional) else: collect r for diagnostics
     }
+
+    bool local_ok = false;
+    r = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    // if this fails the node will automacilly update if enough nodes took the update
 
     if (reply_count >= total_delegates_valid_amount) {
       return "Success";

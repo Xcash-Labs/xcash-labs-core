@@ -3684,10 +3684,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       return true; 
     }
 
-
-
-
-
     // Send to first online seed node and all online delegates
     bool seed_committed = false;  // flip true after the first seed replies OK
     bool is_seed = false;
@@ -3698,15 +3694,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       const std::string &host = block_verifiers_IP_address[i];
       is_seed = (seed_set.count(host) != 0);
 
-      fail_msg_writer() << tr("Delegate ") << host;
-      if (is_seed) fail_msg_writer() << tr("Is Seed ") << host;
-
       if (is_seed && seed_committed) {
         ++reply_count;  // count assumed success
         continue;       // If a seed has already committed, we *count* other seeds as success without sending
       }
 
-      // Otherwise send (all non-seeds always send; seeds send until first success)
+      // Otherwise send (all non-seeds always send; fail on seed node error)
 
       std::string rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       const bool ok = parse_dpops_response(rbuffer, status_text);
@@ -3715,7 +3708,10 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         if (is_seed) seed_committed = true;  // seed found and success
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
-        if (is_seed) return true;
+        if (is_seed) {
+          fail_msg_writer() << tr("Failed to register the delegate, unable to updated seed node");
+          return true;
+        }
       }
     }
 
@@ -4081,6 +4077,10 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         if (is_seed) seed_committed = true;
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
+        if (is_seed) {
+          fail_msg_writer() << tr("Failed to update the delegate, unable to updated seed node");
+          return true;
+        }
       }
     }
 
