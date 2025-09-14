@@ -3698,7 +3698,8 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       const std::string &host = block_verifiers_IP_address[i];
       is_seed = (seed_set.count(host) != 0);
 
-      if (is_seed) fail_msg_writer() << tr("Seed ") << host;
+      fail_msg_writer() << tr("Delegate ") << host;
+      if (is_seed) fail_msg_writer() << tr("Is Seed ") << host;
 
       if (is_seed && seed_committed) {
         ++reply_count;  // count assumed success
