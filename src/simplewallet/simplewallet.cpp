@@ -3672,7 +3672,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     INITIALIZE_NETWORK_DATA_NODES_LIST;
 
     const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
-
     for (int count = 0; count < total_delegates; ++count) {
       if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
         seed_count++;
@@ -3685,33 +3684,37 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       return true; 
     }
 
+
+
+
+
     // Send to first online seed node and all online delegates
     bool seed_committed = false;  // flip true after the first seed replies OK
+    bool is_seed = false;
+
     for (size_t i = 0; i < total_delegates; ++i) {
       if (block_verifiers_IP_address[i].empty()) continue;
 
       const std::string &host = block_verifiers_IP_address[i];
-      const bool is_seed = (seed_set.count(host) != 0);
+      is_seed = (seed_set.count(host) != 0);
 
-      // If a seed has already committed, we *count* other seeds as success without sending
+      if (is_seed) fail_msg_writer() << tr("Seed ") << host;
+
       if (is_seed && seed_committed) {
         ++reply_count;  // count assumed success
-        continue;
+        continue;       // If a seed has already committed, we *count* other seeds as success without sending
       }
 
       // Otherwise send (all non-seeds always send; seeds send until first success)
 
-      fail_msg_writer() << tr("Sending to ip: ") << host.c_str();
-
-      std::string rbuffer = send_and_receive_data(
-          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
+      std::string rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       const bool ok = parse_dpops_response(rbuffer, status_text);
       if (ok) {
         ++reply_count;
         if (is_seed) seed_committed = true;  // seed found and success
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
+        if (is_seed) return true;
       }
     }
 
