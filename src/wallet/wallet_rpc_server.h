@@ -166,9 +166,6 @@ namespace tools
         MAP_JON_RPC_WE("stop_background_sync", on_stop_background_sync, wallet_rpc::COMMAND_RPC_STOP_BACKGROUND_SYNC)
 // jed
         MAP_JON_RPC_WE("vote",               on_vote,               wallet_rpc::COMMAND_RPC_VOTE)
-        MAP_JON_RPC_WE("delegate_register",  on_delegate_register,  wallet_rpc::COMMAND_RPC_DELEGATE_REGISTER)
-        MAP_JON_RPC_WE("delegate_update",    on_delegate_update,    wallet_rpc::COMMAND_RPC_DELEGATE_UPDATE)
-        MAP_JON_RPC_WE("delegate_recover",   on_delegate_recover,   wallet_rpc::COMMAND_RPC_DELEGATE_RECOVER)
         MAP_JON_RPC_WE("vote_status",        on_vote_status,        wallet_rpc::COMMAND_RPC_VOTE_STATUS)
         MAP_JON_RPC_WE("revote",             on_revote,             wallet_rpc::COMMAND_RPC_REVOTE)
 
