@@ -3647,6 +3647,7 @@ void Blockchain::check_ring_signature(const crypto::hash &tx_prefix_hash, const 
 }
 
 //------------------------------------------------------------------
+/*
 uint64_t Blockchain::get_dynamic_base_fee__OLD__(uint64_t block_reward, size_t median_block_weight)
 {
   constexpr uint64_t min_block_weight = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5;
@@ -3667,8 +3668,8 @@ uint64_t Blockchain::get_dynamic_base_fee__OLD__(uint64_t block_reward, size_t m
     }
   }
 }
-
-// jed
+   jed
+*/
 
 uint64_t Blockchain::get_dynamic_base_fee(uint64_t block_reward, size_t median_block_weight)
 {
