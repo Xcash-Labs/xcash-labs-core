@@ -57,9 +57,8 @@
 // #define EMISSION_SPEED_FACTOR_PER_MINUTE                (20)
 // #define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
 #define MONEY_SUPPLY ((uint64_t)(100000000000000000))
-#define EMISSION_SPEED_FACTOR_PER_MINUTE (31)   // was 19, then 29
-//#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)2000000000) // 2000 XCASH per minute, creates 1051200000 XCASH per year, which is an annual inflation of 1.05%. The start date will be around 16/06/2025
-#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t) 700000) // 7 XCASH per minute
+#define EMISSION_SPEED_FACTOR_PER_MINUTE (31)
+#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)7000000) // 7 XCASH per minute, which is an annual inflation rate of 0.00368% per year
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 60000   // size of block (bytes) after which reward for block calculated using block size
@@ -85,7 +84,8 @@
 #define FEE_PER_BYTE ((uint64_t)10)
 #define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)2000)             // 2 * pow(10,3)
 #define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD ((uint64_t)1000000) // 10 * pow(10,6)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE_V5 ((uint64_t)1)             //((uint64_t)2000 * (uint64_t)CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5)
+// #define DYNAMIC_FEE_PER_KB_BASE_FEE_V5 ((uint64_t)1)          //((uint64_t)2000 * (uint64_t)CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5)
+#define DYNAMIC_FEE_PER_KB_BASE_FEE_V5 ((uint64_t)2000)          // 0.002 XCA/kB floor-ish
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
 
 #define ORPHANED_BLOCKS_MAX_COUNT 100
@@ -238,7 +238,8 @@
 // New constants are intended to go here
 namespace config
 {
-  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 500; // Just a placeholder!  Change me!
+//  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 500; // Just a placeholder
+  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 2000;    // 0.002 XCA/kB fallback
   uint8_t const FEE_CALCULATION_MAX_RETRIES = 10;
   //  uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)2000000000); // 2 * pow(10, 9)
   //  uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)100000000); // pow(10, 8)
