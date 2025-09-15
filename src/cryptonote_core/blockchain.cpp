@@ -3647,7 +3647,7 @@ void Blockchain::check_ring_signature(const crypto::hash &tx_prefix_hash, const 
 }
 
 //------------------------------------------------------------------
-uint64_t Blockchain::get_dynamic_base_fee(uint64_t block_reward, size_t median_block_weight)
+uint64_t Blockchain::get_dynamic_base_fee__OLD__(uint64_t block_reward, size_t median_block_weight)
 {
   constexpr uint64_t min_block_weight = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5;
   if (median_block_weight < min_block_weight)
@@ -3667,6 +3667,50 @@ uint64_t Blockchain::get_dynamic_base_fee(uint64_t block_reward, size_t median_b
     }
   }
 }
+
+// jed
+
+uint64_t Blockchain::get_dynamic_base_fee(uint64_t block_reward, size_t median_block_weight)
+{
+  constexpr uint64_t min_block_weight = CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5;
+  if (median_block_weight < min_block_weight)
+    median_block_weight = min_block_weight;
+
+  uint64_t hi, lo;
+
+  // lo = block_reward * DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT / (median^2)
+  lo = mul128(block_reward, DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT, &hi);
+  div128_64(hi, lo, median_block_weight, &hi, &lo, NULL, NULL);
+  div128_64(hi, lo, median_block_weight, &hi, &lo, NULL, NULL);
+
+  // Apply the 0.95 factor (Monero v18 behavior)
+  assert(hi == 0);
+  lo -= lo / 20;
+
+  // ---------- FLOOR / CLAMP (avoid 0 with 6-decimal coins) ----------
+  // Convert your per-kB floor to per-byte: ceil(floor_kB / 1024)
+  uint64_t min_per_byte = (DYNAMIC_FEE_PER_KB_BASE_FEE + 1023) / 1024;
+
+  if (FEE_PER_BYTE > min_per_byte)
+    min_per_byte = FEE_PER_BYTE;
+
+  if (lo < min_per_byte)
+    lo = min_per_byte;
+
+  // Safety: never return 0
+  if (lo == 0)
+    lo = 1;
+  // ------------------------------------------------------------------
+
+  return lo;
+}
+
+
+
+
+
+
+
 
 //------------------------------------------------------------------
 bool Blockchain::check_fee(size_t tx_weight, uint64_t fee) const
@@ -4034,7 +4078,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   std::string json = o.str();
   std::string rbuffer = send_and_receive_data("127.0.0.1", json,
                           SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
+  // jed
   //std::cerr << "******* rbuffer: " << rbuffer << std::endl;
   MWARNING("************vrf_pubkey:" << pubkey_str);
   MWARNING("****************rbuffer: " << rbuffer);

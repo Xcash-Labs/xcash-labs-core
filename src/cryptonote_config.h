@@ -80,13 +80,21 @@
 // #define DYNAMIC_FEE_PER_KB_BASE_FEE_V5                  ((uint64_t)2000000000 * (uint64_t)CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5)
 // #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT        ((uint64_t)3000)
 // #define FEE_PER_KB_OLD ((uint64_t)10000) // pow(10, 4)
-#define FEE_PER_KB ((uint64_t)2000)      // 2 * pow(10, 3)
-#define FEE_PER_BYTE ((uint64_t)10)
+// #define FEE_PER_KB ((uint64_t)2000)      // 2 * pow(10, 3)
+// #define FEE_PER_BYTE ((uint64_t)10)
+
 // #define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)2000)             // 2 * pow(10,3)
 // #define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD ((uint64_t)1000000) // 10 * pow(10,6)
 // #define DYNAMIC_FEE_PER_KB_BASE_FEE_V5 ((uint64_t)1)          //((uint64_t)2000 * (uint64_t)CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5)
-//#define DYNAMIC_FEE_PER_KB_BASE_FEE_V5 ((uint64_t)2000)          // 0.002 XCA/kB floor-ish
+// #define DYNAMIC_FEE_PER_KB_BASE_FEE_V5 ((uint64_t)2000)          // 0.002 XCA/kB floor-ish
+// #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
+
+
+#define FEE_PER_KB   ((uint64_t)2000)                      // 0.002 XCA/kB
+#define FEE_PER_BYTE ((FEE_PER_KB + 1023) / 1024)          // -> 2 atomic/byte
+#define FEE_QUANTIZATION_MASK ((uint64_t)1000)             // round to 0.001 XCA
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
+
 
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 
