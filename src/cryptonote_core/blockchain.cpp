@@ -3749,7 +3749,8 @@ bool Blockchain::check_fee(size_t tx_weight, uint64_t fee) const
 }
 
 //------------------------------------------------------------------
-void Blockchain::get_dynamic_base_fee_estimate_2021_scaling(uint64_t base_reward, uint64_t Mnw,
+/*
+void Blockchain::get_dynamic_base_fee_estimate_2021_scaling__OLD__(uint64_t base_reward, uint64_t Mnw,
   uint64_t Mlw, std::vector<uint64_t> &fees)
 {
   // variable names and calculations as per https://github.com/ArticMine/Monero-Documents/blob/master/MoneroScaling2021-02.pdf
@@ -3783,6 +3784,47 @@ void Blockchain::get_dynamic_base_fee_estimate_2021_scaling(uint64_t base_reward
   fees[1] = cryptonote::round_money_up(Fn, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
   fees[2] = cryptonote::round_money_up(Fm, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
   fees[3] = cryptonote::round_money_up(Fh, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
+}
+*/
+
+// Drop-in: clamp fee tiers to a non-zero per-BYTE floor
+void Blockchain::get_dynamic_base_fee_estimate_2021_scaling(uint64_t base_reward, uint64_t Mnw,
+  uint64_t Mlw, std::vector<uint64_t> &fees)
+{
+  // variable names and calculations as per https://github.com/ArticMine/Monero-Documents/blob/master/MoneroScaling2021-02.pdf
+  // from (earlier than) this fork, the base fee is per byte
+  const uint64_t Mfw = std::min(Mnw, Mlw);
+
+  // const uint64_t Fl = base_reward * Brlw / Mfw;  (Brlw folded)
+  const uint64_t Fl = base_reward * /*Brlw*/ DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT / (Mfw * Mfw);
+
+  // const uint64_t Fn = 4 * Fl;  (compute directly for precision)
+  const uint64_t Fn = 4 * base_reward * /*Brlw*/ DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT / (Mfw * Mfw);
+
+  // const uint64_t Fm = 16 * base_reward * Br / Mfw;  (Br folded)
+  const uint64_t Fm = 16 * base_reward * DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT / (CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5 * Mfw);
+
+  // const uint64_t Fh = 4 * Fm * max(1, Mfw / (32 * DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT * Mnw / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5));
+  const uint64_t Fh = std::max<uint64_t>(
+      4 * Fm,
+      4 * Fm * Mfw / (32 * DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT * Mnw / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5));
+
+  // Round per 2021 scaling rules
+  fees.resize(4);
+  fees[0] = cryptonote::round_money_up(Fl, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
+  fees[1] = cryptonote::round_money_up(Fn, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
+  fees[2] = cryptonote::round_money_up(Fm, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
+  fees[3] = cryptonote::round_money_up(Fh, CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES);
+
+  // ---- Clamp: ensure each tier is at least the per-byte floor ----
+  // Convert per-kB floor to per-byte: ceil(kB_floor / 1024)
+  uint64_t min_per_byte = (DYNAMIC_FEE_PER_KB_BASE_FEE + 1023) / 1024; // e.g., 2000 -> 2
+  if (FEE_PER_BYTE > min_per_byte) min_per_byte = FEE_PER_BYTE;
+
+  if (min_per_byte == 0) min_per_byte = 1; // safety
+
+  for (auto &f : fees)
+    if (f < min_per_byte) f = min_per_byte;
 }
 
 void Blockchain::get_dynamic_base_fee_estimate_2021_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees) const
