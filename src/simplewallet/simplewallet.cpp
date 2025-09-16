@@ -5186,7 +5186,7 @@ simple_wallet::simple_wallet()
                            tr("Returns version information"));
   m_cmd_binder.set_handler("vote",
                            boost::bind(&simple_wallet::vote, this, _1),
-                           tr("vote <delegates_name|delegates_public_address>"),
+                           tr("vote <delegates_name|delegates_public_address> <amount|all>"),
                            tr("Votes for a delegate in the DPOPS system"));
   m_cmd_binder.set_handler("delegate_register",
                            boost::bind(&simple_wallet::delegate_register, this, _1),
