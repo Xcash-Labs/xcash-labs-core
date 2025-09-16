@@ -3437,7 +3437,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
     o << "{\r\n"
-      << "  \"message_settings\": \"NODE_TO_BLOCK_VERIFIERS_VOTE\",\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_VOTE\",\r\n"
       << "  \"delegate_name_or_address\": \"" << args[0] << "\",\r\n"
       << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n"
       << "  \"reserve_proof\": \"" << reserve_proof << "\",\r\n"
