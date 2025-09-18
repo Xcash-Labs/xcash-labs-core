@@ -186,7 +186,6 @@ namespace
   const command_line::arg_descriptor<bool> arg_create_address_file = {"create-address-file", sw::tr("Create an address file for new wallets"), false};
   const command_line::arg_descriptor<std::string> arg_subaddress_lookahead = {"subaddress-lookahead", tools::wallet2::tr("Set subaddress lookahead sizes to <major>:<minor>"), ""};
   const command_line::arg_descriptor<bool> arg_use_english_language_names = {"use-english-language-names", sw::tr("Display English language names"), false};
-
   const command_line::arg_descriptor< std::vector<std::string> > arg_command = {"command", ""};
 
   const char* USAGE_START_MINING("start_mining [<number_of_threads>] [bg_mining] [ignore_battery]");
@@ -3428,7 +3427,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // Build unsigned JSON
-    time_t vote_time = time(NULL);
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
     o << "{\r\n"
@@ -4212,114 +4210,146 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
   #undef PARAMETER_AMOUNT
 }
 
-bool simple_wallet::vote_status(const std::vector<std::string>& args)
-{
-  // structures
-  struct network_data_nodes_list {
-    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes public address
-    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT]; // The network data nodes IP address
-};
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   // Variables
-  std::string public_address = "";
   tools::wallet2::transfer_container transfers;
-  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
-  std::string string = "";
-  std::string data2 = "";
-  std::size_t count; 
-  struct network_data_nodes_list network_data_nodes_list; // The network data nodes
-  int random_network_data_node;
-  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
-  std::string delegate_name = "";
-  double total;
+  std::string response_json;
+  std::string senddata;
+  std::string rbuffer;
+  std::string status_text;
 
-  try
-  {
-  // error check   
-  if (m_wallet->key_on_device())
-  {
-    fail_msg_writer() << tr("Failed to send the vote\nCommand not supported by HW wallet");
-    return true;
-  }
-  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
-  {
-    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
-    return true;
-  }
-  if (!try_connect_to_daemon())
-  {
-    fail_msg_writer() << tr("Failed to get the vote status\nFailed to connect to the daemon");
-    return true;
-  }
-
-  // get the wallet transfers   
-  m_wallet->get_transfers(transfers);
-
-  // get the wallets public address
-    auto print_address_sub = [this, &transfers, &public_address]()
-    {
-      bool used = std::find_if(
-        transfers.begin(), transfers.end(),
-        [this](const tools::wallet2::transfer_details& td) {
-          return td.m_subaddr_index == cryptonote::subaddress_index{ 0, 0 };
-        }) != transfers.end();
-        public_address = m_wallet->get_subaddress_as_str({0, 0});
-    };
-    print_address_sub();
-  
-  if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0,sizeof(XCASH_WALLET_PREFIX)-1) != XCASH_WALLET_PREFIX)
-  {
-    fail_msg_writer() << tr("Failed to get the vote status\nInvalid public address. Only XCA addresses are allowed.");
-    return true;  
-  }
-
-  // create the data
-  data2 = "NODE_TO_NETWORK_DATA_NODES_CHECK_VOTE_STATUS|" + public_address + "|";  
-
-  // initialize the network_data_nodes_list struct
-  INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
-  // send the message to a random network data node
-  for (count = 0; string.find("delegate_name: ") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++)
-  {
-    // check if they need to reset the network_data_nodes_array
-    if (network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT-1] != 0)
-    {
-      std::fill(network_data_nodes_array, network_data_nodes_array+NETWORK_DATA_NODES_AMOUNT, 0);
+  try {
+    if (m_wallet->key_on_device()) {
+      fail_msg_writer() << tr("Failed to send vote_status\nCommand not supported by HW wallet");
+      return true;
+    }
+    if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
+      fail_msg_writer() << tr("Vote_status submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot be used.");
+      return true;
+    }
+    if (!try_connect_to_daemon()) {
+      fail_msg_writer() << tr("Failed to send vote_status\nFailed to connect to the daemon");
+      return true;
     }
 
-    do
-    {
-      // get a random network data node
-      random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
-    } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number){return number == random_network_data_node;}));
+    // Ensure wallet state is populated
+    m_wallet->get_transfers(transfers);
 
-    network_data_nodes_array[count] = random_network_data_node;
+    // Primary subaddress as public address
+    std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
+    if (public_address.length() != XCASH_WALLET_LENGTH ||
+        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address. Only XCA addresses are allowed.");
+      return true;
+    }
 
-    // get the block verifiers list from the network data node
-    string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node-1],data2);
+    // Build unsigned JSON
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
+      << "  \"public_address\": \"" << public_address << "\"\r\n"
+      << "}";
+    std::string unsigned_json = o.str();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  } 
+    // Sign the full JSON
+    std::string signature = m_wallet->sign(unsigned_json, tools::wallet2::sign_with_spend_key, {0, 0});
 
-  if (count == NETWORK_DATA_NODES_AMOUNT)
-  {
-    fail_msg_writer() << tr("Failed to get the vote status");
+    // Insert signature into JSON
+    const auto insert_pos = unsigned_json.rfind('}');
+    if (insert_pos == std::string::npos) {
+      fail_msg_writer() << tr("Failed to send vote_status: malformed JSON");
+      return true;
+    }
+    std::ostringstream final;
+    final << unsigned_json.substr(0, insert_pos)
+          << ",\"signature\": \"" << signature << "\"}";
+    senddata = final.str();
+
+    // Load node list
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
+
+    // Random picker over nodes, no repeats
+    size_t attempts = 0, failures = 0;
+    int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
+    auto pick = [&]() -> int {
+      if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
+      int idx;
+      do {
+        idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+      } while (tried[idx]);
+      tried[idx] = 1;
+      ++attempts;
+      return idx;
+    };
+
+    const size_t MIN_FAILURES = (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
+    bool ok = false;
+    std::string host;
+
+    while (attempts < NETWORK_DATA_NODES_AMOUNT && failures < MIN_FAILURES) {
+      const int idx = pick();
+      if (idx < 0) break;
+
+      // Adapt this line to your structure type:
+      host = network_data_nodes_list.network_data_nodes_IP_address[idx];
+
+      rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+      ok = parse_dpops_response(rbuffer, status_text);
+      if (ok) break;
+
+      ++failures;
+    }
+
+    if (ok) {
+      message_writer(console_color_green, false) << status_text;
+    } else {
+      if (host.empty()) host = "<no host>";
+      fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
+    }
+  } catch (const std::exception &e) {
+    fail_msg_writer() << tr("Failed to send vote_status: ") << e.what();
+    return true;
+  } catch (...) {
+    fail_msg_writer() << tr("Failed to send vote_status");
     return true;
   }
 
-  delegate_name = string.substr(15,string.find(",")-15);
-  total = std::stod(string.substr(string.find("total: ")+7)) / COIN; 
-  string = "delegate_name: " + delegate_name + ", total: " + std::to_string(total);
-
-  message_writer(console_color_green, false) << string;
-  }
-  catch (...)
-  {
-    fail_msg_writer() << tr("Failed to get the vote status");
-  }
-  return true; 
+  return true;
 }
+
+
+
+
+
+
+
 
 bool simple_wallet::revote(const std::vector<std::string>& args)
 {
