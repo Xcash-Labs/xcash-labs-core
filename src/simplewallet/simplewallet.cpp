@@ -3294,12 +3294,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    
-    
-//    static constexpr uint64_t MIN_VOTE_XCA = 2'000'000ULL;
-
-    static constexpr uint64_t MIN_VOTE_XCA = 1'000ULL;
-
+    static constexpr uint64_t MIN_VOTE_XCA = 4'000'000ULL;
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCA * COIN;  // COIN = atomic units per XCA
 
     std::string amount_arg = args[1];
@@ -3441,8 +3436,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       << "  \"delegate_name_or_address\": \"" << args[0] << "\",\r\n"
       << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n"
       << "  \"reserve_proof\": \"" << reserve_proof << "\",\r\n"
-      << "  \"public_address\": \"" << public_address << "\",\r\n"
-      << "  \"vote_timestamp\": " << vote_time << "\r\n"
+      << "  \"public_address\": \"" << public_address << "\"\r\n"
       << "}";
 
     std::string unsigned_json = o.str();
@@ -3499,8 +3493,12 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       if (ok) {
         ++reply_count;
         if (is_seed) seed_committed = true;  // seed found and success
-      } else if (!status_text.empty()) {
+      } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
+        if (is_seed) {
+          fail_msg_writer() << tr("Failed to register the delegate, unable to updated seed node");
+          return true;
+        }
       }
     }
 
@@ -3821,8 +3819,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
       } else if (key == "about") {
-        if (val.size() > 1024) {
-          fail_msg_writer() << tr("Invalid 'about'. Max length 1024");
+        if (val.size() > 512) {
+          fail_msg_writer() << tr("Invalid 'about'. Max length 512");
           return false;
         }
       } else if (key == "website") {
@@ -3836,8 +3834,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
       } else if (key == "shared_delegate_status") {
-        if (!(val == "solo" || val == "shared" || val == "group")) {
-          fail_msg_writer() << tr("Invalid shared_delegate_status. Must be solo/shared/group");
+        if (!(val == "solo" || val == "shared" || val == "team")) {
+          fail_msg_writer() << tr("Invalid shared_delegate_status. Must be solo/shared/team");
           return false;
         }
       } else if (key == "delegate_fee") {
