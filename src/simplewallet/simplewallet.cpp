@@ -4210,33 +4210,6 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
   #undef PARAMETER_AMOUNT
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   // Variables
   tools::wallet2::transfer_container transfers;
@@ -4318,8 +4291,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
       if (idx < 0) break;
 
       // Adapt this line to your structure type:
-      host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-
+      host = network_data_nodes_list[idx];
       rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       ok = parse_dpops_response(rbuffer, status_text);
       if (ok) break;
@@ -4343,13 +4315,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
 
   return true;
 }
-
-
-
-
-
-
-
 
 bool simple_wallet::revote(const std::vector<std::string>& args)
 {
