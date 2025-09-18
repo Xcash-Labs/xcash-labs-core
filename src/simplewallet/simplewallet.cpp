@@ -3305,7 +3305,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      fail_msg_writer() << tr("You need at least 2,000,000 XCA unlocked in account 0 to vote");
+      fail_msg_writer() << tr("You need at least 4,000,000 XCA unlocked in account 0 to vote");
       return true;
     }
 
@@ -3321,7 +3321,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
 
       // Per-vote minimum
       if (vote_amount < MIN_VOTE_ATOMIC) {
-        fail_msg_writer() << tr("Each vote must be at least 2,000,000 XCA");
+        fail_msg_writer() << tr("Each vote must be at least 4,000,000 XCA");
         return true;
       }
     } else {
@@ -3340,7 +3340,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       }
       // Per-vote minimum
       if (atomic < MIN_VOTE_ATOMIC) {
-        fail_msg_writer() << tr("Each vote must be at least 2,000,000 XCA");
+        fail_msg_writer() << tr("Each vote must be at least 4,000,000 XCA");
         return true;
       }
       vote_amount = atomic;
@@ -3500,14 +3500,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
           return true;
         }
       }
-    }
-
-    // Optional local node check (not part of quorum, but helpful)
-    std::string local_status;
-    std::string local_reply = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    (void)parse_dpops_response(local_reply, local_status);
-    if (!local_status.empty() && local_reply != "OK") {
-      fail_msg_writer() << tr("[ERR] local delegate ") << local_status;
     }
 
     if (reply_count >= total_delegates_valid_amount) {
