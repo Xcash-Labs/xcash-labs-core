@@ -4268,8 +4268,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
     
-    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
     // Random picker over nodes, no repeats
     size_t attempts = 0, failures = 0;
     int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
@@ -4300,8 +4298,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
 
       // Adapt this line to your structure type:
       host = network_data_nodes_list[idx];
-      fail_msg_writer() << tr("Host: ") << host;
-      host = network_data_nodes_list.network_data_nodes_IP_address[idx];
       fail_msg_writer() << tr("Host: ") << host;
 
       rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
