@@ -4252,7 +4252,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
 //    std::string unsigned_json = o.str();
     senddata = o.str();
 
-    fail_msg_writer() << tr("Senddata pre: ") << unsigned_json;
 
     // Sign the full JSON
     //std::string signature = m_wallet->sign(unsigned_json, tools::wallet2::sign_with_spend_key, {0, 0});
