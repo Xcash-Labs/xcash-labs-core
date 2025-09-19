@@ -4301,13 +4301,14 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
       const int idx = pick();
       if (idx < 0) break;
 
-      // Adapt this line to your structure type:
       host = network_data_nodes_list[idx];
-      fail_msg_writer() << tr("Host: ") << host;
+
 
       rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       status_text.clear();
       ok = parse_dpops_response(rbuffer, status_text);
+      fail_msg_writer() << tr("Host: ") << host << tr(" error: ") << rbuffer;
+
       if (ok) break;
 
       ++failures;
