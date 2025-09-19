@@ -4244,15 +4244,16 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     }
 
     // Build unsigned JSON
+//    std::ostringstream o;
+//    o << "{\r\n"
+//      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
+//      << "  \"public_address\": \"" << public_address << "\"\r\n"
+//      << "}";
+//    std::string unsigned_json = o.str();
 
-    std::ostringstream o;
-    time_t votestatus_time = time(NULL);
-    o << "{\r\n"
-      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
-      << "  \"public_address\": \"" << public_address << "\",\r\n"
-      << "  \"votestatus_timestamp\": " << votestatus_time << "\r\n"
-      << "}";
-      std::string unsigned_json = o.str();
+    o << "{\"message_settings\":\"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\"public_address\":\"" << public_address << "\"}";
+    std::string unsigned_json = o.str();
+
 
     fail_msg_writer() << tr("Senddata pre: ") << unsigned_json;
 
