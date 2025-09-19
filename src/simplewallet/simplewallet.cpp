@@ -4269,6 +4269,9 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
           << ",\"signature\": \"" << signature << "\"}";
     senddata = final.str();
 
+      fail_msg_writer() << tr("Senddata: ") << senddata;
+
+
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
     
