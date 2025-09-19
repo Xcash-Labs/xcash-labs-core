@@ -4278,6 +4278,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
 
     host = network_data_nodes_list[idx];
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
 
