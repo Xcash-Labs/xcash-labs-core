@@ -4217,6 +4217,9 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   std::string rbuffer;
   std::string status_text;
 
+  tools::wallet2::pause_refresh pause_refresh(*m_wallet);
+  rdln::suspend_readline rl_guard;   // <-- move up here
+
   try {
     if (m_wallet->key_on_device()) {
       fail_msg_writer() << tr("Failed to send vote_status\nCommand not supported by HW wallet");
@@ -4278,7 +4281,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
 
     host = network_data_nodes_list[idx];
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
 
@@ -4294,6 +4296,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     fail_msg_writer() << tr("Failed to send vote_status");
     return true;
   }
+
 
   return true;
 }
