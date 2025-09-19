@@ -4217,8 +4217,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   std::string rbuffer;
   std::string status_text;
 
-  tools::wallet2::pause_refresh pause_refresh(*m_wallet);
-  rdln::suspend_readline rl_guard;   // <-- move up here
+  rdln::suspend_readline rl_guard;
 
   try {
     if (m_wallet->key_on_device()) {
