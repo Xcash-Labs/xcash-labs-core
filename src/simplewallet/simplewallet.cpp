@@ -4271,7 +4271,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     std::string host;
     const int idx = pick();
 
-    if (idx < 0 || indx > NETWORK_DATA_NODES_AMOUNT) {
+    if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
       fail_msg_writer() << tr("Failed to send vote_status\nFailed to pick random seed node.");
       return true; 
     };
