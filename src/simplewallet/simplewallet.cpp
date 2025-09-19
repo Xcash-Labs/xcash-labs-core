@@ -4213,7 +4213,6 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
 bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   // Variables
   tools::wallet2::transfer_container transfers;
-  std::string response_json;
   std::string senddata;
   std::string rbuffer;
   std::string status_text;
@@ -4249,26 +4248,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
       << "  \"public_address\": \"" << public_address << "\"\r\n"
       << "}";
-//    std::string unsigned_json = o.str();
     senddata = o.str();
-
-
-    // Sign the full JSON
-    //std::string signature = m_wallet->sign(unsigned_json, tools::wallet2::sign_with_spend_key, {0, 0});
-
-    // Insert signature into JSON
-    //const auto insert_pos = unsigned_json.rfind('}');
-    //if (insert_pos == std::string::npos) {
-    //  fail_msg_writer() << tr("Failed to send vote_status: malformed JSON");
-    //  return true;
-    //}
-    //std::ostringstream final;
-    //final << unsigned_json.substr(0, insert_pos)
-    //      << ",\"signature\": \"" << signature << "\"}";
-    //senddata = final.str();
-
-    //  fail_msg_writer() << tr("Senddata: ") << senddata;
-
 
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
@@ -4287,37 +4267,23 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
       return idx;
     };
 
-
-
-
-
-
-
-
-    const size_t MIN_FAILURES = (NETWORK_DATA_NODES_AMOUNT >= 2 ? 2 : NETWORK_DATA_NODES_AMOUNT);
     bool ok = false;
     std::string host;
-    while (attempts < NETWORK_DATA_NODES_AMOUNT && failures < MIN_FAILURES) {
-      const int idx = pick();
-      if (idx < 0) break;
+    const int idx = pick();
 
-      host = network_data_nodes_list[idx];
+    if (idx < 0 || indx > NETWORK_DATA_NODES_AMOUNT) {
+      fail_msg_writer() << tr("Failed to send vote_status\nFailed to pick random seed node.");
+      return true; 
+    };
 
-
-      rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-      status_text.clear();
-      ok = parse_dpops_response(rbuffer, status_text);
-      fail_msg_writer() << tr("Host: ") << host << tr(" error: ") << rbuffer;
-
-      if (ok) break;
-
-      ++failures;
-    }
+    host = network_data_nodes_list[idx];
+    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    ok = parse_dpops_response(rbuffer, status_text);
 
     if (ok) {
       message_writer(console_color_green, false) << status_text;
     } else {
-      if (host.empty()) host = "<no host>";
       fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
     }
   } catch (const std::exception &e) {
