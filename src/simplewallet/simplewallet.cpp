@@ -4297,7 +4297,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     return true;
   }
 
-
   return true;
 }
 
