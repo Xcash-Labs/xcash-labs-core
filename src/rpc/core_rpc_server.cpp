@@ -3049,26 +3049,6 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-/*
-  bool core_rpc_server::on_get_base_fee_estimate__OLD__(const COMMAND_RPC_GET_BASE_FEE_ESTIMATE::request& req, COMMAND_RPC_GET_BASE_FEE_ESTIMATE::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
-  {
-    RPC_TRACKER(get_base_fee_estimate);
-    bool r;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_BASE_FEE_ESTIMATE>(invoke_http_mode::JON_RPC, "get_fee_estimate", req, res, r))
-      return r;
-
-    CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
-
-    {
-      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2021_scaling(req.grace_blocks, res.fees);
-      res.fee = res.fees[0];
-    }
-    res.quantization_mask = Blockchain::get_fee_quantization_mask();
-    res.status = CORE_RPC_STATUS_OK;
-    return true;
-  }
-*/
-
   bool core_rpc_server::on_get_base_fee_estimate(
       const COMMAND_RPC_GET_BASE_FEE_ESTIMATE::request& req,
       COMMAND_RPC_GET_BASE_FEE_ESTIMATE::response& res,
