@@ -2790,13 +2790,13 @@ std::string WalletImpl::vote_status() {
 
   try {
     if (m_wallet->key_on_device()) {
-      return "Failed to send vote_status. Command not supported by HW wallet";
+      return "Failed to send vote_status, Command not supported by HW wallet";
     }
     if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
       return "Vote_status submission failed: This action requires a full-access wallet. Watch-only and multisig wallets cannot be used.";
     }
     if (!try_connect_to_daemon()) {
-      return "Failed to send vote_status. Failed to connect to the daemon";
+      return "Failed to send vote_status, Could not connect to the daemon";
     }
 
     // Ensure wallet state is populated
@@ -2806,7 +2806,7 @@ std::string WalletImpl::vote_status() {
     std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      return "Failed to send vote_status. Invalid public address. Only XCA addresses are allowed.";
+      return "Failed to send vote_status, Invalid public address - Only XCA addresses are allowed";
     }
 
     // Build unsigned JSON
@@ -2820,24 +2820,11 @@ std::string WalletImpl::vote_status() {
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
     
-    // Random picker over nodes, no repeats
-    int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
-    auto pick = [&]() -> int {
-      if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
-      int idx;
-      do {
-        idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-      } while (tried[idx]);
-      tried[idx] = 1;
-      ++attempts;
-      return idx;
-    };
-
     std::string host;
     int idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
 
     if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
-      return "Failed to send vote_status. Failed to pick random seed node."; 
+      return "Failed to send vote_status, Could not pick random seed node"; 
     };
 
     bool ok = false;

@@ -3049,7 +3049,8 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_get_base_fee_estimate(const COMMAND_RPC_GET_BASE_FEE_ESTIMATE::request& req, COMMAND_RPC_GET_BASE_FEE_ESTIMATE::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
+/*
+  bool core_rpc_server::on_get_base_fee_estimate__OLD__(const COMMAND_RPC_GET_BASE_FEE_ESTIMATE::request& req, COMMAND_RPC_GET_BASE_FEE_ESTIMATE::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
   {
     RPC_TRACKER(get_base_fee_estimate);
     bool r;
@@ -3066,6 +3067,45 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
+*/
+
+  bool core_rpc_server::on_get_base_fee_estimate(
+      const COMMAND_RPC_GET_BASE_FEE_ESTIMATE::request& req,
+      COMMAND_RPC_GET_BASE_FEE_ESTIMATE::response& res,
+      epee::json_rpc::error& error_resp,
+      const connection_context* ctx) {
+    RPC_TRACKER(get_base_fee_estimate);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_BASE_FEE_ESTIMATE>(invoke_http_mode::JON_RPC, "get_fee_estimate", req, res, r))
+      return r;
+
+    CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
+
+    // compute dynamic fees (per BYTE)
+    m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2021_scaling(req.grace_blocks, res.fees);
+
+    // ---- Clamp: never return 0 / too-small per-byte fee ----
+    // Convert your per-kB floor to per-byte: ceil(kB_floor / 1024)
+    uint64_t min_per_byte = (DYNAMIC_FEE_PER_KB_BASE_FEE + 1023) / 1024;
+
+    if (FEE_PER_BYTE > min_per_byte) min_per_byte = FEE_PER_BYTE;
+
+    if (res.fees.empty()) {
+      // if estimator returned nothing, fabricate a sane baseline
+      res.fees = {min_per_byte, min_per_byte * 4, min_per_byte * 20, min_per_byte * 300};
+    } else {
+      for (auto& f : res.fees)
+        if (f < min_per_byte) f = min_per_byte;
+    }
+
+    // legacy single-value field: some wallets still read this
+    res.fee = res.fees[0];
+
+    res.quantization_mask = Blockchain::get_fee_quantization_mask();
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_alternate_chains(const COMMAND_RPC_GET_ALTERNATE_CHAINS::request& req, COMMAND_RPC_GET_ALTERNATE_CHAINS::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
   {

@@ -4239,7 +4239,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address. Only XCA addresses are allowed.");
+      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address, Only XCA addresses are allowed");
       return true;
     }
 
@@ -4254,29 +4254,15 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
     
-    // Random picker over nodes, no repeats
-  //  int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
-  //  auto pick = [&]() -> int {
-  //    if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
-  //    int idx;
-  //    do {
-  //      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-  //    } while (tried[idx]);
-  //    tried[idx] = 1;
-  //    ++attempts;
-  //    return idx;
-  //  };
-
-    bool ok = false;
     std::string host;
-//    const int idx = pick();
     int idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
 
     if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
-      fail_msg_writer() << tr("Failed to send vote_status\nFailed to pick random seed node.");
+      fail_msg_writer() << tr("Failed to send vote_status\nCould not pick random seed node");
       return true; 
     };
 
+    bool ok = false;
     host = network_data_nodes_list[idx];
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
