@@ -2834,7 +2834,7 @@ std::string WalletImpl::vote_status() {
     };
 
     std::string host;
-    const int idx = pick();
+    int idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
 
     if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
       return "Failed to send vote_status. Failed to pick random seed node."; 
