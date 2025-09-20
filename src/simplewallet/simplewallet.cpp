@@ -3484,7 +3484,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
         continue;
       }
 
-      std::string rbuffer = send_and_receive_data(
+      rbuffer = send_and_receive_data(
           host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
       const bool ok = parse_dpops_response(rbuffer, status_text);
@@ -3494,7 +3494,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to register the delegate, unable to updated seed node");
+          fail_msg_writer() << tr("Failed to send vote, unable to updated seed node");
           return true;
         }
       }
@@ -3509,11 +3509,11 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
   }
   catch (const std::exception& e) {
-    fail_msg_writer() << tr("Failed to send the vote: ") << e.what();
+    fail_msg_writer() << tr("Failed to send vote: ") << e.what();
     return true;
   }
   catch (...) {
-    fail_msg_writer() << tr("Failed to send the vote");
+    fail_msg_writer() << tr("Failed to send vote");
     return true;
   }
 
@@ -4239,7 +4239,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address, Only XCA addresses are allowed");
+      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address - Only XCA addresses are allowed");
       return true;
     }
 
