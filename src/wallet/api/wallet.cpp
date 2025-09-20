@@ -2783,87 +2783,94 @@ std::string WalletImpl::vote(const std::string &value) {
 }
 
 std::string WalletImpl::vote_status() {
-  // structures
-  struct network_data_nodes_list {
-    std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];  // The network data nodes public address
-    std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];      // The network data nodes IP address
-  };
-
-  // Variables
-  std::string public_address = "";
   tools::wallet2::transfer_container transfers;
-  boost::optional<std::pair<uint32_t, uint64_t>> account_minreserve;
-  std::string string = "";
-  std::string data2 = "";
-  std::size_t count;
-  struct network_data_nodes_list network_data_nodes_list;  // The network data nodes
-  int random_network_data_node;
-  int network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT];
-  std::string delegate_name = "";
-  std::string errorInfo = ":";
-  double total;
+  std::string senddata;
+  std::string rbuffer;
+  std::string status_text;
 
   try {
-    // get the wallet transfers
+    if (m_wallet->key_on_device()) {
+      return "Failed to send vote_status. Command not supported by HW wallet";
+    }
+    if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
+      return "Vote_status submission failed: This action requires a full-access wallet. Watch-only and multisig wallets cannot be used.";
+    }
+    if (!try_connect_to_daemon()) {
+      return "Failed to send vote_status. Failed to connect to the daemon";
+    }
+
+    // Ensure wallet state is populated
     m_wallet->get_transfers(transfers);
 
-    // get the wallets public address
-    auto print_address_sub = [this, &transfers, &public_address]() {
-      bool used = std::find_if(
-                      transfers.begin(), transfers.end(),
-                      [this](const tools::wallet2::transfer_details &td) {
-                        return td.m_subaddr_index == cryptonote::subaddress_index{0, 0};
-                      }) != transfers.end();
-      public_address = m_wallet->get_subaddress_as_str({0, 0});
-    };
-    print_address_sub();
-
-    if (public_address.length() != XCASH_WALLET_LENGTH || public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      return "Failed to send the vote\nInvalid public address. Only XCA addresses are allowed";
+    // Primary subaddress as public address
+    std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
+    if (public_address.length() != XCASH_WALLET_LENGTH ||
+        public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
+      return "Failed to send vote_status. Invalid public address. Only XCA addresses are allowed.";
     }
 
-    // create the data
-    data2 = "NODE_TO_NETWORK_DATA_NODES_CHECK_VOTE_STATUS|" + public_address + "|";
+    // Build unsigned JSON
+    std::ostringstream o;
+    o << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
+      << "  \"public_address\": \"" << public_address << "\"\r\n"
+      << "}";
+    senddata = o.str();
 
-    // initialize the network_data_nodes_list struct
-    INITIALIZE_NETWORK_DATA_NODES_LIST_STRUCT;
-
-    // send the message to a random network data node
-    for (count = 0; string.find("delegate_name: ") == std::string::npos && count < NETWORK_DATA_NODES_AMOUNT; count++) {
-      // check if they need to reset the network_data_nodes_array
-      if (network_data_nodes_array[NETWORK_DATA_NODES_AMOUNT - 1] != 0) {
-        std::fill(network_data_nodes_array, network_data_nodes_array + NETWORK_DATA_NODES_AMOUNT, 0);
-      }
-
+    // Load node list
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
+    
+    // Random picker over nodes, no repeats
+    int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
+    auto pick = [&]() -> int {
+      if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
+      int idx;
       do {
-        // get a random network data node
-        random_network_data_node = (int)(rand() % NETWORK_DATA_NODES_AMOUNT + 1);
-      } while (std::any_of(std::begin(network_data_nodes_array), std::end(network_data_nodes_array), [&](int number) { return number == random_network_data_node; }));
+        idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+      } while (tried[idx]);
+      tried[idx] = 1;
+      ++attempts;
+      return idx;
+    };
 
-      network_data_nodes_array[count] = random_network_data_node;
+    std::string host;
+    const int idx = pick();
 
-      // get the block verifiers list from the network data node
-      string = send_and_receive_data(network_data_nodes_list.network_data_nodes_IP_address[random_network_data_node - 1], data2);
+    if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
+      return "Failed to send vote_status. Failed to pick random seed node."; 
+    };
 
-      std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    bool ok = false;
+    host = network_data_nodes_list[idx];
+    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    ok = parse_dpops_response(rbuffer, status_text);
+
+    if (ok) {
+      return status_text;
     }
-
-    if (count == NETWORK_DATA_NODES_AMOUNT) {
-      return "Failed to get the vote status";
-    }
-
-    delegate_name = string.substr(15, string.find(",") - 15);
-    total = std::stod(string.substr(string.find("total: ") + 7)) / COIN;
-    string = "delegate_name: " + delegate_name + ", total: " + std::to_string(total);
-
-    return string;
-
   } catch (const std::exception &e) {
-    LOG_ERROR("Failed to check the vote status: " << e.what());
+    return std::string("Failed to send vote_status: ") + e.what();
+  } catch (...) {
+    return "Failed to send vote_status";
   }
 
-  return "Failed to recover the delegate" + errorInfo;
+  return std::string("Failed to send vote_status: ") + status_text;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 std::string WalletImpl::revote() {
   // structures

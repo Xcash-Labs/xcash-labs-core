@@ -4211,7 +4211,6 @@ bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
 }
 
 bool simple_wallet::vote_status(const std::vector<std::string> &args) {
-  // Variables
   tools::wallet2::transfer_container transfers;
   std::string senddata;
   std::string rbuffer;
@@ -4256,7 +4255,6 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     INITIALIZE_NETWORK_DATA_NODES_LIST;
     
     // Random picker over nodes, no repeats
-    size_t attempts = 0, failures = 0;
     int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
     auto pick = [&]() -> int {
       if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
