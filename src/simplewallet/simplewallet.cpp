@@ -4255,21 +4255,22 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     INITIALIZE_NETWORK_DATA_NODES_LIST;
     
     // Random picker over nodes, no repeats
-    int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
-    auto pick = [&]() -> int {
-      if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
-      int idx;
-      do {
-        idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-      } while (tried[idx]);
-      tried[idx] = 1;
-      ++attempts;
-      return idx;
-    };
+  //  int tried[NETWORK_DATA_NODES_AMOUNT] = {0};
+  //  auto pick = [&]() -> int {
+  //    if (attempts >= NETWORK_DATA_NODES_AMOUNT) return -1;
+  //    int idx;
+  //    do {
+  //      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+  //    } while (tried[idx]);
+  //    tried[idx] = 1;
+  //    ++attempts;
+  //    return idx;
+  //  };
 
     bool ok = false;
     std::string host;
-    const int idx = pick();
+//    const int idx = pick();
+    idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
 
     if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
       fail_msg_writer() << tr("Failed to send vote_status\nFailed to pick random seed node.");
