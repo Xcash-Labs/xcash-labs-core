@@ -4504,8 +4504,13 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       old_total_atomic = static_cast<int64_t>(std::llround(total_xca * COIN));
     }
 
-    if (vote_amount >= old_total_atomic) {
-      fail_msg_writer() << tr("Failed to revote\nNew vote amount should be greater than or equal to the original vote");
+    if (old_total_atomic == -1) {
+      fail_msg_writer() << tr("Failed to revote\nCould not parse old vote amount");
+      return true;
+    }
+
+    if (vote_amount > old_total_atomic) {
+      fail_msg_writer() << tr("Failed to revote\nNew vote amount should be greater than the original vote");
       return true;
     }
 
