@@ -4459,8 +4459,53 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
                                         : line.substr(start, end - start);
     }(status_text);
 
+
     if (delegate_name.empty()) {
       fail_msg_writer() << tr("Failed to revote\nCould not parse delegate name");
+      return true;
+    }
+
+    // parse total (only "total:")
+    double total_xca = [&](const std::string &line) -> double {
+      constexpr char tag[] = "total:";
+      size_t p = line.find(tag);
+      if (p == std::string::npos) return -1.0;
+      p += sizeof(tag) - 1;  // after "total:"
+      while (p < line.size() && line[p] == ' ') ++p;
+
+      // consume digits and at most one dot
+      size_t q = p;
+      bool dot = false;
+      while (q < line.size()) {
+        unsigned char c = static_cast<unsigned char>(line[q]);
+        if (std::isdigit(c)) {
+          ++q;
+          continue;
+        }
+        if (c == '.' && !dot) {
+          dot = true;
+          ++q;
+          continue;
+        }
+        break;  // hit space, 'X' in "XCA", comma, etc.
+      }
+      if (q == p) return -1.0;  // no number found
+
+      try {
+        return std::stod(line.substr(p, q - p));
+      } catch (...) {
+        return -1.0;
+      }
+    }(status_text);
+
+    // convert to atomic (6 dp for XCA)
+    int64_t old_total_atomic = -1;
+    if (total_xca >= 0.0) {
+      old_total_atomic = static_cast<int64_t>(std::llround(total_xca * COIN));
+    }
+
+    if (vote_amount >= old_total_atomic) {
+      fail_msg_writer() << tr("Failed to revote\nNew vote amount should be greater than or equal to the original vote");
       return true;
     }
 
@@ -4498,11 +4543,13 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
+    const std::string vote_old_amount_str = std::to_string(org_total_atomic);
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REVOTE\",\r\n"
       << "  \"delegate_name_or_address\": \"" << delegate_name << "\",\r\n"
       << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n"
+      << "  \"old_vote_amount\": \"" << vote_old_amount_str << "\",\r\n"
       << "  \"reserve_proof\": \"" << reserve_proof << "\",\r\n"
       << "  \"public_address\": \"" << public_address << "\"\r\n"
       << "}";
