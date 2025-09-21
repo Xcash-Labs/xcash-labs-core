@@ -4543,7 +4543,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
-    const std::string vote_old_amount_str = std::to_string(org_total_atomic);
+    const std::string vote_old_amount_str = std::to_string(old_total_atomic);
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REVOTE\",\r\n"
