@@ -4446,7 +4446,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 //      if (string.find("delegate_name:") == std::string::npos) {
 //        fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
 //        return true;
-      }
+//      }
     } else {
 
     }
