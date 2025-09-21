@@ -3426,6 +3426,40 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // Build unsigned JSON
+    std::ostringstream ostat;
+    ostat << "{\r\n"
+      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
+      << "  \"public_address\": \"" << public_address << "\"\r\n"
+      << "}";
+    senddata = ostat.str();
+
+    // Load node list
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
+    
+    std::string host;
+    int idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+
+    if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
+      fail_msg_writer() << tr("Failed to revote\nCould not pick random seed node");
+      return true; 
+    };
+
+    bool okstat = false;
+    host = network_data_nodes_list[idx];
+    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    okstat = parse_dpops_response(rbuffer, status_text);
+    if (okstat) {
+      if (status_text != "No Vote Found") {
+        fail_msg_writer() << tr("You have already voted for a delegate: ") << status_text;
+        return true;
+      }
+    } else {
+      fail_msg_writer() << tr("Failed to send vote: ") << status_text;
+      return true;
+    }
+
+    // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
     o << "{\r\n"
@@ -3453,8 +3487,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     senddata = final.str();
 
     // Ensure enough seed delegates are online
-    INITIALIZE_NETWORK_DATA_NODES_LIST;
-
     const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
 
     for (size_t count = 0; count < total_delegates; ++count) {
