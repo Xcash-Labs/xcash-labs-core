@@ -4294,7 +4294,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   std::string senddata;
   std::string rbuffer;
   std::string status_text;
-  std::string delegate_name = "";
   size_t reply_count = 0;
   size_t seed_count = 0;
   size_t total_delegates = 0;
@@ -4441,23 +4440,33 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     status_text.clear();
     okstat = parse_dpops_response(rbuffer, status_text);
     if (okstat) {
-      //      #include <regex>
-      std::smatch m;
       if (strcmp(status_text, "No Vote Found") == 0) {
         fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
         return true;
-      } else {
-        if (std::regex_search(status_text, m, std::regex(R"(delegate\s*[:=]\s*([^\s,]+))"))) {
-          delegate_name = m[1].str();
-        } else {
-          fail_msg_writer() << tr("Failed to revote\nCould not parse current delegate name");
-          return true;
-        }
       }
     } else {
       fail_msg_writer() << tr("Failed to send revote: ") << status_text;
       return true;
     }
+
+    std::string delegate_name = [&](const std::string &line) -> std::string {
+      constexpr char tag[] = "delegate:";
+      const size_t pos = line.find(tag);
+      if (pos == std::string::npos) return {};
+      const size_t start = pos + (sizeof(tag) - 1);
+      const size_t end = line.find_first_of(",\r\n", start);
+      return (end == std::string::npos) ? line.substr(start)
+                                        : line.substr(start, end - start);
+    }(status_text);
+
+    if (delegate_name.empty()) {
+      fail_msg_writer() << tr("Failed to revote\nCould not parse delegate name");
+      return true;
+    }
+
+
+
+
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
