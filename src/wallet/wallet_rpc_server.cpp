@@ -4322,11 +4322,6 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       er.message = "Vote submission failed, Watch-only and multisig wallets cannot be used";
       return false;      
     }
-    if (!try_connect_to_daemon()) {
-      er.code = WALLET_RPC_ERROR_CODE_NO_DAEMON_CONNECTION;      
-      er.message = "Failed to send the vote, Failed to connect to the daemon";
-      return false;
-    }
 
     uint64_t vote_amount = 0;
     // Cache unlocked balance (account 0, strict)
