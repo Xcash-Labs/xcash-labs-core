@@ -3464,7 +3464,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       }
     }
 
-    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
+    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to send the vote, not enough seed delegates online");
       return true; 
@@ -3493,7 +3493,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to send vote, unable to updated seed node");
+          fail_msg_writer() << tr("Failed to send vote, unable to update seed node");
           return true;
         }
       }
@@ -3670,7 +3670,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
     }
 
-    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;        
+    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;        
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
       return true; 
@@ -3701,7 +3701,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to register the delegate, unable to updated seed node");
+          fail_msg_writer() << tr("Failed to register the delegate, unable to update seed node");
           return true;
         }
       }
@@ -4043,7 +4043,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         ++seed_count;
       }
     }
-    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
+    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to update the delegate, not enough seed delegates online");
       return true;
@@ -4070,7 +4070,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to update the delegate, unable to updated seed node");
+          fail_msg_writer() << tr("Failed to update the delegate, unable to update seed node");
           return true;
         }
       }
@@ -4440,7 +4440,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     status_text.clear();
     okstat = parse_dpops_response(rbuffer, status_text);
     if (okstat) {
-      if (strcmp(status_text, "No Vote Found") == 0) {
+      if (status_text == "No Vote Found") {
         fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
         return true;
       }
@@ -4464,9 +4464,37 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
 
+    {
+      const std::string question = (boost::format(tr("Revoting for %1%. Proceed? [y/n]: ")) % delegate_name).str();
 
+      std::string answer = input_line(question);
 
+      // If input failed (Ctrl+D/Ctrl+Z/stream closed), abort.
+      if (!std::cin.good()) {
+        fail_msg_writer() << tr("Cancelled (no input).");
+        return true;
+      }
 
+      // Trim leading/trailing spaces (optional but recommended)
+      auto trim = [](std::string &s) {
+        auto a = s.find_first_not_of(" \t\r\n");
+        auto b = s.find_last_not_of(" \t\r\n");
+        s = (a == std::string::npos) ? std::string() : s.substr(a, b - a + 1);
+      };
+      trim(answer);
+
+      // Empty => default No
+      if (answer.empty() || command_line::is_no(answer)) {
+        fail_msg_writer() << tr("Revote cancelled.");
+        return true;
+      }
+
+      // Only proceed if it's an explicit Yes
+      if (!command_line::is_yes(answer)) {
+        fail_msg_writer() << tr("Please answer y/yes or n/no. Revote cancelled.");
+        return true;
+      }
+    }
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
@@ -4505,7 +4533,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       }
     }
 
-    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
+    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to send the revote, not enough seed delegates online");
       return true; 
@@ -4534,7 +4562,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to send revote, unable to updated seed node");
+          fail_msg_writer() << tr("Failed to send revote, unable to update seed node");
           return true;
         }
       }
