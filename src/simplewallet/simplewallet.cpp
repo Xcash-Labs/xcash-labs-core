@@ -4318,8 +4318,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCA * COIN;  // COIN = atomic units per XCA
 
-
-
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
 
@@ -4443,14 +4441,23 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     status_text.clear();
     okstat = parse_dpops_response(rbuffer, status_text);
     if (okstat) {
-//      if (string.find("delegate_name:") == std::string::npos) {
-//        fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
-//        return true;
-//      }
+      //      #include <regex>
+      std::smatch m;
+      if (strcmp(status_text, "No Vote Found") == 0) {
+        fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
+        return true;
+      } else {
+        if (std::regex_search(status_text, m, std::regex(R"(delegate\s*[:=]\s*([^\s,]+))"))) {
+          delegate_name = m[1].str();
+        } else {
+          fail_msg_writer() << tr("Failed to revote\nCould not parse current delegate name");
+          return true;
+        }
+      }
     } else {
-
+      fail_msg_writer() << tr("Failed to send revote: ") << status_text;
+      return true;
     }
-//    delegate_name = string.substr(15,string.find(",")-15);
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
