@@ -4302,11 +4302,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   uint64_t vote_amount = 0;
 
   try {
-    // error check
-    if (args.size() != PARAMETER_AMOUNT) {
-      fail_msg_writer() << tr("Failed to send the revote\nInvalid parameters. Usage: revote <delegate_name|address> <amount|all>");
-      return true;
-    }
     if (m_wallet->key_on_device()) {
       fail_msg_writer() << tr("Failed to send the revote\nCommand not supported by HW wallet");
       return true;
@@ -4448,14 +4443,14 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     status_text.clear();
     okstat = parse_dpops_response(rbuffer, status_text);
     if (okstat) {
-      if (string.find("delegate_name:") == std::string::npos) {
-        fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
-        return true;
+//      if (string.find("delegate_name:") == std::string::npos) {
+//        fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
+//        return true;
       }
     } else {
 
     }
-    delegate_name = string.substr(15,string.find(",")-15);
+//    delegate_name = string.substr(15,string.find(",")-15);
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
