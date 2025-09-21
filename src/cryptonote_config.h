@@ -77,6 +77,7 @@
 #define FEE_QUANTIZATION_MASK ((uint64_t)1000)             // round to 0.001 XCA
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
 #define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)2000)       // used for the floor
+#define MIN_VOTE_XCA 4000000ULL                            // minimum amout needed to vote
 
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 

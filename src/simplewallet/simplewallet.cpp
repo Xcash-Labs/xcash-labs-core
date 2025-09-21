@@ -3293,7 +3293,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_XCA = 4'000'000ULL;
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCA * COIN;  // COIN = atomic units per XCA
 
     std::string amount_arg = args[1];

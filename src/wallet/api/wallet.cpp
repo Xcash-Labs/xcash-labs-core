@@ -2677,12 +2677,6 @@ std::string get_current_block_verifiers_list() {
   return "0";
 }
 
-
-
-
-
-
-
 std::string WalletImpl::vote(const std::string &value)
 {
   // value will come in format of <delegates_name or delegates_public_address>|<amount or all>
@@ -2703,7 +2697,6 @@ std::string WalletImpl::vote(const std::string &value)
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_XCA = 4'000'000ULL;
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCA * COIN;  // COIN = atomic units per XCA
 
     // value format: "<delegate_or_address>|<All or amount>"
@@ -2916,18 +2909,6 @@ std::string WalletImpl::vote(const std::string &value)
   }
 
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 std::string WalletImpl::vote_status() {
   tools::wallet2::transfer_container transfers;
