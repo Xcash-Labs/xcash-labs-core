@@ -4424,11 +4424,11 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     // Send to random online seed node
-    int start = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    int startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     int chosen = -1;
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
-      int idx = (start + k) % NETWORK_DATA_NODES_AMOUNT;
+      int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
       const std::string &candidate = network_data_nodes_list[idx];
 
       bool online =
