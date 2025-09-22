@@ -4501,7 +4501,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       }
     }
 
-    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
     if (seed_count < required_seeds) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
       er.message = "Failed to send the vote, not enough seed delegates online";

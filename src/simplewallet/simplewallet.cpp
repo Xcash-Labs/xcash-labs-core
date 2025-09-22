@@ -3386,9 +3386,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
         if (!ip.empty()) block_verifiers_IP_address[total_delegates++] = ip;
       }
     }
-    if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-      total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
-    }
+
     if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
       fail_msg_writer() << tr("Failed to send the vote, minimum number of delegates not online");
       return true;
@@ -3426,40 +3424,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // Build unsigned JSON
-    std::ostringstream ostat;
-    ostat << "{\r\n"
-      << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_CHECK_VOTE_STATUS\",\r\n"
-      << "  \"public_address\": \"" << public_address << "\"\r\n"
-      << "}";
-    senddata = ostat.str();
-
-    // Load node list
-    INITIALIZE_NETWORK_DATA_NODES_LIST;
-    
-    std::string host;
-    int idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-
-    if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
-      fail_msg_writer() << tr("Failed to revote\nCould not pick random seed node");
-      return true; 
-    };
-
-    bool okstat = false;
-    host = network_data_nodes_list[idx];
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    status_text.clear();
-    okstat = parse_dpops_response(rbuffer, status_text);
-    if (okstat) {
-      if (status_text != "No Vote Found") {
-        fail_msg_writer() << tr("You have already voted for a delegate: ") << status_text;
-        return true;
-      }
-    } else {
-      fail_msg_writer() << tr("Failed to send vote: ") << status_text;
-      return true;
-    }
-
-    // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
     o << "{\r\n"
@@ -3487,6 +3451,8 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     senddata = final.str();
 
     // Ensure enough seed delegates are online
+    INITIALIZE_NETWORK_DATA_NODES_LIST;
+
     const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
 
     for (size_t count = 0; count < total_delegates; ++count) {
@@ -3496,7 +3462,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       }
     }
 
-    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to send the vote, not enough seed delegates online");
       return true; 
@@ -3702,7 +3668,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
     }
 
-    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;        
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;        
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to register the delegate, not enough seed delegates online");
       return true; 
@@ -4075,7 +4041,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         ++seed_count;
       }
     }
-    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to update the delegate, not enough seed delegates online");
       return true;
@@ -4126,119 +4092,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
 
   return true;
 #undef PARAMETER_AMOUNT
-}
-
-bool simple_wallet::delegate_recover(const std::vector<std::string>& args)
-{
-  // Variables
-  std::string block_verifiers_IP_address[BLOCK_VERIFIERS_TOTAL_AMOUNT]; // The block verifiers IP address
-  std::string string = "";
-  std::string data2 = "";
-  std::string data3 = ""; 
-  std::string error_message;
-  std::size_t count; 
-  std::size_t count2;
-  std::size_t count3;
-  std::size_t total_delegates;
-  std::size_t total_delegates_valid_amount;
-  uint64_t current_block_height;
-
-  // define macros
-  #define PARAMETER_AMOUNT 1
-
-  try
-  {
-  // error check
-  if (args.size() != PARAMETER_AMOUNT)
-  {
-    fail_msg_writer() << tr("Failed to recover the delegate\nInvalid parameters");
-    return true;
-  }  
-  if (m_wallet->key_on_device())
-  {
-    fail_msg_writer() << tr("Failed to recover the delegate\nCommand not supported by HW wallet");
-    return true;
-  }
-  if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active)
-  {
-    fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot sign or submit votes.");
-    return true;
-  }
-  if (!try_connect_to_daemon())
-  {
-    fail_msg_writer() << tr("Failed to recover the delegate\nFailed to connect to the daemon");
-    return true;
-  }
-
-  // ask for the password
-  SCOPED_WALLET_UNLOCK();
-
-  // wait until the next valid data time
-  //sync_minutes_and_seconds(0);
-
-  // get the current block verifiers list
-  if ((string = get_current_block_verifiers_list()) == "")
-  {
-    fail_msg_writer() << tr("Failed to recover the delegate\n");
-    return true; 
-  }
-
-  total_delegates = std::count(string.begin(), string.end(), '|') / 3;
-  if (total_delegates > BLOCK_VERIFIERS_AMOUNT)
-  {
-    total_delegates = BLOCK_VERIFIERS_AMOUNT;
-  }
-  total_delegates_valid_amount = ceil(total_delegates * BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE);
-
-  // initialize the current_block_verifiers_list struct
-  for (count = 0, count2 = string.find("block_verifiers_IP_address_list")+35, count3 = 0; count < total_delegates; count++)
-  {
-    count3 = string.find("|",count2);
-    block_verifiers_IP_address[count] = string.substr(count2,count3 - count2);
-    count2 = count3 + 1;
-  }
-
-  // get the current block height
-  current_block_height = m_wallet->get_blockchain_current_height();
- 
-  // create the data  
-  data2 = "NODES_TO_BLOCK_VERIFIERS_RECOVER_DELEGATE|" + args[0] + "|";
-
-  // send the data to all block verifiers
-  for (count = 0, count2 = 0, count3 = 0; count < total_delegates; count++)
-  {
-    if ((data3 = send_and_receive_data(block_verifiers_IP_address[count],data2,SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS)) == "The delegate has been recovered successfully")
-    {
-      count2++;
-      if (block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_1 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_2 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_3 || block_verifiers_IP_address[count] == NETWORK_DATA_NODE_IP_ADDRESS_4)
-      {
-        count3++;
-      }
-    }
-    else
-    {
-      error_message = data3;
-    }   
-  }
-
-  // check the result of the data (allow for data to be valid if a majority of seed nodes accepted the data during registration mode, as this is when only the seed nodes will check the majority every block time)
-  if ((count2 >= total_delegates_valid_amount) || (current_block_height < HF_BLOCK_HEIGHT_PROOF_OF_STAKE && count3 >= (NETWORK_DATA_NODES_AMOUNT-1)))
-  {
-    message_writer(console_color_green, false) << "The delegate has been recovered successfully";             
-  }
-  else
-  {
-    fail_msg_writer() << tr("Failed to recovered the delegate");
-    fail_msg_writer() << error_message; 
-  }
-  }
-  catch (...)
-  {
-    fail_msg_writer() << tr("Failed to recovered the delegate");
-  }
-  return true;  
-
-  #undef PARAMETER_AMOUNT
 }
 
 bool simple_wallet::vote_status(const std::vector<std::string> &args) {
@@ -4326,11 +4179,13 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   std::string senddata;
   std::string rbuffer;
   std::string status_text;
-  size_t reply_count = 0;
   size_t seed_count = 0;
   size_t total_delegates = 0;
-  size_t total_delegates_valid_amount = 0;
   uint64_t vote_amount = 0;
+  std::string host;
+  int idx;
+  int prev_idx;
+  bool ok;
 
   try {
     if (m_wallet->key_on_device()) {
@@ -4359,12 +4214,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     vote_amount = unlocked0;
-
-    // Per-vote minimum
-    if (vote_amount < MIN_VOTE_ATOMIC) {
-      fail_msg_writer() << tr("Each revote must be at least 4,000,000 XCA");
-      return true;
-    }
 
     // ask for the password
     SCOPED_WALLET_UNLOCK();
@@ -4416,11 +4265,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
 
-    // Quorum AFTER we know total_delegates
-    total_delegates_valid_amount = static_cast<size_t>(
-      std::ceil(static_cast<double>(total_delegates) *
-                static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
-
     // get the wallet transfers (ensures wallet data is populated)
     m_wallet->get_transfers(transfers);
 
@@ -4457,26 +4301,35 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
-    
-    std::string host;
-    int idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
 
-    if (idx < 0 || idx >= NETWORK_DATA_NODES_AMOUNT) {
-      fail_msg_writer() << tr("Failed to revote\nCould not pick random seed node");
-      return true; 
-    };
+    // Check seed nodes for status, try twice
+    prev_idx = -1;
+    ok = false;
 
-    bool okstat = false;
-    host = network_data_nodes_list[idx];
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    status_text.clear();
-    okstat = parse_dpops_response(rbuffer, status_text);
-    if (okstat) {
+    for (int attempt = 1; attempt <= 2; ++attempt) {
+      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+      if (attempt == 2 && NETWORK_DATA_NODES_AMOUNT > 1 && idx == prev_idx) {
+        idx = (idx + 1) % NETWORK_DATA_NODES_AMOUNT;
+      }
+      prev_idx = idx;
+
+      host = network_data_nodes_list[idx];
+      rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+      status_text.clear();
+      ok = parse_dpops_response(rbuffer, status_text);
+      if (!ok) {
+        continue;
+      }
+
       if (status_text == "No Vote Found") {
         fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
         return true;
       }
-    } else {
+
+      break;
+    }
+
+    if (!ok) {
       fail_msg_writer() << tr("Failed to send revote: ") << status_text;
       return true;
     }
@@ -4494,55 +4347,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     if (delegate_name.empty()) {
       fail_msg_writer() << tr("Failed to revote\nCould not parse delegate name");
-      return true;
-    }
-
-    // parse total (only "total:")
-    double total_xca = [&](const std::string &line) -> double {
-      constexpr char tag[] = "total:";
-      size_t p = line.find(tag);
-      if (p == std::string::npos) return -1.0;
-      p += sizeof(tag) - 1;  // after "total:"
-      while (p < line.size() && line[p] == ' ') ++p;
-
-      // consume digits and at most one dot
-      size_t q = p;
-      bool dot = false;
-      while (q < line.size()) {
-        unsigned char c = static_cast<unsigned char>(line[q]);
-        if (std::isdigit(c)) {
-          ++q;
-          continue;
-        }
-        if (c == '.' && !dot) {
-          dot = true;
-          ++q;
-          continue;
-        }
-        break;  // hit space, 'X' in "XCA", comma, etc.
-      }
-      if (q == p) return -1.0;  // no number found
-
-      try {
-        return std::stod(line.substr(p, q - p));
-      } catch (...) {
-        return -1.0;
-      }
-    }(status_text);
-
-    // convert to atomic (6 dp for XCA)
-    int64_t old_total_atomic = -1;
-    if (total_xca >= 0.0) {
-      old_total_atomic = static_cast<int64_t>(std::llround(total_xca * COIN));
-    }
-
-    if (old_total_atomic == -1) {
-      fail_msg_writer() << tr("Failed to revote\nCould not parse old vote amount");
-      return true;
-    }
-
-    if (vote_amount > old_total_atomic) {
-      fail_msg_writer() << tr("Failed to revote\nNew vote amount should be greater than the original vote");
       return true;
     }
 
@@ -4580,13 +4384,11 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
-    const std::string vote_old_amount_str = std::to_string(old_total_atomic);
     std::ostringstream o;
     o << "{\r\n"
       << "  \"message_settings\": \"NODES_TO_BLOCK_VERIFIERS_REVOTE\",\r\n"
       << "  \"delegate_name_or_address\": \"" << delegate_name << "\",\r\n"
       << "  \"vote_amount\": \"" << vote_amount_str << "\",\r\n"
-      << "  \"old_vote_amount\": \"" << vote_old_amount_str << "\",\r\n"
       << "  \"reserve_proof\": \"" << reserve_proof << "\",\r\n"
       << "  \"public_address\": \"" << public_address << "\"\r\n"
       << "}";
@@ -4608,8 +4410,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     senddata = final.str();
 
     // Ensure enough seed delegates are online
-    const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
-
     for (size_t count = 0; count < total_delegates; ++count) {
       if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(),
                     block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
@@ -4617,48 +4417,47 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       }
     }
 
-    const size_t required_seeds = (network_data_nodes_list.size() / 2) + 1;
+    const size_t required_seeds = (NETWORK_DATA_NODES_AMOUNT / 2) + 1;
     if (seed_count < required_seeds) {
       fail_msg_writer() << tr("Failed to send the revote, not enough seed delegates online");
       return true; 
     }
 
-    // Send to first online seed node and all online delegates
-    bool seed_committed = false;  // flip true after the first seed replies OK
-    for (size_t i = 0; i < total_delegates; ++i) {
-      if (block_verifiers_IP_address[i].empty()) continue;
+    // Send to random online seed node
+    int start = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    int chosen = -1;
 
-      const std::string &host = block_verifiers_IP_address[i];
-      const bool is_seed = (seed_set.count(host) != 0);
+    for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
+      int idx = (start + k) % NETWORK_DATA_NODES_AMOUNT;
+      const std::string &candidate = network_data_nodes_list[idx];
 
-      if (is_seed && seed_committed) {
-        ++reply_count;  // count assumed success
-        continue;
-      }
+      bool online =
+          (std::find(block_verifiers_IP_address,
+                     block_verifiers_IP_address + total_delegates,
+                     candidate) != block_verifiers_IP_address + total_delegates);
 
-      rbuffer = send_and_receive_data(
-          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
-      const bool ok = parse_dpops_response(rbuffer, status_text);
-      if (ok) {
-        ++reply_count;
-        if (is_seed) seed_committed = true;  // seed found and success
-      } else {
-        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
-        if (is_seed) {
-          fail_msg_writer() << tr("Failed to send revote, unable to update seed node");
-          return true;
-        }
+      if (online) {
+        chosen = idx;
+        host = candidate;
+        break;
       }
     }
 
-    if (reply_count >= total_delegates_valid_amount) {
-      message_writer(console_color_green, false) << "Vote has been sent successfully";
-    } else {
-      fail_msg_writer() << tr("Vote submission encountered errors");
-      fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
+    if (chosen < 0) {
+      fail_msg_writer() << tr("Failed to revote\nNo seed nodes online");
       return true;
     }
+
+    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    ok = parse_dpops_response(rbuffer, status_text);
+    if (ok) {
+      message_writer(console_color_green, false) << "Revote has been sent successfully";
+    } else {
+      fail_msg_writer() << tr("Failed to send revote, unable to update seed node");
+      return true;
+    }
+
   }
   catch (const std::exception& e) {
     fail_msg_writer() << tr("Failed to send revote: ") << e.what();
@@ -5306,10 +5105,6 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::delegate_update, this, _1),
                            tr("delegate_update [about|website|team|shared_delegate_status|delegate_fee|server_specs] <value>"),
                            tr("Updates a registered delegates data in the DPOPS system"));
-  m_cmd_binder.set_handler("delegate_recover",
-                           boost::bind(&simple_wallet::delegate_recover, this, _1),
-                           tr("delegate_recover <domain_name>"),
-                           tr("Updates a registered delegates public address and or public key in the DPOPS system. Setup a TXT record (one for the public address, one for the public key) that you want to change on your domain. For example if you only want to change your public address setup a TXT record with the prefix string \"xcash-dpops:\" followed by the public address. Run the delegate recover function to update the public address. Remove the TXT records from the domain."));
   m_cmd_binder.set_handler("vote_status",
                            boost::bind(&simple_wallet::vote_status, this, _1),
                            tr("vote_status"),
