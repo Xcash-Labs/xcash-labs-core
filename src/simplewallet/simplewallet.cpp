@@ -4183,8 +4183,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   size_t total_delegates = 0;
   uint64_t vote_amount = 0;
   std::string host;
-  int idx;
-  int prev_idx;
   bool ok;
   int startpt;
   int chosen;
