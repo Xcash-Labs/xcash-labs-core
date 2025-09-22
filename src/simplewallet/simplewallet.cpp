@@ -4186,6 +4186,8 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   int idx;
   int prev_idx;
   bool ok;
+  int startpt;
+  int chosen;
 
   try {
     if (m_wallet->key_on_device()) {
@@ -4301,6 +4303,39 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     // Load node list
     INITIALIZE_NETWORK_DATA_NODES_LIST;
+
+    // Send to random online seed node
+    startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    chosen = -1;
+
+    for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
+      int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
+      const std::string &candidate = network_data_nodes_list[idx];
+
+      bool online =
+          (std::find(block_verifiers_IP_address,
+                     block_verifiers_IP_address + total_delegates,
+                     candidate) != block_verifiers_IP_address + total_delegates);
+
+      if (online) {
+        chosen = idx;
+        host = candidate;
+        break;
+      }
+    }
+
+    if (chosen < 0) {
+      fail_msg_writer() << tr("Failed to revote\nNo seed nodes online");
+      return true;
+    }
+
+    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    ok = parse_dpops_response(rbuffer, status_text);
+    if (!ok) {
+      fail_msg_writer() << tr("Failed to send revote, unable to update seed node ") << status_text;
+      return true;
+    }
 
     // Check seed nodes for status, try twice
     prev_idx = -1;
@@ -4424,7 +4459,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     // Send to random online seed node
-    int startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     int chosen = -1;
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
@@ -4454,7 +4489,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     if (ok) {
       message_writer(console_color_green, false) << "Revote has been sent successfully";
     } else {
-      fail_msg_writer() << tr("Failed to send revote, unable to update seed node");
+      fail_msg_writer() << tr("Failed to send revote, unable to update seed node ") << status_text;
       return true;
     }
 
