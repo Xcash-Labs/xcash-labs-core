@@ -4337,35 +4337,8 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
 
-    // Check seed nodes for status, try twice
-    prev_idx = -1;
-    ok = false;
-
-    for (int attempt = 1; attempt <= 2; ++attempt) {
-      idx = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-      if (attempt == 2 && NETWORK_DATA_NODES_AMOUNT > 1 && idx == prev_idx) {
-        idx = (idx + 1) % NETWORK_DATA_NODES_AMOUNT;
-      }
-      prev_idx = idx;
-
-      host = network_data_nodes_list[idx];
-      rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-      status_text.clear();
-      ok = parse_dpops_response(rbuffer, status_text);
-      if (!ok) {
-        continue;
-      }
-
-      if (status_text == "No Vote Found") {
-        fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
-        return true;
-      }
-
-      break;
-    }
-
-    if (!ok) {
-      fail_msg_writer() << tr("Failed to send revote: ") << status_text;
+    if (status_text == "No Vote Found") {
+      fail_msg_writer() << tr("Failed to revote\nNo vote is currently active for this wallet");
       return true;
     }
 
@@ -4460,7 +4433,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     // Send to random online seed node
     startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
-    int chosen = -1;
+    chosen = -1;
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
       int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
