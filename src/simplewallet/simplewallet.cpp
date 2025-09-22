@@ -3268,12 +3268,12 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::string status_text;
   std::string host;
   std::string host2;
-  size_t reply_count = 0;
   size_t seed_count = 0;
   size_t total_delegates = 0;
   size_t total_delegates_valid_amount = 0;
   int chosen;
   int chosen2;
+  int startpt;
   bool ok;
 
   #define PARAMETER_AMOUNT 2
@@ -3527,7 +3527,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
-      if (status_text.find("already exists") != std::string::npos) { {
+      if (status_text.find("already exists") != std::string::npos) {
         // confirmation of replication
         message_writer(console_color_green, false) << "Vote has been sent successfully";
       } else {
@@ -4520,7 +4520,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
-      if (status_text.find("already exists") != std::string::npos) { {
+      if (status_text.find("already exists") != std::string::npos) {
         // confirmation of replication
         message_writer(console_color_green, false) << "Revote has been sent successfully";
       } else {
