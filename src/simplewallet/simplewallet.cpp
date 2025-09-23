@@ -4487,7 +4487,8 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       // first hit
       if (chosen < 0) {
         chosen = idx;
-        host = candidate;
+        host = "seeds.xcashseeds.us";
+    //    host = candidate;
         // if list is size 1, keep looping but we may never find a second
         if (NETWORK_DATA_NODES_AMOUNT < 2) break;
         continue;
@@ -4496,8 +4497,9 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       // second, distinct hit
       if (idx != chosen) {
         chosen2 = idx;
-        host2 = candidate;
-        break;  // we’ve got two; bail early
+    //    host2 = candidate;
+        host2 = "seeds.xcashseeds.us";
+    break;  // we’ve got two; bail early
       }
     }
 
