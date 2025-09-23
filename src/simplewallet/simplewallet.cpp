@@ -4416,20 +4416,10 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       vote_total_atomic = static_cast<uint64_t>(llround(xca * static_cast<double>(COIN)));
     }
 
-    message_writer(console_color_green, false)
-        << tr("check values ")
-        << "("
-        << tr("proven=") << std::fixed << std::setprecision(6) << proven_xca
-        << " XCA / " << vote_total_atomic << " atomic, "
-        << tr("requested=") << std::fixed << std::setprecision(6) << requested_xca
-        << " XCA / " << vote_amount_atomic << " atomic"
-        << ").";
-
     if (vote_total_atomic == vote_amount) {
-      fail_msg_writer() << tr("“No revote needed: Your reserve proof already covers the requested vote amount");
+      fail_msg_writer() << tr("No revote needed: Your reserve proof already covers the requested vote amount");
       return true;
     }
-
 
     {
       const std::string question = (boost::format(tr("Revoting for %1%. Proceed? [y/n]: ")) % delegate_name).str();
