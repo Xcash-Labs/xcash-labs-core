@@ -4393,6 +4393,44 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
 
+    std::string vote_total_str = [&](const std::string &line) -> std::string {
+      constexpr char tag[] = "total:";
+      size_t pos = line.find(tag);
+      if (pos == std::string::npos) return {};
+      size_t start = pos + (sizeof(tag) - 1);
+      // skip whitespace
+      while (start < line.size() && std::isspace(static_cast<unsigned char>(line[start]))) ++start;
+      // read digits + optional dot
+      size_t end = start;
+      while (end < line.size()) {
+        unsigned char ch = static_cast<unsigned char>(line[end]);
+        if (!(std::isdigit(ch) || ch == '.')) break;
+        ++end;
+      }
+      return line.substr(start, end - start);  // e.g., "5001000.000000"
+    }(status_text);
+
+    uint64_t vote_total_atomic = 0;
+    if (!vote_total_str.empty()) {
+      double xca = std::strtod(vote_total_str.c_str(), nullptr);
+      vote_total_atomic = static_cast<uint64_t>(llround(xca * static_cast<double>(COIN)));
+    }
+
+    message_writer(console_color_green, false)
+        << tr("check values ")
+        << "("
+        << tr("proven=") << std::fixed << std::setprecision(6) << proven_xca
+        << " XCA / " << vote_total_atomic << " atomic, "
+        << tr("requested=") << std::fixed << std::setprecision(6) << requested_xca
+        << " XCA / " << vote_amount_atomic << " atomic"
+        << ").";
+
+    if (vote_total_atomic == vote_amount) {
+      fail_msg_writer() << tr("“No revote needed: Your reserve proof already covers the requested vote amount");
+      return true;
+    }
+
+
     {
       const std::string question = (boost::format(tr("Revoting for %1%. Proceed? [y/n]: ")) % delegate_name).str();
 
@@ -4425,6 +4463,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       }
     }
 
+    sync_minutes_and_seconds(0, 45);
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
@@ -4487,8 +4526,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       // first hit
       if (chosen < 0) {
         chosen = idx;
-        host = "seeds.xcashseeds.us";
-    //    host = candidate;
+        host = candidate;
         // if list is size 1, keep looping but we may never find a second
         if (NETWORK_DATA_NODES_AMOUNT < 2) break;
         continue;
@@ -4497,8 +4535,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       // second, distinct hit
       if (idx != chosen) {
         chosen2 = idx;
-    //    host2 = candidate;
-        host2 = "seeds.xcashseeds.us";
+        host2 = candidate;
     break;  // we’ve got two; bail early
       }
     }
