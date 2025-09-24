@@ -4291,6 +4291,8 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   size_t total_delegates = 0;
   size_t total_delegates_valid_amount = 0;
   int chosen;
+  int startpt;
+  bool ok;
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---

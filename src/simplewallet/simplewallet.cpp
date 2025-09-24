@@ -4206,7 +4206,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
     if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
-      fail_msg_writer() << tr("Vote submission failed: This action requires a full-access wallet.\nWatch-only and multisig wallets cannot be used.");
+      fail_msg_writer() << tr("This action requires a full-access wallet.\nWatch-only and multisig wallets cannot be used.");
       return true;
     }
     if (!try_connect_to_daemon()) {
