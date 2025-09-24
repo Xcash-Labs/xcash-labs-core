@@ -3267,11 +3267,9 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::string rbuffer;
   std::string status_text;
   std::string host;
-  std::string host2;
   size_t seed_count = 0;
   size_t total_delegates = 0;
   int chosen;
-  int chosen2;
   int startpt;
   bool ok;
 
@@ -3470,9 +3468,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     // Send to random online seed node
     startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     chosen = -1;
-    chosen2 = -1;
     host.clear();
-    host2.clear();
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
       int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
@@ -3483,26 +3479,15 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
                      block_verifiers_IP_address + total_delegates,
                      candidate) != block_verifiers_IP_address + total_delegates);
 
-      if (!online) continue;
-
-      // first hit
-      if (chosen < 0) {
+      if (online) {
         chosen = idx;
         host = candidate;
-        // if list is size 1, keep looping but we may never find a second
-        if (NETWORK_DATA_NODES_AMOUNT < 2) break;
-        continue;
+        break;
       }
 
-      // second, distinct hit
-      if (idx != chosen) {
-        chosen2 = idx;
-        host2 = candidate;
-        break;  // we’ve got two; bail early
-      }
     }
 
-    if (chosen < 0 || chosen2 < 0) {
+    if (chosen < 0) {
       fail_msg_writer() << tr("Failed to vote\nNot enough seed nodes online");
       return true;
     }
@@ -3510,26 +3495,15 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    if (!ok) {
-      fail_msg_writer() << tr("Failed to send vote, unable to update seed node: ") << status_text;
-      return true;
-    }
-
-    // check another random node to verify the update
-    rbuffer = send_and_receive_data(host2.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    status_text.clear();
-    ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
       if (status_text.find("already exists") != std::string::npos) {
-        // confirmation of replication
-        message_writer(console_color_green, false) << "Vote has been sent successfully";
+        message_writer(console_color_green, false) << "Vote already exists for this delegate";
       } else {
-        message_writer(console_color_green, false) << "Vote applied, but replication was not confirmed on seed";
+        message_writer(console_color_green, false) << "Vote has been sent successfully";
       }
       return true;
     } else {
-      fail_msg_writer() << tr("Vote applied, but replication to a second seed was not confirmed: ") << status_text;
+      fail_msg_writer() << tr("Failed to send vote, unable to update seed node: ") << status_text;
       return true;
     }
 
@@ -4217,11 +4191,9 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   size_t total_delegates = 0;
   uint64_t vote_amount = 0;
   std::string host;
-  std::string host2;
   bool ok;
   int startpt;
   int chosen;
-  int chosen2;
 
   try {
     if (args.size() > 0) {
@@ -4361,6 +4333,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
         host = candidate;
         break;
       }
+
     }
 
     if (chosen < 0) {
@@ -4502,9 +4475,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
    // Send to random online seed node
     startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     chosen = -1;
-    chosen2 = -1;
     host.clear();
-    host2.clear();
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
       int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
@@ -4515,26 +4486,15 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
                      block_verifiers_IP_address + total_delegates,
                      candidate) != block_verifiers_IP_address + total_delegates);
 
-      if (!online) continue;
-
-      // first hit
-      if (chosen < 0) {
+      if (online) {
         chosen = idx;
         host = candidate;
-        // if list is size 1, keep looping but we may never find a second
-        if (NETWORK_DATA_NODES_AMOUNT < 2) break;
-        continue;
+        break;
       }
-
-      // second, distinct hit
-      if (idx != chosen) {
-        chosen2 = idx;
-        host2 = candidate;
-    break;  // we’ve got two; bail early
-      }
+      
     }
 
-    if (chosen < 0 || chosen2 < 0) {
+    if (chosen < 0) {
       fail_msg_writer() << tr("Failed to revote\nNot enough seed nodes online");
       return true;
     }
@@ -4542,26 +4502,15 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    if (!ok) {
-      fail_msg_writer() << tr("Failed to send revote, unable to update seed node: ") << status_text;
-      return true;
-    }
-
-    // check another random node to verify the update
-    rbuffer = send_and_receive_data(host2.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    status_text.clear();
-    ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
       if (status_text.find("already exists") != std::string::npos) {
-        // confirmation of replication
-        message_writer(console_color_green, false) << "Revote has been sent successfully";
+        message_writer(console_color_green, false) << "Revote already exists for this delegate";
       } else {
-        message_writer(console_color_green, false) << "Revote applied, but replication was not confirmed on seed";
+        message_writer(console_color_green, false) << "Revote has been sent successfully";
       }
       return true;
     } else {
-      fail_msg_writer() << tr("Revote applied, but replication to a second seed was not confirmed: ") << status_text;
+      fail_msg_writer() << tr("Failed to send revote, unable to update seed node: ") << status_text;
       return true;
     }
 

@@ -2690,10 +2690,12 @@ std::string WalletImpl::vote(const std::string &value)
   std::string status_text;
   std::string name_or_address_arg;
   std::string amount_arg;
+  std::string host;
   size_t reply_count = 0;
   size_t seed_count = 0;
   size_t total_delegates = 0;
   size_t total_delegates_valid_amount = 0;
+  int chosen;
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
@@ -2871,9 +2873,7 @@ std::string WalletImpl::vote(const std::string &value)
     // Send to random online seed node
     startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     chosen = -1;
-    chosen2 = -1;
     host.clear();
-    host2.clear();
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
       int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
@@ -2884,52 +2884,27 @@ std::string WalletImpl::vote(const std::string &value)
                      block_verifiers_IP_address + total_delegates,
                      candidate) != block_verifiers_IP_address + total_delegates);
 
-      if (!online) continue;
-
-      // first hit
-      if (chosen < 0) {
+      if (online) {
         chosen = idx;
         host = candidate;
-        // if list is size 1, keep looping but we may never find a second
-        if (NETWORK_DATA_NODES_AMOUNT < 2) break;
-        continue;
+        break;
       }
-
-      // second, distinct hit
-      if (idx != chosen) {
-        chosen2 = idx;
-        host2 = candidate;
-        break;  // we’ve got two; bail early
-      }
+    
     }
 
-    if (chosen < 0 || chosen2 < 0) {
+    if (chosen < 0) {
       return "Failed to vote: Not enough seed nodes online";
     }
 
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    if (!ok) {
+    if (ok) {
+      return "Vote has been sent successfully";
+    } else {
       return std::string("Failed to send vote, unable to update seed node: ") + status_text;
     }
 
-    // check another random node to verify the update
-    rbuffer = send_and_receive_data(host2.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    status_text.clear();
-    ok = parse_dpops_response(rbuffer, status_text);
-    if (ok) {
-      if (status_text.find("already exists") != std::string::npos) {
-        // confirmation of replication
-        return "Vote has been sent successfully";
-      } else {
-        return "Vote applied, but replication was not confirmed on seed";
-      }
-    } else {
-      return std::string("Vote applied, but replication to a second seed was not confirmed: ") + status_text;
-    }
-    
   }
   catch (const std::exception& e) {
     return std::string("Failed to send vote: ") + e.what();
