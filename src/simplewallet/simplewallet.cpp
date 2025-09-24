@@ -4138,6 +4138,11 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   rdln::suspend_readline rl_guard;
 
   try {
+    if (args.size() > PARAMETER_AMOUNT) {
+      fail_msg_writer() << tr("There are no parameters for this option");
+      return true;
+    }
+
     if (m_wallet->key_on_device()) {
       fail_msg_writer() << tr("Failed to send vote_status\nCommand not supported by HW wallet");
       return true;
@@ -4225,6 +4230,11 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   int chosen2;
 
   try {
+    if (args.size() > PARAMETER_AMOUNT) {
+      fail_msg_writer() << tr("There are no parameters for this option");
+      return true;
+    }
+
     if (m_wallet->key_on_device()) {
       fail_msg_writer() << tr("Failed to send the revote\nCommand not supported by HW wallet");
       return true;
@@ -4417,7 +4427,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     if (vote_total_atomic == vote_amount) {
-      fail_msg_writer() << tr("No revote needed: Your reserve proof already covers the requested vote amount");
+      message_writer(console_color_green, false) << tr("No revote needed: Your reserve proof already covers the requested vote amount");
       return true;
     }
 
