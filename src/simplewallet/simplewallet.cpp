@@ -4491,7 +4491,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
         host = candidate;
         break;
       }
-      
+
     }
 
     if (chosen < 0) {
