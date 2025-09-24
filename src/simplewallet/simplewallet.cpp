@@ -4536,7 +4536,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       if (idx != chosen) {
         chosen2 = idx;
         host2 = candidate;
-        break;  // we’ve got two; bail early
+    break;  // we’ve got two; bail early
       }
     }
 
@@ -10976,7 +10976,7 @@ bool simple_wallet::print_address(const std::vector<std::string> &args/* = std::
       }) != transfers.end();
     success_msg_writer() << index << "  " << m_wallet->get_subaddress_as_str({m_current_subaddress_account, index}) << "  " << (index == 0 ? tr("Primary address") : m_wallet->get_subaddress_label({m_current_subaddress_account, index})) << " " << (used ? tr("(used)") : "");
   };
-  void(used);
+  static_cast<void>(used);
 
   uint32_t index = 0;
   if (local_args.empty())
