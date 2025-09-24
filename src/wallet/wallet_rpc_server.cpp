@@ -4333,6 +4333,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     if (unlocked0 < MIN_VOTE_ATOMIC) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_UNLOCKED_MONEY; 
       er.message = "You need at least 4,000,000 XCA unlocked in account 0 to vote";
+      er.message = std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCA unlocked in account 0 to vote");
       return false;
     }
 
