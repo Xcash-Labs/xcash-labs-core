@@ -3308,6 +3308,12 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       fail_msg_writer() << tr("You need at least 4,000,000 XCA unlocked in account 0 to vote");
       return true;
     }
+    if (unlocked0 < MIN_VOTE_ATOMIC) {
+      fail_msg_writer() << tr("You need at least ")
+                        << cryptonote::print_money(MIN_VOTE_ATOMIC)
+                        << tr(" XCA unlocked in account 0 to vote");
+      return true;
+    }
 
     // normalize "all"
     auto tolower_str = [](std::string s) {
