@@ -4286,10 +4286,8 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
   std::string name_or_address_arg;
   std::string amount_arg;
   std::string host;
-  size_t reply_count = 0;
   size_t seed_count = 0;
   size_t total_delegates = 0;
-  size_t total_delegates_valid_amount = 0;
   int chosen;
   int startpt;
   bool ok;
@@ -4432,11 +4430,6 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       er.message = "Failed to send the vote, minimum number of delegates not online";
       return false;       
     }
-
-    // Quorum AFTER we know total_delegates
-    total_delegates_valid_amount = static_cast<size_t>(
-      std::ceil(static_cast<double>(total_delegates) *
-                static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
     // get the wallet transfers (ensures wallet data is populated)
     m_wallet->get_transfers(transfers);
@@ -4865,7 +4858,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     }
 
     if (vote_total_atomic == vote_amount) {
-      res.vote_status = "success";
+      res.status = "success";
       return true;
     }
 
@@ -4943,7 +4936,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
-      res.vote_status = "success";
+      res.status = "success";
       return true;
     } else {
       er.code = WALLET_RPC_ERROR_CODE_POSSIBLE_DPOPS_NETWORK_ERROR;
@@ -4954,7 +4947,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
   }
   catch (const std::exception& e) {
       er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message =  "Failed to send revote: " << e.what();
+      er.message =  std::string("Failed to send revote: ") << e.what();
       return false;
   }
   catch (...) {
