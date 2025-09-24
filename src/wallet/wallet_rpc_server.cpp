@@ -4697,6 +4697,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
                       [this](const tools::wallet2::transfer_details& td) {
                         return td.m_subaddr_index == cryptonote::subaddress_index{0, 0};
                       }) != transfers.end();
+      static_cast<void>(used);                      
       public_address = m_wallet->get_subaddress_as_str({0, 0});
     };
     print_address_sub();
