@@ -3017,7 +3017,8 @@ std::string WalletImpl::revote() {
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      return "You need at least 4,000,000 XCA unlocked in account 0 to revote";
+//      return "You need at least 4,000,000 XCA unlocked in account 0 to revote";
+      return "You need at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA unlocked in account 0 to vote";
     }
 
     vote_amount = unlocked0;
