@@ -4138,7 +4138,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   rdln::suspend_readline rl_guard;
 
   try {
-    if (args.size() > PARAMETER_AMOUNT) {
+    if (args.size() > 0) {
       fail_msg_writer() << tr("There are no parameters for this option");
       return true;
     }
@@ -4230,7 +4230,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
   int chosen2;
 
   try {
-    if (args.size() > PARAMETER_AMOUNT) {
+    if (args.size() > 0) {
       fail_msg_writer() << tr("There are no parameters for this option");
       return true;
     }
@@ -4427,7 +4427,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     if (vote_total_atomic == vote_amount) {
-      message_writer(console_color_green, false) << tr("No revote needed: Your reserve proof already covers the requested vote amount");
+      message_writer(console_color_green, false) << tr("No revote needed: Your current vote already covers the requested vote amount");
       return true;
     }
 
