@@ -4508,41 +4508,74 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       return false;
     }
 
-    // Send to first online seed node and all online delegates
-    bool seed_committed = false;  // flip true after the first seed replies OK
-    for (size_t i = 0; i < total_delegates; ++i) {
-      if (block_verifiers_IP_address[i].empty()) continue;
+    // Send to random online seed node
+    startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    chosen = -1;
+    chosen2 = -1;
+    host.clear();
+    host2.clear();
 
-      const std::string &host = block_verifiers_IP_address[i];
-      const bool is_seed = (seed_set.count(host) != 0);
+    for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {
+      int idx = (startpt + k) % NETWORK_DATA_NODES_AMOUNT;
+      const std::string &candidate = network_data_nodes_list[idx];
 
-      if (is_seed && seed_committed) {
-        ++reply_count;  // count assumed success
+      bool online =
+          (std::find(block_verifiers_IP_address,
+                     block_verifiers_IP_address + total_delegates,
+                     candidate) != block_verifiers_IP_address + total_delegates);
+
+      if (!online) continue;
+
+      // first hit
+      if (chosen < 0) {
+        chosen = idx;
+        host = candidate;
+        // if list is size 1, keep looping but we may never find a second
+        if (NETWORK_DATA_NODES_AMOUNT < 2) break;
         continue;
       }
 
-      rbuffer = send_and_receive_data(
-          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
-      const bool ok = parse_dpops_response(rbuffer, status_text);
-      if (ok) {
-        ++reply_count;
-        if (is_seed) seed_committed = true;  // seed found and success
-      } else {
-        if (is_seed) {
-          er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-          er.message = "Failed to send vote, unable to update seed node";
-          return false;
-        }
+      // second, distinct hit
+      if (idx != chosen) {
+        chosen2 = idx;
+        host2 = candidate;
+        break;  // we’ve got two; bail early
       }
     }
 
-    if (reply_count >= total_delegates_valid_amount) {
-      res.vote_status = "success";
-      return true;
-    } else {
+    if (chosen < 0 || chosen2 < 0) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_DELEGATES;
-      er.message = "Failed to send vote to a majority of delegates";
+      er.message = "Failed to send the vote, not enough seed delegates online";
+      return false;
+    }
+
+    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    ok = parse_dpops_response(rbuffer, status_text);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    if (!ok) {
+      er.code = WALLET_RPC_ERROR_CODE_POSSIBLE_DPOPS_NETWORK_ERROR;
+      er.message = "Failed to send vote, unable to update seed node: " + status_text;
+      return false;
+    }
+
+    // check another random node to verify the update
+    rbuffer = send_and_receive_data(host2.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    ok = parse_dpops_response(rbuffer, status_text);
+    if (ok) {
+      if (status_text.find("already exists") != std::string::npos) {
+        // confirmation of replication
+        res.vote_status = "success";
+        return true;
+      } else {
+        er.code = WALLET_RPC_ERROR_CODE_POSSIBLE_DPOPS_NETWORK_ERROR;
+        er.message = "Vote applied, but replication to a second seed was not confirmed";
+        return false;
+      }
+    } else {
+      er.code = WALLET_RPC_ERROR_CODE_POSSIBLE_DPOPS_NETWORK_ERROR;
+      er.message = "Vote applied, but replication to a second seed was not confirmed: " + status_text;
       return false;
     }
   }
