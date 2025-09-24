@@ -2927,8 +2927,9 @@ std::string WalletImpl::vote(const std::string &value)
         return "Vote applied, but replication was not confirmed on seed";
       }
     } else {
-      return status_text.find("Vote applied, but replication to a second seed was not confirmed: ") + status_text;
+      return std::string("Vote applied, but replication to a second seed was not confirmed: ") + status_text;
     }
+    
   }
   catch (const std::exception& e) {
     return std::string("Failed to send vote: ") + e.what();

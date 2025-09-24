@@ -4579,6 +4579,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       return false;
     }
   }
+
   catch (const std::exception& e) {
     er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
     er.message = std::string("Failed to send vote: ") + e.what();
