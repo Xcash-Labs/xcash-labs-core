@@ -2888,7 +2888,6 @@ std::string WalletImpl::vote(const std::string &value)
         host = candidate;
         break;
       }
-    
     }
 
     if (chosen < 0) {
@@ -2974,13 +2973,8 @@ std::string WalletImpl::vote_status() {
     return "Failed to send vote_status";
   }
 
-  return std::string("Failed to send vote_status: ") + status_text;
+  return std::string "Failed to send vote_status";
 }
-
-
-
-
-
 
 std::string WalletImpl::revote() {
 {
@@ -3119,7 +3113,6 @@ std::string WalletImpl::revote() {
         host = candidate;
         break;
       }
-
     }
 
     if (chosen < 0) {
@@ -3237,7 +3230,6 @@ std::string WalletImpl::revote() {
         host = candidate;
         break;
       }
-
     }
 
     if (chosen < 0) {

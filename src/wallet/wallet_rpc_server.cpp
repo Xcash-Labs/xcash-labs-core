@@ -4533,7 +4533,6 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
         host = candidate;
         break;
       }
-
     }
 
     if (chosen < 0) {
