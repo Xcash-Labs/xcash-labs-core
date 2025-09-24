@@ -4694,7 +4694,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
       return false; 
     }
 
-    size_t start = response_json.find("\"block_verifiers_IP_address_list\":";
+    size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
       er.code = WALLET_RPC_ERROR_CODE_TX_NOT_POSSIBLE;      
       er.message = "Failed to send the revote: missing block_verifiers_IP_address_list field.";

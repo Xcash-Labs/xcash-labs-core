@@ -3028,7 +3028,7 @@ std::string WalletImpl::revote() {
       return "Failed to get current block verifiers list: no valid response from any network data node.";
     }
 
-    size_t start = response_json.find("\"block_verifiers_IP_address_list\":";
+    size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
       return "Failed to send the revote: missing block_verifiers_IP_address_list field";
     }
