@@ -3270,7 +3270,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
   std::string host2;
   size_t seed_count = 0;
   size_t total_delegates = 0;
-  size_t total_delegates_valid_amount = 0;
   int chosen;
   int chosen2;
   int startpt;
@@ -3396,11 +3395,6 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       fail_msg_writer() << tr("Failed to send the vote, minimum number of delegates not online");
       return true;
     }
-
-    // Quorum AFTER we know total_delegates
-    total_delegates_valid_amount = static_cast<size_t>(
-      std::ceil(static_cast<double>(total_delegates) *
-                static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
     // get the wallet transfers (ensures wallet data is populated)
     m_wallet->get_transfers(transfers);
