@@ -3358,7 +3358,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
 
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
-      fail_msg_writer() << tr("Failed to send the vote: missing 'block_verifiers_IP_address_list' field");
+      fail_msg_writer() << tr("Failed to send the vote: missing block_verifiers_IP_address_list field");
       return true;
     }
 
@@ -3568,7 +3568,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
-      fail_msg_writer() << tr("Failed to register the delegate: missing 'block_verifiers_IP_address_list' field");
+      fail_msg_writer() << tr("Failed to register the delegate: missing block_verifiers_IP_address_list field");
       return true;
     }
 
@@ -3948,7 +3948,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
 
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
-      fail_msg_writer() << tr("Failed to update the delegate: missing 'block_verifiers_IP_address_list' field");
+      fail_msg_writer() << tr("Failed to update the delegate: missing block_verifiers_IP_address_list field");
       return true;
     }
     size_t colon = response_json.find(':', start);
@@ -4239,7 +4239,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
 
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
-      fail_msg_writer() << tr("Failed to send the revote: missing 'block_verifiers_IP_address_list' field");
+      fail_msg_writer() << tr("Failed to send the revote: missing block_verifiers_IP_address_list field");
       return true;
     }
 

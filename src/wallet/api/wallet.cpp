@@ -2997,7 +2997,6 @@ std::string WalletImpl::revote() {
 
   try {
 
-
     if (m_wallet->key_on_device()) {
       return "Failed to send the revote: Command not supported by HW wallet";
 
@@ -3031,7 +3030,7 @@ std::string WalletImpl::revote() {
 
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":";
     if (start == std::string::npos) {
-      return "Failed to send the revote: missing 'block_verifiers_IP_address_list' field";
+      return "Failed to send the revote: missing block_verifiers_IP_address_list field";
     }
 
     size_t colon = response_json.find(':', start);
@@ -3142,7 +3141,7 @@ std::string WalletImpl::revote() {
 
 
     if (delegate_name.empty()) {
-      return "Failed to revote\nCould not parse delegate name";
+      return "Failed to revote: Could not parse delegate name";
     }
 
     std::string vote_total_str = [&](const std::string &line) -> std::string {
