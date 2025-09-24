@@ -2725,7 +2725,7 @@ std::string WalletImpl::vote(const std::string &value)
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      return "You need at least 4,000,000 XCA unlocked in account 0 to vote";
+      return "You need at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA unlocked in account 0 to vote";
     }
 
     // normalize "all"
@@ -2740,7 +2740,7 @@ std::string WalletImpl::vote(const std::string &value)
 
       // Per-vote minimum
       if (vote_amount < MIN_VOTE_ATOMIC) {
-        return "Each vote must be at least 4,000,000 XCA";
+        return "Each vote must be at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA";
       }
     } else {
       uint64_t atomic = 0;
@@ -2755,7 +2755,7 @@ std::string WalletImpl::vote(const std::string &value)
       }
       // Per-vote minimum
       if (atomic < MIN_VOTE_ATOMIC) {
-        return "Each vote must be at least 4,000,000 XCA";
+        return "Each vote must be at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA";
       }
       vote_amount = atomic;
     }
@@ -3017,7 +3017,6 @@ std::string WalletImpl::revote() {
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-//      return "You need at least 4,000,000 XCA unlocked in account 0 to revote";
       return "You need at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA unlocked in account 0 to vote";
     }
 
