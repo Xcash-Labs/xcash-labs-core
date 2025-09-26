@@ -3166,7 +3166,7 @@ void sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
 std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
 {
   // The macro expects this exact struct + variable name
-  sync_minutes_and_seconds(0, 45);
+  sync_minutes_and_seconds(0, 50);
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
@@ -4437,7 +4437,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       }
     }
 
-    sync_minutes_and_seconds(0, 45);
+    sync_minutes_and_seconds(0, 50);
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;

@@ -4176,7 +4176,7 @@ void sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
 
 std::string wallet_rpc_server::get_current_block_verifiers_list() {
   // The macro expects this exact struct + variable name
-  sync_minutes_and_seconds(0, 45);
+  sync_minutes_and_seconds(0, 50);
   struct network_data_nodes_list {
     std::string network_data_nodes_public_address[NETWORK_DATA_NODES_AMOUNT];
     std::string network_data_nodes_IP_address[NETWORK_DATA_NODES_AMOUNT];
