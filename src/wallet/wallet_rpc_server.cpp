@@ -4229,8 +4229,7 @@ std::string wallet_rpc_server::get_current_block_verifiers_list() {
     if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-    std::string response = send_and_receive_data(host, senddata);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::string response = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
     // ---- Validate response ----
     bool ok = true;
