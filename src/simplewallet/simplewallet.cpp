@@ -3217,11 +3217,7 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
     if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-
-//    std::string response = send_and_receive_data(host, senddata);
-
-    std::string response = send_and_receive_data("seeds.xcashseeds.us", senddata);
-
+    std::string response = send_and_receive_data(host, senddata);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // ---- Validate response ----
@@ -3576,9 +3572,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       return true;
     }
 
-    fail_msg_writer() << tr("response_json") << response_json;
-  
-
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
       fail_msg_writer() << tr("Failed to register the delegate: missing block_verifiers_IP_address_list field");
@@ -3617,14 +3610,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         }
       }
     }
-
-    fail_msg_writer() << tr("total_delegates ") << total_delegates;
-    std::ostringstream os;
-    for (size_t i = 0; i < total_delegates; ++i) {
-      if (i) os << ", ";
-      os << block_verifiers_IP_address[i];
-    }
-    fail_msg_writer() << tr("IPs: ") << os.str();
 
     if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
       total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
