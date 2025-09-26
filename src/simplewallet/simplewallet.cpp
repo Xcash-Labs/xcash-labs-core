@@ -3572,6 +3572,9 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       return true;
     }
 
+    fail_msg_writer() << tr("response_json") << response_json;
+  
+
     size_t start = response_json.find("\"block_verifiers_IP_address_list\":");
     if (start == std::string::npos) {
       fail_msg_writer() << tr("Failed to register the delegate: missing block_verifiers_IP_address_list field");
@@ -3610,6 +3613,14 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         }
       }
     }
+
+    fail_msg_writer() << tr("total_delegates ") << total_delegates;
+    std::ostringstream os;
+    for (size_t i = 0; i < total_delegates; ++i) {
+      if (i) os << ", ";
+      os << block_verifiers_IP_address[i];
+    }
+    fail_msg_writer() << tr("IPs: ") << os.str();
 
     if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
       total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
