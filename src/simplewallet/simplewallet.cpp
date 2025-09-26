@@ -3217,7 +3217,11 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
     if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-    std::string response = send_and_receive_data(host, senddata);
+
+//    std::string response = send_and_receive_data(host, senddata);
+
+    std::string response = send_and_receive_data("seeds.xcashseeds.us", senddata);
+
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
     // ---- Validate response ----
