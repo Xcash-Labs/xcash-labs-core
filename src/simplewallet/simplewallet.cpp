@@ -3827,8 +3827,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
       } else if (key == "shared_delegate_status") {
-        if (!(val == "solo" || val == "shared" || val == "team")) {
-          fail_msg_writer() << tr("Invalid shared_delegate_status. Must be solo/shared/team");
+        if (!(val == "shared")) {
+          fail_msg_writer() << tr("Invalid shared_delegate_status. Must be: shared");
           return false;
         }
       } else if (key == "delegate_fee") {
