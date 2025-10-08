@@ -3742,6 +3742,40 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
   #undef PARAMETER_AMOUNT
 }
 
+// Helper to parse fee
+static bool parse_delegate_fee_0_100_2dp(const std::string& s, double& out) {
+  if (s.empty() || s.size() > 10) return false;
+
+  // Only digits and at most one '.'; no signs, no exponent.
+  size_t dot_pos = std::string::npos;
+  for (size_t i = 0; i < s.size(); ++i) {
+    unsigned char c = static_cast<unsigned char>(s[i]);
+    if (s[i] == '.') {
+      if (dot_pos != std::string::npos) return false; // second dot
+      dot_pos = i;
+    } else if (!std::isdigit(c)) {
+      return false;
+    }
+  }
+
+  // If there is a dot, require 1–2 digits after it (so "5." is rejected; "5.5"/"5.50" ok).
+  if (dot_pos != std::string::npos) {
+    size_t decimals = s.size() - dot_pos - 1;
+    if (decimals == 0 || decimals > 2) return false;
+  }
+
+  // Parse to double now that format is clean.
+  errno = 0;
+  char* end = nullptr;
+  double v = std::strtod(s.c_str(), &end);
+  if (errno != 0 || end == s.c_str() || *end != '\0') return false;
+
+  if (v < 0.0 || v > 100.0) return false; // clamp range
+
+  out = v;
+  return true;
+}
+
 bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
 #define PARAMETER_AMOUNT 2
   std::string response_json;
@@ -3800,6 +3834,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       return v;
     };
 
+    double fee = 0.0;
     auto validate_pair = [&](const std::string &key, const std::string &val) -> bool {
       if (!kAllowedFields.count(key)) {
         fail_msg_writer() << tr("Failed to update the delegate\nInvalid item: ") << key
@@ -3832,8 +3867,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
       } else if (key == "delegate_fee") {
-        if (val.size() > 10) {
-          fail_msg_writer() << tr("Invalid 'delegate_fee'. Max length 10");
+        if (!parse_delegate_fee_0_100_2dp(val, fee)) {
+          fail_msg_writer() << tr("Invalid 'delegate_fee'. Must be 0-100 with up to 2 decimals (e.g., 5, 5.5, 5.50)");
           return false;
         }
       } else if (key == "server_specs") {
@@ -3922,10 +3957,16 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       }
 
       val = trim_quotes(std::move(val));
-
       if (!validate_pair(key, val)) return true;
+
+      // Special-case: delegate_fee → integer basis points (×100), no decimals
+      if (key == "delegate_fee") {
+          const uint32_t fee_bp = static_cast<uint32_t>(std::llround(fee * 100.0));
+          val = std::to_string(fee_bp);  // e.g., "5.50" -> "550"
+      }
+
       updates.emplace_back(std::move(key), std::move(val));
-    }
+}
 
     if (m_wallet->key_on_device()) {
       fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
@@ -4009,12 +4050,22 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       << "  \"public_address\": \"" << public_address << "\",\r\n"
       << "  \"registration_timestamp\": " << registration_time << ",\r\n"
       << "  \"updates\": {\r\n";
-
     for (size_t i = 0; i < updates.size(); ++i) {
-      o << "    \"" << updates[i].first << "\": \"" << json_escape(updates[i].second) << "\"";
+      const auto &k = updates[i].first;
+      const auto &v = updates[i].second;
+
+      o << "    \"" << k << "\": ";
+      if (k == "delegate_fee") {
+        // Write as a JSON number (already scaled to integer, contains only digits)
+        o << v;
+      } else {
+        o << "\"" << json_escape(v) << "\"";
+      }
+
       if (i + 1 < updates.size()) o << ",";
       o << "\r\n";
     }
+
     o << "  }\r\n"
       << "}";
 
