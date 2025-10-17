@@ -3563,6 +3563,19 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // ask for the password
     SCOPED_WALLET_UNLOCK();
 
+    uint64_t vote_amount = 0;
+
+    // Cache unlocked balance (account 0, strict)
+    const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
+
+    // Wallet-level minimum gate
+    if (unlocked0 < MIN_VOTE_ATOMIC) {
+      fail_msg_writer() << tr("You need at least ")
+                        << cryptonote::print_money(MIN_VOTE_ATOMIC)
+                        << tr(" XCA unlocked in account 0 to register as a delegate");
+      return true;
+    }
+
     // get the current block verifiers list
     response_json = get_current_block_verifiers_list();
     if (response_json == "0") {
@@ -8162,6 +8175,17 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
     }
 
     dsts.push_back(de);
+  }
+
+  // Minimal public-tx guard: exactly one recipient
+  if (tx_privacy_settings == "public" && dsts.size() != 1) {
+    fail_msg_writer() << tr("Invalid public transaction: exactly one recipient is required.");
+    return false;
+  }
+
+  if (tx_privacy_settings == "public" && dsts[0].amount == 0) {
+   fail_msg_writer() << tr("Invalid public transaction: amount must be > 0.");
+   return false;
   }
 
   if (subtract_fee_from_all)

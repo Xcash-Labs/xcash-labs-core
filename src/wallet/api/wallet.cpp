@@ -1466,9 +1466,7 @@ PendingTransaction *WalletImpl::createTransactionMultDest(const std::vector<stri
   pauseRefresh();
 
   cryptonote::address_parse_info info;
-
   uint32_t adjusted_priority = m_wallet->adjust_priority(static_cast<uint32_t>(priority));
-
   PendingTransactionImpl *transaction = new PendingTransactionImpl(*this);
 
   do {
@@ -1478,6 +1476,11 @@ PendingTransaction *WalletImpl::createTransactionMultDest(const std::vector<stri
     std::vector<uint8_t> extra;
     std::string extra_nonce;
     vector<cryptonote::tx_destination_entry> dsts;
+
+    if (tx_privacy_settings == "public" && amount && dsts.size() != 1) {
+      setStatusError(tr("Invalid public transaction: exactly one destination is required."));
+      break;
+    }
     if (!amount && dst_addr.size() > 1) {
       setStatusError(tr("Sending all requires one destination address"));
       break;

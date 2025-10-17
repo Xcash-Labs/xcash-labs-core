@@ -1033,6 +1033,13 @@ bool wallet_rpc_server::on_transfer(const wallet_rpc::COMMAND_RPC_TRANSFER::requ
       return false;
     }
 
+    // ---- Minimal public-tx guard: exactly one recipient ----
+    if (tx_privacy_settings == "public" && dsts.size() != 1) {
+      er.code = WALLET_RPC_ERROR_CODE_TX_NOT_POSSIBLE;
+      er.message = "Invalid public transaction: exactly one recipient is required.";
+      return false;
+    }
+
     uint32_t priority = m_wallet->adjust_priority(req.priority);
     std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_2(dsts, mixin, tx_privacy_settings, priority, extra, req.account_index, req.subaddr_indices, req.subtract_fee_from_outputs);
 
@@ -1093,6 +1100,13 @@ bool wallet_rpc_server::on_transfer_split(const wallet_rpc::COMMAND_RPC_TRANSFER
     if (tx_privacy_settings != "private" && tx_privacy_settings != "public") {
       er.code = WALLET_RPC_ERROR_CODE_TX_NOT_POSSIBLE;
       er.message = "Invalid tx_privacy_settings. private or public are the only valid settings";
+      return false;
+    }
+
+    // ---- Minimal public-tx guard: exactly one recipient ----
+    if (tx_privacy_settings == "public" && dsts.size() != 1) {
+      er.code = WALLET_RPC_ERROR_CODE_TX_NOT_POSSIBLE;
+      er.message = "Invalid public transaction: exactly one recipient is required.";
       return false;
     }
 
