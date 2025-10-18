@@ -543,7 +543,7 @@ if (tx_privacy_settings == "public")
 }
 
 
-  std::cout << "[TRACE] Starting new public trans" << std::endl
+  std::cout << "[TRACE] Ending new public trans" << std::endl;
 
 
 
@@ -629,7 +629,7 @@ if (tx_privacy_settings == "public")
     //check money
     if(summary_outs_money > summary_inputs_money )
     {
-        std::cout << "[TRACE] less than outputs money" << std::endl
+        std::cout << "[TRACE] less than outputs money" << std::endl;
       LOG_ERROR("Transaction inputs money ("<< summary_inputs_money << ") less than outputs money (" << summary_outs_money << ")");
       return false;
     }
@@ -693,7 +693,7 @@ if (tx_privacy_settings == "public")
         {
           if(src_entr.real_output != sources.begin()->real_output)
           {
-                    std::cout << "[TRACE] All inputs must have the same index for non-simple ringc" << std::endl
+                    std::cout << "[TRACE] All inputs must have the same index for non-simple ringc" << std::endl;
             LOG_ERROR("All inputs must have the same index for non-simple ringct");
             return false;
           }
@@ -702,7 +702,7 @@ if (tx_privacy_settings == "public")
         // enforce same mixin for all outputs
         for (size_t i = 1; i < sources.size(); ++i) {
           if (n_total_outs != sources[i].outputs.size()) {
-                    std::cout << "[TRACE] Non-simple ringct transaction has varying ring size" << std::endl
+                    std::cout << "[TRACE] Non-simple ringct transaction has varying ring size" << std::endl;
             LOG_ERROR("Non-simple ringct transaction has varying ring size");
             return false;
           }
@@ -763,7 +763,7 @@ if (tx_privacy_settings == "public")
           }
         }
       }
-
+        std::cout << "[TRACE] Before fee" << std::endl;
       // fee
       if (!use_simple_rct && amount_in > amount_out)
         outamounts.push_back(amount_in - amount_out);
