@@ -3051,26 +3051,6 @@ bool simple_wallet::set_enable_multisig(const std::vector<std::string> &args/* =
   return true;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// jed
-
-
-
-
-
 static inline void rstrip_chars(std::string &s, const char *chars = " \r\n|") {
   while (!s.empty() && std::strchr(chars, s.back())) s.pop_back();
 }

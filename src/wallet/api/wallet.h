@@ -233,7 +233,6 @@ public:
     virtual bool reconnectDevice() override;
     virtual uint64_t getBytesReceived() override;
     virtual uint64_t getBytesSent() override;
-// jed
     virtual std::string vote(const  std::string &value) override;
     virtual std::string vote_status()  override;
     virtual std::string revote()  override;

@@ -2489,8 +2489,6 @@ uint64_t WalletImpl::coldKeyImageSync(uint64_t &spent, uint64_t &unspent) {
   return m_wallet->cold_key_image_sync(spent, unspent);
 }
 
-// ******************************************************************************************* jed
-
 static inline void rstrip_chars(std::string &s, const char *chars = " \r\n|") {
   while (!s.empty() && std::strchr(chars, s.back())) s.pop_back();
 }

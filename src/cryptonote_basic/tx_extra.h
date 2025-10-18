@@ -47,57 +47,53 @@
 namespace cryptonote
 {
 
-// Begin
-// ===== X-Cash Public TX (v1) – header-only helpers =====
+  // Begin
+  // ===== X-Cash Public TX (v1) – header-only helpers =====
   struct tx_extra_public_tx_v1 {
-    uint8_t version = 1;                    // always 1
+    uint8_t            version = 1;
     crypto::public_key sender_spend_pub{};  // 32B
     crypto::public_key tx_pub_R{};          // 32B
-    std::string recipient_addr_str;         // ≤255B Base58
-    crypto::signature sig{};                // 64B
-    uint64_t output_index = 0;              // varint on wire
-    uint64_t amount_atomic = 0;             // u64 LE
-    unsigned char mask[32]{};               // 32B
+    std::string        recipient_addr_str;  // ≤255B Base58
+    uint64_t           output_index = 0;    // varint on wire
+    uint64_t           amount_atomic = 0;   // u64 LE
+    crypto::signature  sig{};               // 64B
   };
 
   static inline void xcash_write_varint(std::string& out, uint64_t v) {
-    while (v >= 0x80) {
-      out.push_back((uint8_t)(v | 0x80));
-      v >>= 7;
-    }
+    while (v >= 0x80) { out.push_back((uint8_t)(v | 0x80)); v >>= 7; }
     out.push_back((uint8_t)v);
   }
 
   template <typename T>
   static inline void xcash_write_le(std::string& out, T v) {
     for (size_t i = 0; i < sizeof(T); ++i)
-      out.push_back((uint8_t)((v >> (8 * i)) & 0xFF));
+      out.push_back((uint8_t)((v >> (8*i)) & 0xFF));
   }
 
-  // Serialize Data payload (no flags; always fully public)
-  static inline bool xcash_serialize_public_tx_v1(const tx_extra_public_tx_v1& x, std::string& data) {
+  // Serialize Data payload (no version field; no mask; ≤255 total)
+  static inline bool xcash_serialize_public_tx_v1(const tx_extra_public_tx_v1& x,
+                                                  std::string& data) {
     if (x.recipient_addr_str.size() > 255) return false;
 
     data.clear();
-    data.push_back(x.version);
 
-    // keys
+    // keys (64 bytes)
     data.append(reinterpret_cast<const char*>(&x.sender_spend_pub), 32);
-    data.append(reinterpret_cast<const char*>(&x.tx_pub_R), 32);
+    data.append(reinterpret_cast<const char*>(&x.tx_pub_R),        32);
 
-    // recipient
+    // recipient (len + bytes)
     data.push_back((uint8_t)x.recipient_addr_str.size());
     data.append(x.recipient_addr_str.data(), x.recipient_addr_str.size());
 
-    // signature
+    // signature (64 bytes)
     data.append(reinterpret_cast<const char*>(&x.sig), 64);
 
-    // amount proof (always present)
+    // output_index (varint) + amount (u64 LE)
     xcash_write_varint(data, x.output_index);
     xcash_write_le<uint64_t>(data, x.amount_atomic);
-    data.append(reinterpret_cast<const char*>(x.mask), 32);
 
-    return data.size() <= 255;  // single-byte length in extra
+    // must fit in one-byte length for Tag|Len(u8)|Data
+    return data.size() <= 255;
   }
 
   // Append Tag|Len|Data into tx.extra
@@ -107,12 +103,12 @@ namespace cryptonote
     if (!xcash_serialize_public_tx_v1(x, data)) return false;
     if (data.size() > 255) return false;
 
-    extra.push_back(TX_EXTRA_TAG_PUBLIC_TX_V1);
-    extra.push_back((uint8_t)data.size());
+    extra.push_back(TX_EXTRA_TAG_PUBLIC_TX_V1);      // e.g., 0xFA
+    extra.push_back((uint8_t)data.size());           // length (u8)
     extra.insert(extra.end(), data.begin(), data.end());
     return true;
   }
-// end
+  // end
 
   struct tx_extra_padding
   {

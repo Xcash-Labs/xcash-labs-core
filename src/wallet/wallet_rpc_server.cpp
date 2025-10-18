@@ -4095,7 +4095,7 @@ bool wallet_rpc_server::on_get_version(const wallet_rpc::COMMAND_RPC_GET_VERSION
 }
 //------------------------------------------------------------------------------------------------------------------------------
 
-//  jed
+// Helpers
 static inline void rstrip_chars(std::string& s, const char* chars = " \r\n|") {
   while (!s.empty() && std::strchr(chars, s.back())) s.pop_back();
 }
