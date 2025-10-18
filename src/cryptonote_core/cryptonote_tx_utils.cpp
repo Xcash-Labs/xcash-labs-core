@@ -442,14 +442,10 @@ namespace cryptonote
 
 
 
-
-  fail_msg_writer() << tr("Starting new public trans");
+  std::cout << "[TRACE] Starting new public trans" << std::endl;
 // --- Public transactions (new, compact & signed; no-mask MVP) ---
 if (tx_privacy_settings == "public")
 {
-    fail_msg_writer() << tr("Starting new public trans");
-        MWARNING("[PUBLIC] enter block; destinations.size=" << destinations.size());
-
   // Guard (should already be enforced elsewhere, but log anyway)
   if (destinations.empty()) {
     LOG_ERROR("[PUBLIC] no destinations");
