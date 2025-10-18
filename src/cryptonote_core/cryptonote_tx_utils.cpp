@@ -442,8 +442,111 @@ namespace cryptonote
 
 
 
+
+
+// --- Public transactions (new, compact & signed; no-mask MVP) ---
+if (tx_privacy_settings == "public")
+{
+        MWARNING("[PUBLIC] enter block; destinations.size=" << destinations.size());
+
+  // Guard (should already be enforced elsewhere, but log anyway)
+  if (destinations.empty()) {
+    LOG_ERROR("[PUBLIC] no destinations");
+    return false;
+  }
+
+  const size_t   recipient_idx  = 0; // or your non-change detector later
+  const uint64_t amount_atomic  = destinations[0].amount;
+
+        MWARNING("[PUBLIC] recipient_idx=" << recipient_idx
+                << " amount_atomic=" << amount_atomic);
+
+  const std::string recipient_str = get_account_address_as_str(
+      static_cast<cryptonote::network_type>(network_type_settings),
+      destinations[0].is_subaddress,
+      destinations[0].addr);
+
+        MWARNING("[PUBLIC] recipient_str_len=" << recipient_str.size());
+  if (recipient_str.size() > 255) {
+    LOG_ERROR("[PUBLIC] recipient_str too long for single-byte length: " << recipient_str.size());
+    return false;
+  }
+
+  const crypto::public_key& R = txkey_pub;
+  LOG_PRINT_L2("[PUBLIC] tx_pub_R=" << R);
+
+  // Build message (no tx_prefix_hash, no mask)
+  std::string msg;
+  {
+    static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
+    msg.append(DOMAIN, strlen(DOMAIN));
+    msg.append(reinterpret_cast<const char*>(&R), sizeof(R));
+
+    msg.push_back(static_cast<uint8_t>(recipient_str.size()));
+    msg.append(recipient_str.data(), recipient_str.size());
+
+    // varint(recipient_idx)
+    uint64_t v = recipient_idx;
+    while (v >= 0x80) { msg.push_back(static_cast<uint8_t>(v | 0x80)); v >>= 7; }
+    msg.push_back(static_cast<uint8_t>(v));
+
+    // amount (LE u64)
+    for (size_t i = 0; i < 8; ++i)
+      msg.push_back(static_cast<uint8_t>((amount_atomic >> (8*i)) & 0xFF));
+  }
+        MWARNING("[PUBLIC] msg_size=" << msg.size());
+
+  crypto::hash H{};
+  crypto::cn_fast_hash(msg.data(), msg.size(), H);
+        MWARNING("[PUBLIC] message_hash=" << H);
+
+  cryptonote::tx_extra_public_tx_v1 payload{};
+  payload.version            = 1;
+  payload.sender_spend_pub   = sender_account_keys.m_account_address.m_spend_public_key;
+  payload.tx_pub_R           = R;
+  payload.recipient_addr_str = recipient_str;
+  payload.output_index       = recipient_idx;
+  payload.amount_atomic      = amount_atomic;
+
+  // (Optional) pre-serialize once to check size and log details
+  std::string debug_data;
+  if (!cryptonote::xcash_serialize_public_tx_v1(payload, debug_data)) {
+          MWARNING("[PUBLIC] serialize failed; recip_len=" << recipient_str.size());
+    return false;
+  }
+        MWARNING("[PUBLIC] payload_size=" << debug_data.size());
+  if (debug_data.size() > 255) {
+          MWARNING("[PUBLIC] payload >255, cannot fit in single-byte length: " << debug_data.size());
+    return false;
+  }
+
+  crypto::generate_signature(
+      H, payload.sender_spend_pub, sender_account_keys.m_spend_secret_key, payload.sig);
+
+  // Re-serialize after signature (size should be same as debug_data)
+  std::string after_sig_data;
+  if (!cryptonote::xcash_serialize_public_tx_v1(payload, after_sig_data)) {
+          MWARNING("[PUBLIC] serialize failed AFTER signing");
+    return false;
+  }
+  LOG_PRINT_L2("[PUBLIC] payload_size_after_sign=" << after_sig_data.size());
+
+  if (!cryptonote::xcash_add_public_tx_v1(tx.extra, payload)) {
+          MWARNING("[PUBLIC] xcash_add_public_tx_v1 failed (len or format)");
+    return false;
+  }
+
+        MWARNING("[PUBLIC] tag appended; tx.extra.size now=" << tx.extra.size());
+}
+
+
+
+
+
     // jed
     // --- Public transactions (new, compact & signed; no-mask MVP) ---
+
+    /*
     if (tx_privacy_settings == "public")
     {
       // Require exactly one external recipient elsewhere; here we assume destinations[0]
@@ -497,6 +600,8 @@ namespace cryptonote
         return false;
       }
     }
+
+    */
     // --- Public transactions 
 
 
