@@ -682,7 +682,6 @@ bool parse_tx_extra__DEBUG__(const std::vector<uint8_t>& tx_extra, std::vector<t
     if (!pick<tx_extra_merge_mining_tag>(nar, tx_extra_fields, TX_EXTRA_MERGE_MINING_TAG)) return false;
     if (!pick<tx_extra_vrf_signature>(nar, tx_extra_fields, TX_EXTRA_VRF_SIGNATURE_TAG)) return false;
     if (!pick<tx_extra_vrf_signature>(nar, tx_extra_fields, TX_EXTRA_TAG_PUBLIC_TX_V1)) return false;
-    if (!pick<tx_extra_padding>(nar, tx_extra_fields, TX_EXTRA_TAG_PADDING)) return false;
 
     // if not empty, someone added a new type and did not add a case above
     if (!tx_extra_fields.empty())
