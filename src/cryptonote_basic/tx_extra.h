@@ -76,6 +76,7 @@ namespace cryptonote
     if (x.recipient_addr_str.size() > 255) return false;
 
     data.clear();
+    data.push_back(x.version);
 
     // keys (64 bytes)
     data.append(reinterpret_cast<const char*>(&x.sender_spend_pub), 32);
