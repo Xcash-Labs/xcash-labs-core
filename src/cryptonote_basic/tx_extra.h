@@ -246,3 +246,4 @@ VARIANT_TAG(binary_archive, cryptonote::tx_extra_nonce, TX_EXTRA_NONCE);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_merge_mining_tag, TX_EXTRA_MERGE_MINING_TAG);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_additional_pub_keys, TX_EXTRA_TAG_ADDITIONAL_PUBKEYS);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_vrf_signature, TX_EXTRA_VRF_SIGNATURE_TAG);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_public_tx_v1, TX_EXTRA_TAG_PUBLIC_TX_V1);
