@@ -489,26 +489,6 @@ namespace cryptonote
           sender_account_keys.m_spend_secret_key,
           payload.sig);
 
-
-
-
-
-std::string after_sig_data;
-xcash_serialize_public_tx_v1(payload, after_sig_data);
-std::cout << "[PUBLIC] first_byte=" << (int)(uint8_t)after_sig_data[0] << std::endl; // expect 1
-
-// dump last 9 bytes: index (varint) + amount (u64 LE)
-auto tail = after_sig_data.substr(after_sig_data.size() - 9);
-std::cout << "[PUBLIC] tail_hex="
-          << epee::string_tools::buff_to_hex_nodelimer(epee::span<const uint8_t>(
-                 (const uint8_t*)tail.data(), tail.size()))
-          << std::endl;
-
-
-
-
-
-
       if (!cryptonote::xcash_add_public_tx_v1(tx.extra, payload)) {
         LOG_ERROR("Public TX: failed to encode tx_extra (size/format)");
         return false;
