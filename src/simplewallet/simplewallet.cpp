@@ -7958,6 +7958,7 @@ void simple_wallet::check_for_inactivity_lock(bool user)
     m_locked = false;
   }
 }
+
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::on_command(bool (simple_wallet::*cmd)(const std::vector<std::string>&), const std::vector<std::string> &args)
 {
@@ -7972,6 +7973,7 @@ bool simple_wallet::on_command(bool (simple_wallet::*cmd)(const std::vector<std:
   check_for_inactivity_lock(false);
   return (this->*cmd)(args);
 }
+
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool called_by_mms)
 {

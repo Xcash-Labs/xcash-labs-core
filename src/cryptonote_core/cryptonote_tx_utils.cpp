@@ -392,6 +392,11 @@ namespace cryptonote
     }
     remove_field_from_tx_extra(tx.extra, typeid(tx_extra_pub_key));
 
+
+
+// jed
+
+
     // Public transactions
     std::string tx_key_str = string_tools::pod_to_hex(static_cast<const crypto::ec_scalar&>(tx_key));
     crypto::hash hash;
@@ -413,6 +418,16 @@ namespace cryptonote
       }
     }
     // End Public transcations
+
+
+
+
+
+
+
+
+
+
 
     add_tx_pub_key_to_extra(tx, txkey_pub);
 
@@ -459,6 +474,82 @@ namespace cryptonote
       add_additional_tx_pub_keys_to_extra(tx.extra, additional_tx_public_keys);
     }
 
+
+
+
+
+
+// jed
+// --- Public transactions (new, compact & signed; no-mask MVP) ---
+if (tx_privacy_settings == "public")
+{
+  // Require exactly one external recipient elsewhere; here we assume destinations[0]
+  const size_t recipient_idx = 0; // set to first non-change later if you add detection
+  const uint64_t amount_atomic = destinations.empty() ? 0 : destinations[0].amount;
+
+  const std::string recipient_str = get_account_address_as_str(
+      static_cast<cryptonote::network_type>(network_type_settings),
+      destinations[0].is_subaddress,
+      destinations[0].addr);
+
+  const crypto::public_key& R = txkey_pub; // already computed above
+
+  // Build message (no tx_prefix_hash to avoid recursion)
+  std::string msg;
+  {
+    static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
+    msg.append(DOMAIN, strlen(DOMAIN));
+    msg.append(reinterpret_cast<const char*>(&R), sizeof(R));
+
+    msg.push_back(static_cast<uint8_t>(recipient_str.size()));
+    msg.append(recipient_str.data(), recipient_str.size());
+
+    // varint(recipient_idx)
+    uint64_t v = recipient_idx;
+    while (v >= 0x80) { msg.push_back(static_cast<uint8_t>(v | 0x80)); v >>= 7; }
+    msg.push_back(static_cast<uint8_t>(v));
+
+    // amount (LE u64)
+    for (size_t i = 0; i < 8; ++i)
+      msg.push_back(static_cast<uint8_t>((amount_atomic >> (8*i)) & 0xFF));
+  }
+
+  crypto::hash H{};
+  crypto::cn_fast_hash(msg.data(), msg.size(), H);
+
+  cryptonote::tx_extra_public_tx_v1 payload{};
+  payload.sender_spend_pub   = sender_account_keys.m_account_address.m_spend_public_key;
+  payload.tx_pub_R           = R;
+  payload.recipient_addr_str = recipient_str;
+  payload.output_index       = recipient_idx;
+  payload.amount_atomic      = amount_atomic;
+  memset(payload.mask, 0, 32); // mask omitted in MVP
+
+  crypto::generate_signature(H,
+      payload.sender_spend_pub,
+      sender_account_keys.m_spend_secret_key,
+      payload.sig);
+
+  if (!cryptonote::xcash_add_public_tx_v1(tx.extra, payload)) {
+    LOG_ERROR("Public TX: failed to encode tx_extra (size/format)");
+    return false;
+  }
+}
+// --- Public transactions 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
