@@ -443,7 +443,7 @@ namespace cryptonote
 
 
 
-
+  fail_msg_writer() << tr("Starting new public trans");
 // --- Public transactions (new, compact & signed; no-mask MVP) ---
 if (tx_privacy_settings == "public")
 {
