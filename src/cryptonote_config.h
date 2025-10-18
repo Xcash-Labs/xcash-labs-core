@@ -78,6 +78,7 @@
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
 #define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)2000)       // used for the floor
 #define MIN_VOTE_XCA 4000000ULL                            // minimum amout needed to vote
+#define MIN_PREFUND_XCA 2000000ULL                         // minimum amout needed to register
 
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 

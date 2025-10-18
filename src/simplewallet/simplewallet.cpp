@@ -3568,9 +3568,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
 
+    // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XCA * COIN;  // COIN = atomic units per XCA
+
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      fail_msg_writer() << tr("You need at least ")
+      fail_msg_writer() << tr("You need to prefund at least ")
                         << cryptonote::print_money(MIN_VOTE_ATOMIC)
                         << tr(" XCA unlocked in account 0 to register as a delegate");
       return true;
