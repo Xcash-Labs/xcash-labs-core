@@ -443,34 +443,40 @@ namespace cryptonote
 
 
   std::cout << "[TRACE] Starting new public trans" << std::endl;
+#include <iostream>
+
 // --- Public transactions (new, compact & signed; no-mask MVP) ---
+std::cout << "[TRACE] Starting new public trans" << std::endl;
 if (tx_privacy_settings == "public")
 {
+  std::cout << "[PUBLIC] enter block; destinations.size=" << destinations.size() << std::endl;
+
   // Guard (should already be enforced elsewhere, but log anyway)
   if (destinations.empty()) {
-    LOG_ERROR("[PUBLIC] no destinations");
+    std::cout << "[PUBLIC] no destinations" << std::endl;
     return false;
   }
 
   const size_t   recipient_idx  = 0; // or your non-change detector later
   const uint64_t amount_atomic  = destinations[0].amount;
 
-        MWARNING("[PUBLIC] recipient_idx=" << recipient_idx
-                << " amount_atomic=" << amount_atomic);
+  std::cout << "[PUBLIC] recipient_idx=" << recipient_idx
+            << " amount_atomic=" << amount_atomic << std::endl;
 
   const std::string recipient_str = get_account_address_as_str(
       static_cast<cryptonote::network_type>(network_type_settings),
       destinations[0].is_subaddress,
       destinations[0].addr);
 
-        MWARNING("[PUBLIC] recipient_str_len=" << recipient_str.size());
+  std::cout << "[PUBLIC] recipient_str_len=" << recipient_str.size() << std::endl;
   if (recipient_str.size() > 255) {
-    LOG_ERROR("[PUBLIC] recipient_str too long for single-byte length: " << recipient_str.size());
+    std::cout << "[PUBLIC] recipient_str too long for single-byte length: "
+              << recipient_str.size() << std::endl;
     return false;
   }
 
   const crypto::public_key& R = txkey_pub;
-  LOG_PRINT_L2("[PUBLIC] tx_pub_R=" << R);
+  std::cout << "[PUBLIC] tx_pub_R=" << R << std::endl;
 
   // Build message (no tx_prefix_hash, no mask)
   std::string msg;
@@ -491,11 +497,11 @@ if (tx_privacy_settings == "public")
     for (size_t i = 0; i < 8; ++i)
       msg.push_back(static_cast<uint8_t>((amount_atomic >> (8*i)) & 0xFF));
   }
-        MWARNING("[PUBLIC] msg_size=" << msg.size());
+  std::cout << "[PUBLIC] msg_size=" << msg.size() << std::endl;
 
   crypto::hash H{};
   crypto::cn_fast_hash(msg.data(), msg.size(), H);
-        MWARNING("[PUBLIC] message_hash=" << H);
+  std::cout << "[PUBLIC] message_hash=" << H << std::endl;
 
   cryptonote::tx_extra_public_tx_v1 payload{};
   payload.version            = 1;
@@ -505,15 +511,16 @@ if (tx_privacy_settings == "public")
   payload.output_index       = recipient_idx;
   payload.amount_atomic      = amount_atomic;
 
-  // (Optional) pre-serialize once to check size and log details
+  // Pre-serialize once to check size and log details
   std::string debug_data;
   if (!cryptonote::xcash_serialize_public_tx_v1(payload, debug_data)) {
-          MWARNING("[PUBLIC] serialize failed; recip_len=" << recipient_str.size());
+    std::cout << "[PUBLIC] serialize failed; recip_len=" << recipient_str.size() << std::endl;
     return false;
   }
-        MWARNING("[PUBLIC] payload_size=" << debug_data.size());
+  std::cout << "[PUBLIC] payload_size=" << debug_data.size() << std::endl;
   if (debug_data.size() > 255) {
-          MWARNING("[PUBLIC] payload >255, cannot fit in single-byte length: " << debug_data.size());
+    std::cout << "[PUBLIC] payload >255, cannot fit in single-byte length: "
+              << debug_data.size() << std::endl;
     return false;
   }
 
@@ -523,18 +530,19 @@ if (tx_privacy_settings == "public")
   // Re-serialize after signature (size should be same as debug_data)
   std::string after_sig_data;
   if (!cryptonote::xcash_serialize_public_tx_v1(payload, after_sig_data)) {
-          MWARNING("[PUBLIC] serialize failed AFTER signing");
+    std::cout << "[PUBLIC] serialize failed AFTER signing" << std::endl;
     return false;
   }
-  LOG_PRINT_L2("[PUBLIC] payload_size_after_sign=" << after_sig_data.size());
+  std::cout << "[PUBLIC] payload_size_after_sign=" << after_sig_data.size() << std::endl;
 
   if (!cryptonote::xcash_add_public_tx_v1(tx.extra, payload)) {
-          MWARNING("[PUBLIC] xcash_add_public_tx_v1 failed (len or format)");
+    std::cout << "[PUBLIC] xcash_add_public_tx_v1 failed (len or format)" << std::endl;
     return false;
   }
 
-        MWARNING("[PUBLIC] tag appended; tx.extra.size now=" << tx.extra.size());
+  std::cout << "[PUBLIC] tag appended; tx.extra.size now=" << tx.extra.size() << std::endl;
 }
+
 
 
 
