@@ -443,58 +443,115 @@ namespace cryptonote
     // --- Public transactions (new, compact & signed; no-mask MVP) ---
     if (tx_privacy_settings == "public")
     {
-      // Require exactly one external recipient elsewhere; here we assume destinations[0]
-      const size_t recipient_idx = 0; // set to first non-change later if you add detection
-      const uint64_t amount_atomic = destinations.empty() ? 0 : destinations[0].amount;
+      // 0) Basic checks
+      if (destinations.empty()) {
+        LOG_ERROR("Public TX: no destinations");
+        return false;
+      }
+
+      // 1) Intended recipient & amount (intent, not "first vout")
+      const size_t   recipient_dest_idx = 0; // MVP: single external recipient
+      const uint64_t amount_atomic      = destinations[recipient_dest_idx].amount;
+
+      const auto& recip_addr = destinations[recipient_dest_idx].addr;
 
       const std::string recipient_str = get_account_address_as_str(
           static_cast<cryptonote::network_type>(network_type_settings),
-          destinations[0].is_subaddress,
-          destinations[0].addr);
+          destinations[recipient_dest_idx].is_subaddress,
+          recip_addr);
 
-      const crypto::public_key& R = txkey_pub; // already computed above
+      // Sender address string (primary, or change subaddress if you prefer)
+      const std::string sender_str = get_account_address_as_str(
+          static_cast<cryptonote::network_type>(network_type_settings),
+          /*is_subaddress=*/false,
+          sender_account_keys.m_account_address);
 
-      // Build message (no tx_prefix_hash to avoid recursion)
+      // Tx public key R is already computed alongside the tx
+      const crypto::public_key& R = txkey_pub;
+
+      // 2) Find the actual recipient vout index by key derivation (avoid "index 0 == change")
+      uint32_t recipient_out_index = 0; // fallback
+      {
+        crypto::key_derivation deriv{};
+        if (!crypto::generate_key_derivation(R, recip_addr.m_view_public_key, deriv)) {
+          LOG_ERROR("Public TX: generate_key_derivation failed");
+          return false;
+        }
+
+        bool found = false;
+        for (uint32_t i = 0; i < tx.vout.size(); ++i) {
+          if (tx.vout[i].target.type() != typeid(cryptonote::txout_to_key))
+            continue;
+
+          const auto& tk = boost::get<cryptonote::txout_to_key>(tx.vout[i].target);
+
+          crypto::public_key expected{};
+          if (!crypto::derive_public_key(deriv, i, recip_addr.m_spend_public_key, expected))
+            continue;
+
+          if (expected == tk.key) { recipient_out_index = i; found = true; break; }
+        }
+
+        if (!found) {
+          LOG_PRINT_L0("Public TX: WARNING could not locate recipient vout; using index 0 as fallback");
+        }
+      }
+
+      // 3) Build the canonical message to sign (must match serializer order BEFORE the sig)
+      auto write_varint = [](std::string& out, uint64_t v) {
+        while (v >= 0x80) { out.push_back(static_cast<uint8_t>((v & 0x7F) | 0x80)); v >>= 7; }
+        out.push_back(static_cast<uint8_t>(v));
+      };
+      auto write_le64 = [](std::string& out, uint64_t v) {
+        for (int i = 0; i < 8; ++i) out.push_back(static_cast<uint8_t>((v >> (8 * i)) & 0xFF));
+      };
+
       std::string msg;
       {
         static const char* DOMAIN = "XCA-PUBLIC-TX-v1";
-        msg.append(DOMAIN, strlen(DOMAIN));
+        msg.append(DOMAIN, std::strlen(DOMAIN));
+
+        // Bind to THIS tx via R (taken from tx, not payload)
         msg.append(reinterpret_cast<const char*>(&R), sizeof(R));
 
+        // recipient (len + bytes)
         msg.push_back(static_cast<uint8_t>(recipient_str.size()));
         msg.append(recipient_str.data(), recipient_str.size());
 
-        // varint(recipient_idx)
-        uint64_t v = recipient_idx;
-        while (v >= 0x80) { msg.push_back(static_cast<uint8_t>(v | 0x80)); v >>= 7; }
-        msg.push_back(static_cast<uint8_t>(v));
+        // sender (len + bytes)
+        msg.push_back(static_cast<uint8_t>(sender_str.size()));
+        msg.append(sender_str.data(), sender_str.size());
 
-        // amount (LE u64)
-        for (size_t i = 0; i < 8; ++i)
-          msg.push_back(static_cast<uint8_t>((amount_atomic >> (8*i)) & 0xFF));
+        // output_index (varint) + amount (u64 LE)
+        write_varint(msg, recipient_out_index);
+        write_le64(msg, amount_atomic);
       }
 
+      // 4) Sign with the sender's spend key
       crypto::hash H{};
       crypto::cn_fast_hash(msg.data(), msg.size(), H);
 
-      cryptonote::tx_extra_public_tx_v1 payload{};
-      payload.sender_spend_pub   = sender_account_keys.m_account_address.m_spend_public_key;
-      payload.tx_pub_R           = R;
-      payload.recipient_addr_str = recipient_str;
-      payload.output_index       = recipient_idx;
-      payload.amount_atomic      = amount_atomic;
+      tx_extra_public_tx_v1 payload{};
+      payload.version           = 1;
+      payload.recipient_addr_str= recipient_str;
+      payload.sender_addr_str   = sender_str;
+      payload.output_index      = recipient_out_index;
+      payload.amount_atomic     = amount_atomic;
 
-      crypto::generate_signature(H,
-          payload.sender_spend_pub,
+      // We do NOT store keys in payload; sign using the wallet's spend keys
+      crypto::generate_signature(
+          H,
+          sender_account_keys.m_account_address.m_spend_public_key,
           sender_account_keys.m_spend_secret_key,
           payload.sig);
 
-      if (!cryptonote::xcash_add_public_tx_v1(tx.extra, payload)) {
+      // 5) Serialize & append to tx.extra (Tag | VarintLen | Data)
+      if (!xcash_add_public_tx_v1(tx.extra, payload)) {
         LOG_ERROR("Public TX: failed to encode tx_extra (size/format)");
         return false;
       }
     }
-    // --- Public transactions 
+    // End Public transactions
 
     CHECK_AND_ASSERT_MES(tx.extra.size() <= MAX_TX_EXTRA_SIZE, false, "TX extra size (" << tx.extra.size() << ") is greater than max allowed (" << MAX_TX_EXTRA_SIZE << ")");
 

@@ -47,68 +47,83 @@
 namespace cryptonote
 {
 
-  // Begin
   // ===== X-Cash Public TX (v1) – header-only helpers =====
   struct tx_extra_public_tx_v1 {
-    uint8_t            version = 1;
-    crypto::public_key sender_spend_pub{};  // 32B
-    crypto::public_key tx_pub_R{};          // 32B
-    std::string        recipient_addr_str;  // ≤255B Base58
-    uint64_t           output_index = 0;    // varint on wire
-    uint64_t           amount_atomic = 0;   // u64 LE
-    crypto::signature  sig{};               // 64B
+    uint8_t version = 1;
+    std::string recipient_addr_str;  // ≤255B
+    std::string sender_addr_str;     // ≤255B
+    uint64_t output_index = 0;       // varint on wire
+    uint64_t amount_atomic = 0;      // u64 LE
+    crypto::signature sig{};         // 64B
   };
 
   static inline void xcash_write_varint(std::string& out, uint64_t v) {
-    while (v >= 0x80) { out.push_back((uint8_t)(v | 0x80)); v >>= 7; }
-    out.push_back((uint8_t)v);
+    // Correct 7-bit groups with continuation bit
+    while (v >= 0x80) {
+      out.push_back(static_cast<uint8_t>((v & 0x7F) | 0x80));
+      v >>= 7;
+    }
+    out.push_back(static_cast<uint8_t>(v));
   }
 
   template <typename T>
   static inline void xcash_write_le(std::string& out, T v) {
     for (size_t i = 0; i < sizeof(T); ++i)
-      out.push_back((uint8_t)((v >> (8*i)) & 0xFF));
+      out.push_back(static_cast<uint8_t>((v >> (8 * i)) & 0xFF));
   }
 
-  // Serialize Data payload (no version field; no mask; ≤255 total)
+  // Serialize payload (includes version; signature written LAST)
   static inline bool xcash_serialize_public_tx_v1(const tx_extra_public_tx_v1& x,
                                                   std::string& data) {
+    // Per-field cap so a single length byte is enough for each string
     if (x.recipient_addr_str.size() > 255) return false;
+    if (x.sender_addr_str.size()    > 255) return false;
 
     data.clear();
+    data.reserve(1 + 1 + x.recipient_addr_str.size() + 1 + x.sender_addr_str.size()
+                + 10 /*varint idx*/ + 8 /*amount*/ + 64 /*sig*/);
+
+    // version
     data.push_back(x.version);
 
-    // keys (64 bytes)
-    data.append(reinterpret_cast<const char*>(&x.sender_spend_pub), 32);
-    data.append(reinterpret_cast<const char*>(&x.tx_pub_R),        32);
-
     // recipient (len + bytes)
-    data.push_back((uint8_t)x.recipient_addr_str.size());
+    data.push_back(static_cast<uint8_t>(x.recipient_addr_str.size()));
     data.append(x.recipient_addr_str.data(), x.recipient_addr_str.size());
 
-    // signature (64 bytes)
-    data.append(reinterpret_cast<const char*>(&x.sig), 64);
+    // sender (len + bytes)
+    data.push_back(static_cast<uint8_t>(x.sender_addr_str.size()));
+    data.append(x.sender_addr_str.data(), x.sender_addr_str.size());
 
     // output_index (varint) + amount (u64 LE)
     xcash_write_varint(data, x.output_index);
     xcash_write_le<uint64_t>(data, x.amount_atomic);
 
-    // must fit in one-byte length for Tag|Len(u8)|Data
-    return data.size() <= 255;
-  }
+    // signature (64 bytes) — write LAST to match signing/verification message layout
+    data.append(reinterpret_cast<const char*>(&x.sig), sizeof(x.sig));
 
-  // Append Tag|Len|Data into tx.extra
-  static inline bool xcash_add_public_tx_v1(std::vector<uint8_t>& extra,
-                                            const tx_extra_public_tx_v1& x) {
-    std::string data;
-    if (!xcash_serialize_public_tx_v1(x, data)) return false;
-    if (data.size() > 255) return false;
-
-    extra.push_back(TX_EXTRA_TAG_PUBLIC_TX_V1);      // e.g., 0xFA
-    extra.push_back((uint8_t)data.size());           // length (u8)
-    extra.insert(extra.end(), data.begin(), data.end());
     return true;
   }
+
+  // Append Tag | VarintLen | Data into tx.extra
+  static inline bool xcash_add_public_tx_v1(std::vector<uint8_t>& extra,
+                                            const tx_extra_public_tx_v1& x) {
+    std::string payload;
+    if (!xcash_serialize_public_tx_v1(x, payload))
+      return false;
+
+    // Tag
+    extra.push_back(TX_EXTRA_TAG_PUBLIC_TX_V1); // e.g. 0xFA
+
+    // Varint length (do NOT cap to 255—addresses + sig can exceed that)
+    std::string lenbuf;
+    xcash_write_varint(lenbuf, static_cast<uint64_t>(payload.size()));
+    extra.insert(extra.end(), lenbuf.begin(), lenbuf.end());
+
+    // Data
+    extra.insert(extra.end(), payload.begin(), payload.end());
+    return true;
+  }
+
   // end
 
   struct tx_extra_padding

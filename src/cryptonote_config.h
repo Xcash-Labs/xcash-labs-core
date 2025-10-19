@@ -72,14 +72,15 @@
 // COIN - number of smallest units in one coin
 // #define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
 #define COIN ((uint64_t)1000000) // pow(10, 6)
-#define FEE_PER_KB   ((uint64_t)2000)                      // 0.002 XCA/kB
-#define FEE_PER_BYTE ((FEE_PER_KB + 1023) / 1024)          // -> 2 atomic/byte
-#define FEE_QUANTIZATION_MASK ((uint64_t)1000)             // round to 0.001 XCA
+// Policy floors (in atomic units, for 6 decimals)
+#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XCA/kB
+#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XCA/kB
+#define FEE_PER_BYTE ((FEE_PER_KB + 1023) / 1024)       // -> 25 atomic/byte
+// Quantization: make rounding granular enough that small txs don’t round to zero
+#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XCA
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)2000)       // used for the floor
 #define MIN_VOTE_XCA 4000000ULL                            // minimum amout needed to vote
 #define MIN_PREFUND_XCA 2000000ULL                         // minimum amout needed to register
-
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 
 //#define DIFFICULTY_TARGET_V2 120 // seconds
