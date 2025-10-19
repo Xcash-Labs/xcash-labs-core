@@ -472,15 +472,19 @@ namespace cryptonote
       // 2) Find the actual recipient vout index by key derivation (sender-side variant)
       uint32_t recipient_out_index = 0; // fallback
       {
-        // You need the tx secret key (the scalar r used to form R = r*G)
-        // This should already be in scope where you created the tx; adapt the name if needed.
-        // Common names in Monero code: tx_key, tx_key.sec, tx_secret_key, etc.
-        const crypto::secret_key& r = txkey_sec;  // <-- ensure this is your tx *secret* key
+        const bool is_subaddr = destinations[recipient_dest_idx].is_subaddress;
+
+        // For standard address: derivation point = V (view pub)
+        // For subaddress:       derivation point = D (subaddress spend pub)
+        const crypto::public_key& derivation_point =
+            is_subaddr ? recip_addr.m_spend_public_key : recip_addr.m_view_public_key;
+
+        // tx_key is the tx secret scalar r (already a parameter of this function)
+        const crypto::secret_key& r = tx_key;
 
         crypto::key_derivation deriv{};
-        // Sender-side derivation: use recipient's *public* view key and our tx *secret* key
-        if (!crypto::generate_key_derivation(recip_addr.m_view_public_key, r, deriv)) {
-          LOG_ERROR("Public TX: generate_key_derivation failed (pub=view, sec=tx)");
+        if (!crypto::generate_key_derivation(derivation_point, r, deriv)) {
+          LOG_ERROR("Public TX: generate_key_derivation failed (pub=" << (is_subaddr ? "spend" : "view") << ", sec=tx_key)");
           return false;
         }
 
@@ -492,6 +496,7 @@ namespace cryptonote
           const auto& tk = boost::get<cryptonote::txout_to_key>(tx.vout[i].target);
 
           crypto::public_key expected{};
+          // In both cases derive against recipient SPEND pub
           if (!crypto::derive_public_key(deriv, i, recip_addr.m_spend_public_key, expected))
             continue;
 
