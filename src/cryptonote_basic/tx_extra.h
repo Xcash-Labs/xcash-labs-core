@@ -123,7 +123,6 @@ namespace cryptonote
     extra.insert(extra.end(), payload.begin(), payload.end());
     return true;
   }
-
   // end
 
   struct tx_extra_padding

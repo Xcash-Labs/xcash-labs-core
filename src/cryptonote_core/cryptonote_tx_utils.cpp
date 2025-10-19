@@ -469,12 +469,18 @@ namespace cryptonote
       // Tx public key R is already computed alongside the tx
       const crypto::public_key& R = txkey_pub;
 
-      // 2) Find the actual recipient vout index by key derivation (avoid "index 0 == change")
+      // 2) Find the actual recipient vout index by key derivation (sender-side variant)
       uint32_t recipient_out_index = 0; // fallback
       {
+        // You need the tx secret key (the scalar r used to form R = r*G)
+        // This should already be in scope where you created the tx; adapt the name if needed.
+        // Common names in Monero code: tx_key, tx_key.sec, tx_secret_key, etc.
+        const crypto::secret_key& r = txkey_sec;  // <-- ensure this is your tx *secret* key
+
         crypto::key_derivation deriv{};
-        if (!crypto::generate_key_derivation(R, recip_addr.m_view_public_key, deriv)) {
-          LOG_ERROR("Public TX: generate_key_derivation failed");
+        // Sender-side derivation: use recipient's *public* view key and our tx *secret* key
+        if (!crypto::generate_key_derivation(recip_addr.m_view_public_key, r, deriv)) {
+          LOG_ERROR("Public TX: generate_key_derivation failed (pub=view, sec=tx)");
           return false;
         }
 
