@@ -501,7 +501,6 @@ namespace cryptonote
     //check money
     if(summary_outs_money > summary_inputs_money )
     {
-        std::cout << "[TRACE] less than outputs money" << std::endl;
       LOG_ERROR("Transaction inputs money ("<< summary_inputs_money << ") less than outputs money (" << summary_outs_money << ")");
       return false;
     }
@@ -565,7 +564,6 @@ namespace cryptonote
         {
           if(src_entr.real_output != sources.begin()->real_output)
           {
-                    std::cout << "[TRACE] All inputs must have the same index for non-simple ringc" << std::endl;
             LOG_ERROR("All inputs must have the same index for non-simple ringct");
             return false;
           }
@@ -574,7 +572,6 @@ namespace cryptonote
         // enforce same mixin for all outputs
         for (size_t i = 1; i < sources.size(); ++i) {
           if (n_total_outs != sources[i].outputs.size()) {
-                    std::cout << "[TRACE] Non-simple ringct transaction has varying ring size" << std::endl;
             LOG_ERROR("Non-simple ringct transaction has varying ring size");
             return false;
           }
@@ -634,8 +631,7 @@ namespace cryptonote
             mixRing[i][n] = sources[n].outputs[i].second;
           }
         }
-      }
-        std::cout << "[TRACE] Before fee" << std::endl; 
+      } 
       // fee
       if (!use_simple_rct && amount_in > amount_out)
         outamounts.push_back(amount_in - amount_out);
@@ -652,14 +648,12 @@ namespace cryptonote
       crypto::hash tx_prefix_hash;
       get_transaction_prefix_hash(tx, tx_prefix_hash, hwdev);
       rct::ctkeyV outSk;
-              std::cout << "[TRACE] rct_signatures" << std::endl;
       if (use_simple_rct)
         tx.rct_signatures = rct::genRctSimple(rct::hash2rct(tx_prefix_hash), inSk, destinations, inamounts, outamounts, amount_in - amount_out, mixRing, amount_keys, index, outSk, rct_config, hwdev);
       else
         tx.rct_signatures = rct::genRct(rct::hash2rct(tx_prefix_hash), inSk, destinations, outamounts, mixRing, amount_keys, sources[0].real_output, outSk, rct_config, hwdev); // same index assumption
-              std::cout << "[TRACE] rct_signatures exit" << std::endl;
-        memwipe(inSk.data(), inSk.size() * sizeof(rct::ctkey));
 
+      memwipe(inSk.data(), inSk.size() * sizeof(rct::ctkey));
       CHECK_AND_ASSERT_MES(tx.vout.size() == outSk.size(), false, "outSk size does not match vout");
 
       MCINFO("construct_tx", "transaction_created: " << get_transaction_hash(tx) << ENDL << obj_to_json_str(tx) << ENDL);
