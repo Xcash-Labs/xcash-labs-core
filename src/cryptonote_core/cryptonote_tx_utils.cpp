@@ -225,6 +225,22 @@ namespace cryptonote
     tx.extra = extra;
     crypto::public_key txkey_pub;
 
+    // grab fields early (declare before the if so you can use them later)
+    cryptonote::account_public_address intent_addr{};  // copy, not reference
+    uint64_t intent_amount_atomic = 0;
+    bool intent_is_sub = false;
+
+    if (tx_privacy_settings == "public") {
+      if (destinations.size() != 2) {
+        LOG_ERROR("Invalid public transaction. Public transactions can only be sent to one address.");
+        return false;
+      }
+      const size_t recipient_dest_idx = 0;
+      intent_amount_atomic = destinations[recipient_dest_idx].amount;
+      intent_addr = destinations[recipient_dest_idx].addr;
+      intent_is_sub = destinations[recipient_dest_idx].is_subaddress;
+    }
+
     // if we have a stealth payment id, find it and encrypt it with the tx key now
     std::vector<tx_extra_field> tx_extra_fields;
     if (parse_tx_extra(tx.extra, tx_extra_fields))
@@ -267,30 +283,6 @@ namespace cryptonote
           add_dummy_payment_id = false;
         }
       }
-
-
-
-
-
-// grab fields early (declare before the if so you can use them later)
-      cryptonote::account_public_address intent_addr{};  // copy, not reference
-      uint64_t intent_amount_atomic = 0;
-      bool intent_is_sub = false;
-      bool intent_has = false;
-
-      if (tx_privacy_settings == "public")
-      {
-        if (destinations.size() != 2) {
-          LOG_ERROR("Invalid public transaction. Public transactions can only be sent to one address.");
-          return false;
-        }
-        const size_t recipient_dest_idx = 0;
-        intent_amount_atomic = destinations[recipient_dest_idx].amount;
-        intent_addr          = destinations[recipient_dest_idx].addr;
-        intent_is_sub        = destinations[recipient_dest_idx].is_subaddress;
-      }
-//  end
-
       // we don't add one if we've got more than the usual 1 destination plus change
       if (destinations.size() > 2)
         add_dummy_payment_id = false;
