@@ -268,6 +268,29 @@ namespace cryptonote
         }
       }
 
+
+
+
+
+// grab fields early (declare before the if so you can use them later)
+      cryptonote::account_public_address intent_addr{};  // copy, not reference
+      uint64_t intent_amount_atomic = 0;
+      bool intent_is_sub = false;
+      bool intent_has = false;
+
+      if (tx_privacy_settings == "public")
+      {
+        if (destinations.size() != 2) {
+          LOG_ERROR("Invalid public transaction. Public transactions can only be sent to one address.");
+          return false;
+        }
+        const size_t recipient_dest_idx = 0;
+        intent_amount_atomic = destinations[recipient_dest_idx].amount;
+        intent_addr          = destinations[recipient_dest_idx].addr;
+        intent_is_sub        = destinations[recipient_dest_idx].is_subaddress;
+      }
+//  end
+
       // we don't add one if we've got more than the usual 1 destination plus change
       if (destinations.size() > 2)
         add_dummy_payment_id = false;
@@ -440,25 +463,26 @@ namespace cryptonote
     if (!sort_tx_extra(tx.extra, tx.extra))
       return false;
 
+
+
+
+
+
+
+
+
+
     // --- Public transactions (new, compact & signed; no-mask MVP) ---
     if (tx_privacy_settings == "public")
     {
-      // 0) Basic checks
-      if (destinations.empty()) {
-        LOG_ERROR("Public TX: no destinations");
-        return false;
-      }
 
-      // 1) Intended recipient & amount (intent, not "first vout")
-      const size_t   recipient_dest_idx = 0; // MVP: single external recipient
-      const uint64_t amount_atomic      = destinations[recipient_dest_idx].amount;
-
-      const auto& recip_addr = destinations[recipient_dest_idx].addr;
+      // 1) Intended recipient & amount
+      const uint64_t amount_atomic = intent_amount_atomic;
+      const auto& recip_addr = intent_addr;
 
       const std::string recipient_str = get_account_address_as_str(
           static_cast<cryptonote::network_type>(network_type_settings),
-          destinations[recipient_dest_idx].is_subaddress,
-          recip_addr);
+          intent_is_sub, recip_addr);
 
       // Sender address string (primary, or change subaddress if you prefer)
       const std::string sender_str = get_account_address_as_str(
@@ -472,7 +496,7 @@ namespace cryptonote
       // 2) Find the actual recipient vout index by key derivation (sender-side variant)
       uint32_t recipient_out_index = 0; // fallback
       {
-        const bool is_subaddr = destinations[recipient_dest_idx].is_subaddress;
+        const bool is_subaddr = intent_is_sub;
 
         // For standard address: derivation point = V (view pub)
         // For subaddress:       derivation point = D (subaddress spend pub)
