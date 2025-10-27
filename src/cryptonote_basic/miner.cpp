@@ -358,7 +358,7 @@ namespace cryptonote
   bool miner::is_mining() const
   {
     // mining disabled
-    false;
+    return false;
   }
   //-----------------------------------------------------------------------------------------------------
   const account_public_address& miner::get_mining_address() const
