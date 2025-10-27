@@ -125,6 +125,7 @@ namespace cryptonote
   void miner::send_stop_signal() { /* no-op */ }
   bool miner::on_block_chain_update() { return true; }
   bool miner::request_block_template() { return false; }
+  bool miner::on_idle() { return true; }
   void miner::do_print_hashrate(bool) { /* no-op */ }
   void miner::merge_hr() { /* no-op */ }
   void miner::update_autodetection() { /* no-op */ }
