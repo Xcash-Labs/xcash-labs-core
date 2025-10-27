@@ -55,7 +55,6 @@ namespace tools
 
     wallet_rpc_server();
     ~wallet_rpc_server();
-
     bool init(const boost::program_options::variables_map *vm);
     bool run();
     void stop();
