@@ -152,16 +152,13 @@ namespace cryptonote
     bool setup_background_sync(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_show_wallet_name_when_locked(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_inactivity_lock_timeout(const std::vector<std::string> &args = std::vector<std::string>());
-    bool set_setup_background_mining(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_device_name(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_export_format(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_load_deprecated_formats(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_enable_multisig(const std::vector<std::string> &args = std::vector<std::string>());
     bool help(const std::vector<std::string> &args = std::vector<std::string>());
     bool apropos(const std::vector<std::string> &args);
-    bool scan_tx(const std::vector<std::string> &args);
-    bool start_mining(const std::vector<std::string> &args);
-    bool stop_mining(const std::vector<std::string> &args);
+    bool scan_tx(const std::vector<std::string> &args);;
     bool set_daemon(const std::vector<std::string> &args);
     bool save_bc(const std::vector<std::string> &args);
     bool refresh(const std::vector<std::string> &args);
@@ -329,9 +326,6 @@ namespace cryptonote
     /*!
      * \brief checks whether background mining is enabled, and asks to configure it if not
      */
-    void check_background_mining(const epee::wipeable_string &password);
-    void start_background_mining();
-    void stop_background_mining();
 
     // idle thread workers
     bool check_inactivity();
@@ -340,7 +334,7 @@ namespace cryptonote
 
     void handle_transfer_exception(const std::exception_ptr &e, bool trusted_daemon);
 
-    bool check_daemon_rpc_prices(const std::string &daemon_url, uint32_t &actual_cph, uint32_t &claimed_cph);
+//    bool check_daemon_rpc_prices(const std::string &daemon_url, uint32_t &actual_cph, uint32_t &claimed_cph);
 
     //----------------- i_wallet2_callback ---------------------
     virtual void on_new_block(uint64_t height, const cryptonote::block& block);
