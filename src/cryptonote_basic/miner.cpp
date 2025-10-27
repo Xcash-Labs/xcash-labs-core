@@ -357,7 +357,8 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------------
   bool miner::is_mining() const
   {
-    return !m_stop;
+    // mining disabled
+    false;
   }
   //-----------------------------------------------------------------------------------------------------
   const account_public_address& miner::get_mining_address() const
@@ -369,6 +370,9 @@ namespace cryptonote
     return m_threads_total;
   }
   //-----------------------------------------------------------------------------------------------------
+  
+  /*
+  jed
   bool miner::start(const account_public_address& adr, size_t threads_count, bool do_background, bool ignore_battery)
   {
     m_block_reward = 0;
@@ -424,17 +428,17 @@ namespace cryptonote
 
     return true;
   }
+*/
+
   //-----------------------------------------------------------------------------------------------------
   uint64_t miner::get_speed() const
   {
-    if(is_mining()) {
-      return m_current_hash_rate;
-    }
-    else {
-      return 0;
-    }
+    // mining disabled
+    return 0;
   }
   //-----------------------------------------------------------------------------------------------------
+  /*
+  jed
   void miner::send_stop_signal()
   {
     m_stop = true;
@@ -474,6 +478,7 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
+  */
   bool miner::find_nonce_for_given_block(const get_block_hash_t &gbh, block& bl, const difficulty_type& diffic, uint64_t height, const crypto::hash *seed_hash)
   {
     for(; bl.nonce != std::numeric_limits<uint32_t>::max(); bl.nonce++)
@@ -522,6 +527,8 @@ namespace cryptonote
       MDEBUG("MINING RESUMED");
   }
   //-----------------------------------------------------------------------------------------------------
+  /*
+  jed
   bool miner::worker_thread()
   {
     const uint32_t th_local_index = m_thread_index++; // atomically increment, getting value before increment
@@ -611,10 +618,12 @@ namespace cryptonote
     --m_threads_active;
     return true;
   }
+  */
   //-----------------------------------------------------------------------------------------------------
   bool miner::get_is_background_mining_enabled() const
   {
-    return m_is_background_mining_enabled;
+    // disable mining
+    return false;
   }
   //-----------------------------------------------------------------------------------------------------
   bool miner::get_ignore_battery() const
@@ -626,6 +635,7 @@ namespace cryptonote
   * This has differing behaviour depending on if mining has been started/etc.
   * Note: add documentation
   */
+  /*
   bool miner::set_is_background_mining_enabled(bool is_background_mining_enabled)
   {
     m_is_background_mining_enabled = is_background_mining_enabled;
@@ -678,7 +688,9 @@ namespace cryptonote
     m_mining_target = mining_target;
     return true;
   }
+  */
   //-----------------------------------------------------------------------------------------------------
+  /* jed
   bool miner::background_worker_thread()
   {
     uint64_t prev_total_time, current_total_time;
@@ -833,6 +845,7 @@ namespace cryptonote
 
     return true;
   }
+  */
   //-----------------------------------------------------------------------------------------------------
   bool miner::get_system_times(uint64_t& total_time, uint64_t& idle_time)
   {
