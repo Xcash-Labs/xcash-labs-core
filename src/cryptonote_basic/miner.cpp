@@ -116,11 +116,11 @@ namespace cryptonote
   bool miner::get_ignore_battery() const { return true; } // “don’t care”
 
   // --- No-ops / safe returns ---
-  bool miner::start(const account_public_address&, size_t, bool, bool)
-  {
-    MINFO("Mining is disabled in this xcash fork.");
-    return false;
-  }
+//  bool miner::start(const account_public_address&, size_t, bool, bool)
+//  {
+//    MINFO("Mining is disabled in this xcash fork.");
+//    return false;
+//  }
   bool miner::stop() { return true; }
   void miner::send_stop_signal() { /* no-op */ }
   bool miner::on_block_chain_update() { return true; }
