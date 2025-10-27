@@ -284,6 +284,10 @@ namespace cryptonote
       m_threads.push_back(boost::thread(m_attrs, boost::bind(&miner::worker_thread, this)));
   }
   //-----------------------------------------------------------------------------------------------------
+
+
+  /* jed
+
   void miner::init_options(boost::program_options::options_description& desc)
   {
     command_line::add_arg(desc, arg_extra_messages);
@@ -296,6 +300,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg_bg_mining_miner_target_percentage);
   }
   //-----------------------------------------------------------------------------------------------------
+
   bool miner::init(const boost::program_options::variables_map& vm, network_type nettype)
   {
     if(command_line::has_arg(vm, arg_extra_messages))
