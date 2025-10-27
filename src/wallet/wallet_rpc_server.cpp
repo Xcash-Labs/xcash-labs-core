@@ -296,8 +296,6 @@ bool wallet_rpc_server::init(const boost::program_options::variables_map* vm) {
   m_auto_refresh_period = DEFAULT_AUTO_REFRESH_PERIOD;
   m_last_auto_refresh_time = boost::posix_time::min_date_time;
 
-  check_background_mining();
-
   const auto max_connections_public = command_line::get_arg(vm, arg_rpc_max_connections_per_public_ip);
   const auto max_connections_private = command_line::get_arg(vm, arg_rpc_max_connections_per_private_ip);
   const auto max_connections = command_line::get_arg(vm, arg_rpc_max_connections);
@@ -320,57 +318,6 @@ bool wallet_rpc_server::init(const boost::program_options::variables_map* vm) {
       std::move(rpc_config->ssl_options),
       max_connections_public, max_connections_private, max_connections,
       command_line::get_arg(vm, arg_rpc_response_soft_limit));
-}
-//------------------------------------------------------------------------------------------------------------------------------
-void wallet_rpc_server::check_background_mining() {
-  if (!m_wallet)
-    return;
-  // Background mining can be toggled from the main wallet
-  if (m_wallet->is_background_wallet() || m_wallet->is_background_syncing())
-    return;
-
-  tools::wallet2::BackgroundMiningSetupType setup = m_wallet->setup_background_mining();
-  if (setup == tools::wallet2::BackgroundMiningNo) {
-    MLOG_RED(el::Level::Warning, "Background mining not enabled. Run \"set setup-background-mining 1\" in xcash-wallet-cli to change.");
-    return;
-  }
-
-  if (!m_wallet->is_trusted_daemon()) {
-    MDEBUG("Using an untrusted daemon, skipping background mining check");
-    return;
-  }
-
-  cryptonote::COMMAND_RPC_MINING_STATUS::request req;
-  cryptonote::COMMAND_RPC_MINING_STATUS::response res;
-  bool r = m_wallet->invoke_http_json("/mining_status", req, res);
-  if (!r || res.status != CORE_RPC_STATUS_OK) {
-    MERROR("Failed to query mining status: " << (r ? res.status : "No connection to daemon"));
-    return;
-  }
-  if (res.active || res.is_background_mining_enabled)
-    return;
-
-  if (setup == tools::wallet2::BackgroundMiningMaybe) {
-    MINFO("The daemon is not set up to background mine.");
-    MINFO("With background mining enabled, the daemon will mine when idle and not on battery.");
-    MINFO("Enabling this supports the network you are using, and makes you eligible for receiving new monero");
-    MINFO("Set setup-background-mining to 1 in xcash-wallet-cli to change.");
-    return;
-  }
-
-  cryptonote::COMMAND_RPC_START_MINING::request req2;
-  cryptonote::COMMAND_RPC_START_MINING::response res2;
-  req2.miner_address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
-  req2.threads_count = 1;
-  req2.do_background_mining = true;
-  req2.ignore_battery = false;
-  r = m_wallet->invoke_http_json("/start_mining", req2, res);
-  if (!r || res2.status != CORE_RPC_STATUS_OK) {
-    MERROR("Failed to setup background mining: " << (r ? res.status : "No connection to daemon"));
-    return;
-  }
-
-  MINFO("Background mining enabled. The daemon will mine when idle and not on battery.");
 }
 //------------------------------------------------------------------------------------------------------------------------------
 bool wallet_rpc_server::not_open(epee::json_rpc::error& er) {
@@ -2948,50 +2895,6 @@ bool wallet_rpc_server::on_rescan_spent(const wallet_rpc::COMMAND_RPC_RESCAN_SPE
     return true;
   } catch (const std::exception& e) {
     handle_rpc_exception(std::current_exception(), er, WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR);
-    return false;
-  }
-  return true;
-}
-//------------------------------------------------------------------------------------------------------------------------------
-bool wallet_rpc_server::on_start_mining(const wallet_rpc::COMMAND_RPC_START_MINING::request& req, wallet_rpc::COMMAND_RPC_START_MINING::response& res, epee::json_rpc::error& er, const connection_context* ctx) {
-  if (!m_wallet) return not_open(er);
-  if (!m_wallet->is_trusted_daemon()) {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "This command requires a trusted daemon.";
-    return false;
-  }
-
-  size_t max_mining_threads_count = (std::max)(tools::get_max_concurrency(), static_cast<unsigned>(2));
-  if (req.threads_count < 1 || max_mining_threads_count < req.threads_count) {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "The specified number of threads is inappropriate.";
-    return false;
-  }
-
-  cryptonote::COMMAND_RPC_START_MINING::request daemon_req = AUTO_VAL_INIT(daemon_req);
-  daemon_req.miner_address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
-  daemon_req.threads_count = req.threads_count;
-  daemon_req.do_background_mining = req.do_background_mining;
-  daemon_req.ignore_battery = req.ignore_battery;
-
-  cryptonote::COMMAND_RPC_START_MINING::response daemon_res;
-  bool r = m_wallet->invoke_http_json("/start_mining", daemon_req, daemon_res);
-  if (!r || daemon_res.status != CORE_RPC_STATUS_OK) {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Couldn't start mining due to unknown error.";
-    return false;
-  }
-  return true;
-}
-//------------------------------------------------------------------------------------------------------------------------------
-bool wallet_rpc_server::on_stop_mining(const wallet_rpc::COMMAND_RPC_STOP_MINING::request& req, wallet_rpc::COMMAND_RPC_STOP_MINING::response& res, epee::json_rpc::error& er, const connection_context* ctx) {
-  if (!m_wallet) return not_open(er);
-  cryptonote::COMMAND_RPC_STOP_MINING::request daemon_req;
-  cryptonote::COMMAND_RPC_STOP_MINING::response daemon_res;
-  bool r = m_wallet->invoke_http_json("/stop_mining", daemon_req, daemon_res, std::chrono::seconds(60));  // this waits till stopped, and if randomx has just started initializing its dataset, it might be a while
-  if (!r || daemon_res.status != CORE_RPC_STATUS_OK) {
-    er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-    er.message = "Couldn't stop mining due to unknown error.";
     return false;
   }
   return true;
