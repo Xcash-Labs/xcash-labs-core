@@ -183,6 +183,7 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
+  /*
   bool miner::on_idle()
   {
     m_update_block_template_interval.do_call([&](){
@@ -202,12 +203,14 @@ namespace cryptonote
 
     return true;
   }
+    */
   //-----------------------------------------------------------------------------------------------------
   void miner::do_print_hashrate(bool do_hr)
   {
     m_do_print_hashrate = do_hr;
   }
   //-----------------------------------------------------------------------------------------------------
+  /*
   void miner::merge_hr()
   {
     if(m_last_hr_merge_time && is_mining())
