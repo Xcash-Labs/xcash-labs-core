@@ -129,7 +129,6 @@ namespace cryptonote
     bool set_store_tx_info(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_auto_refresh(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_refresh_type(const std::vector<std::string> &args = std::vector<std::string>());
-    bool set_confirm_missing_payment_id(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_ask_password(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_unit(const std::vector<std::string> &args = std::vector<std::string>());
     bool set_max_reorg_depth(const std::vector<std::string> &args = std::vector<std::string>());
@@ -205,7 +204,6 @@ namespace cryptonote
     bool export_transfers(const std::vector<std::string> &args);
     bool unspent_outputs(const std::vector<std::string> &args);
     bool rescan_blockchain(const std::vector<std::string> &args);
-    bool refresh_main(uint64_t start_height, ResetType reset, bool is_init = false);
     bool set_tx_note(const std::vector<std::string> &args);
     bool get_tx_note(const std::vector<std::string> &args);
     bool set_description(const std::vector<std::string> &args);
@@ -323,18 +321,12 @@ namespace cryptonote
      */
     void commit_or_save(std::vector<tools::wallet2::pending_tx>& ptx_vector, bool do_not_relay);
 
-    /*!
-     * \brief checks whether background mining is enabled, and asks to configure it if not
-     */
-
     // idle thread workers
     bool check_inactivity();
     bool check_refresh();
     bool check_mms();
 
     void handle_transfer_exception(const std::exception_ptr &e, bool trusted_daemon);
-
-//    bool check_daemon_rpc_prices(const std::string &daemon_url, uint32_t &actual_cph, uint32_t &claimed_cph);
 
     //----------------- i_wallet2_callback ---------------------
     virtual void on_new_block(uint64_t height, const cryptonote::block& block);

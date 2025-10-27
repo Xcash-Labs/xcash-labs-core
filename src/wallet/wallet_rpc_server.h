@@ -63,8 +63,6 @@ namespace tools
 
   private:
 
-    CHAIN_HTTP_TO_MAP2(connection_context); //forward http requests to uri map
-
     BEGIN_URI_MAP2()
       BEGIN_JSON_RPC_MAP("/json_rpc")
         MAP_JON_RPC_WE("get_balance",        on_getbalance,         wallet_rpc::COMMAND_RPC_GET_BALANCE)
