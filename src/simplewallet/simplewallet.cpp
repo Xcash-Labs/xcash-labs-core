@@ -188,7 +188,6 @@ namespace
   const command_line::arg_descriptor<bool> arg_use_english_language_names = {"use-english-language-names", sw::tr("Display English language names"), false};
   const command_line::arg_descriptor< std::vector<std::string> > arg_command = {"command", ""};
 
-  const char* USAGE_START_MINING("start_mining [<number_of_threads>] [bg_mining] [ignore_battery]");
   const char* USAGE_SET_DAEMON("set_daemon <host>[:<port>] [trusted|untrusted|this-is-probably-a-spy-node]");
   const char* USAGE_SHOW_BALANCE("balance [detail]");
   const char* USAGE_INCOMING_TRANSFERS("incoming_transfers [available|unavailable] [verbose] [uses] [index=<N1>[,<N2>[,...]]]");
@@ -2929,31 +2928,6 @@ bool simple_wallet::set_inactivity_lock_timeout(const std::vector<std::string> &
   return true;
 }
 
-bool simple_wallet::set_setup_background_mining(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
-{
-  const auto pwd_container = get_and_verify_password();
-  if (pwd_container)
-  {
-    tools::wallet2::BackgroundMiningSetupType setup = tools::wallet2::BackgroundMiningMaybe;
-    if (args[1] == "yes" || args[1] == "1")
-      setup = tools::wallet2::BackgroundMiningYes;
-    else if (args[1] == "no" || args[1] == "0")
-      setup = tools::wallet2::BackgroundMiningNo;
-    else
-    {
-      fail_msg_writer() << tr("invalid argument: must be either 1/yes or 0/no");
-      return true;
-    }
-    m_wallet->setup_background_mining(setup);
-    m_wallet->rewrite(m_wallet_file, pwd_container->password());
-    if (setup == tools::wallet2::BackgroundMiningYes)
-      start_background_mining();
-    else
-      stop_background_mining();
-  }
-  return true;
-}
-
 bool simple_wallet::set_device_name(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
   const auto pwd_container = get_and_verify_password();
@@ -4702,13 +4676,6 @@ simple_wallet::simple_wallet()
   , m_locked(false)
   , m_in_command(false)
 {
-  m_cmd_binder.set_handler("start_mining",
-                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::start_mining, _1),
-                           tr(USAGE_START_MINING),
-                           tr("Start mining in the daemon (bg_mining and ignore_battery are optional booleans)."));
-  m_cmd_binder.set_handler("stop_mining",
-                           boost::bind(&simple_wallet::on_command, this, &simple_wallet::stop_mining, _1),
-                           tr("Stop mining in the daemon."));
   m_cmd_binder.set_handler("set_daemon",
                            boost::bind(&simple_wallet::on_command, this, &simple_wallet::set_daemon, _1),
                            tr(USAGE_SET_DAEMON),
@@ -4872,9 +4839,6 @@ simple_wallet::simple_wallet()
                                   "  Whether to keep track of owned outputs uses.\n "
                                   "background-sync <off|reuse-wallet-password|custom-background-password>\n "
                                   "  Set this to enable scanning in the background with just the view key while the wallet is locked.\n "
-                                  "setup-background-mining <1|0>\n "
-                                  "  Whether to enable background mining. Set this to support the network and to get a chance to receive new xcash.\n "
-                                  "device-name <device_name[:device_spec]>\n "
                                   "  Device name for hardware wallet.\n "
                                   "export-format <\"binary\"|\"ascii\">\n "
                                   "  Save all exported files as binary (cannot be copied and pasted) or ascii (can be).\n "
@@ -5259,13 +5223,6 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
       case tools::wallet2::AskPasswordOnAction: ask_password_string = "action"; break;
       case tools::wallet2::AskPasswordToDecrypt: ask_password_string = "decrypt"; break;
     }
-    std::string setup_background_mining_string = "invalid";
-    switch (m_wallet->setup_background_mining())
-    {
-      case tools::wallet2::BackgroundMiningMaybe: setup_background_mining_string = "maybe"; break;
-      case tools::wallet2::BackgroundMiningYes: setup_background_mining_string = "yes"; break;
-      case tools::wallet2::BackgroundMiningNo: setup_background_mining_string = "no"; break;
-    }
     success_msg_writer() << "seed = " << seed_language;
     success_msg_writer() << "always-confirm-transfers = " << m_wallet->always_confirm_transfers();
     success_msg_writer() << "print-ring-members = " << m_wallet->print_ring_members();
@@ -5295,7 +5252,6 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     success_msg_writer() << "ignore-outputs-below = " << cryptonote::print_money(m_wallet->ignore_outputs_below());
     success_msg_writer() << "track-uses = " << m_wallet->track_uses();
     success_msg_writer() << "background-sync = " << get_background_sync_type_name(m_wallet->background_sync_type());
-    success_msg_writer() << "setup-background-mining = " << setup_background_mining_string;
     success_msg_writer() << "device-name = " << m_wallet->device_name();
     success_msg_writer() << "export-format = " << (m_wallet->export_format() == tools::wallet2::ExportFormat::Ascii ? "ascii" : "binary");
     success_msg_writer() << "show-wallet-name-when-locked = " << m_wallet->show_wallet_name_when_locked();
@@ -5367,7 +5323,6 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("background-sync", setup_background_sync, tr("off (default); reuse-wallet-password (reuse the wallet password to encrypt the background cache); custom-background-password (use a custom background password to encrypt the background cache)"));
     CHECK_SIMPLE_VARIABLE("show-wallet-name-when-locked", set_show_wallet_name_when_locked, tr("1 or 0"));
     CHECK_SIMPLE_VARIABLE("inactivity-lock-timeout", set_inactivity_lock_timeout, tr("unsigned integer (seconds, 0 to disable)"));
-    CHECK_SIMPLE_VARIABLE("setup-background-mining", set_setup_background_mining, tr("1/yes or 0/no"));
     CHECK_SIMPLE_VARIABLE("device-name", set_device_name, tr("<device_name[:device_spec]>"));
     CHECK_SIMPLE_VARIABLE("export-format", set_export_format, tr("\"binary\" or \"ascii\""));
     CHECK_SIMPLE_VARIABLE("load-deprecated-formats", set_load_deprecated_formats, tr("0 or 1"));
@@ -6164,10 +6119,6 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
 
   m_wallet->callback(this);
 
-  bool skip_check_backround_mining = !command_line::get_arg(vm, arg_command).empty();
-  if (!skip_check_backround_mining)
-    check_background_mining(password);
-
   if (welcome)
     message_writer(console_color_yellow, true) << tr("If you are new to XCASH, type \"welcome\" for a brief overview.");
 
@@ -6755,211 +6706,6 @@ bool simple_wallet::save_watch_only(const std::vector<std::string> &args/* = std
     fail_msg_writer() << tr("Failed to save watch only wallet: ") << e.what();
     return true;
   }
-  return true;
-}
-//----------------------------------------------------------------------------------------------------
-void simple_wallet::start_background_mining()
-{
-  COMMAND_RPC_MINING_STATUS::request reqq;
-  COMMAND_RPC_MINING_STATUS::response resq;
-  bool r = m_wallet->invoke_http_json("/mining_status", reqq, resq);
-  std::string err = interpret_rpc_response(r, resq.status);
-  if (!r)
-    return;
-  if (!err.empty())
-  {
-    fail_msg_writer() << tr("Failed to query mining status: ") << err;
-    return;
-  }
-  if (!resq.is_background_mining_enabled)
-  {
-    COMMAND_RPC_START_MINING::request req;
-    COMMAND_RPC_START_MINING::response res;
-    req.miner_address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
-    req.threads_count = 1;
-    req.do_background_mining = true;
-    req.ignore_battery = false;
-    bool r = m_wallet->invoke_http_json("/start_mining", req, res);
-    std::string err = interpret_rpc_response(r, res.status);
-    if (!err.empty())
-    {
-      fail_msg_writer() << tr("Failed to setup background mining: ") << err;
-      return;
-    }
-  }
-  success_msg_writer() << tr("Background mining enabled. Thank you for supporting the XCash network.");
-}
-//----------------------------------------------------------------------------------------------------
-void simple_wallet::stop_background_mining()
-{
-  COMMAND_RPC_MINING_STATUS::request reqq;
-  COMMAND_RPC_MINING_STATUS::response resq;
-  bool r = m_wallet->invoke_http_json("/mining_status", reqq, resq);
-  if (!r)
-    return;
-  std::string err = interpret_rpc_response(r, resq.status);
-  if (!err.empty())
-  {
-    fail_msg_writer() << tr("Failed to query mining status: ") << err;
-    return;
-  }
-  if (resq.is_background_mining_enabled)
-  {
-    COMMAND_RPC_STOP_MINING::request req;
-    COMMAND_RPC_STOP_MINING::response res;
-    bool r = m_wallet->invoke_http_json("/stop_mining", req, res);
-    std::string err = interpret_rpc_response(r, res.status);
-    if (!err.empty())
-    {
-      fail_msg_writer() << tr("Failed to setup background mining: ") << err;
-      return;
-    }
-  }
-  message_writer(console_color_red, false) << tr("Background mining not enabled. Run \"set setup-background-mining 1\" to change.");
-}
-//----------------------------------------------------------------------------------------------------
-void simple_wallet::check_background_mining(const epee::wipeable_string &password)
-{
-  // Background mining can be toggled from the main wallet
-  if (m_wallet->is_background_wallet() || m_wallet->is_background_syncing())
-    return;
-
-  tools::wallet2::BackgroundMiningSetupType setup = m_wallet->setup_background_mining();
-  if (setup == tools::wallet2::BackgroundMiningNo)
-  {
-    message_writer(console_color_red, false) << tr("Background mining not enabled. Run \"set setup-background-mining 1\" to change.");
-    return;
-  }
-
-  if (!m_wallet->is_trusted_daemon())
-  {
-    message_writer() << tr("Using an untrusted daemon, skipping background mining check");
-    return;
-  }
-
-  COMMAND_RPC_MINING_STATUS::request req;
-  COMMAND_RPC_MINING_STATUS::response res;
-  bool r = m_wallet->invoke_http_json("/mining_status", req, res);
-  std::string err = interpret_rpc_response(r, res.status);
-  bool is_background_mining_enabled = false;
-  if (err.empty())
-    is_background_mining_enabled = res.is_background_mining_enabled;
-
-  if (is_background_mining_enabled)
-  {
-    // already active, nice
-    if (setup == tools::wallet2::BackgroundMiningMaybe)
-    {
-      m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningYes);
-      m_wallet->rewrite(m_wallet_file, password);
-    }
-    start_background_mining();
-    return;
-  }
-  if (res.active)
-    return;
-
-  if (setup == tools::wallet2::BackgroundMiningMaybe)
-  {
-    message_writer() << tr("The daemon is not set up to background mine.");
-    message_writer() << tr("With background mining enabled, the daemon will mine when idle and not on battery.");
-    message_writer() << tr("Enabling this supports the network you are using, and makes you eligible for receiving new xcash");
-    std::string accepted = input_line(tr("Do you want to do it now? (Y/Yes/N/No): "));
-    if (std::cin.eof() || !command_line::is_yes(accepted)) {
-      m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningNo);
-      m_wallet->rewrite(m_wallet_file, password);
-      message_writer(console_color_red, false) << tr("Background mining not enabled. Set setup-background-mining to 1 to change.");
-      return;
-    }
-    m_wallet->setup_background_mining(tools::wallet2::BackgroundMiningYes);
-    m_wallet->rewrite(m_wallet_file, password);
-    start_background_mining();
-  }
-  else
-  {
-    // the setting is already enabled, and the daemon is not mining yet, so start it
-    start_background_mining();
-  }
-}
-//----------------------------------------------------------------------------------------------------
-bool simple_wallet::start_mining(const std::vector<std::string>& args)
-{
-  if (!m_wallet->is_trusted_daemon())
-  {
-    fail_msg_writer() << tr("this command requires a trusted daemon. Enable with --trusted-daemon");
-    return true;
-  }
-
-  if (!try_connect_to_daemon())
-    return true;
-
-  if (!m_wallet)
-  {
-    fail_msg_writer() << tr("wallet is null");
-    return true;
-  }
-  COMMAND_RPC_START_MINING::request req = AUTO_VAL_INIT(req); 
-  req.miner_address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
-
-  bool ok = true;
-  size_t arg_size = args.size();
-  if(arg_size >= 3)
-  {
-    if (!parse_bool_and_use(args[2], [&](bool r) { req.ignore_battery = r; }))
-      return true;
-  }
-  if(arg_size >= 2)
-  {
-    if (!parse_bool_and_use(args[1], [&](bool r) { req.do_background_mining = r; }))
-      return true;
-  }
-  if(arg_size >= 1)
-  {
-    uint16_t num = 1;
-    ok = string_tools::get_xtype_from_string(num, args[0]);
-    ok = ok && 1 <= num;
-    req.threads_count = num;
-  }
-  else
-  {
-    req.threads_count = 1;
-  }
-
-  if (!ok)
-  {
-    PRINT_USAGE(USAGE_START_MINING);
-    return true;
-  }
-
-  COMMAND_RPC_START_MINING::response res;
-  bool r = m_wallet->invoke_http_json("/start_mining", req, res);
-  std::string err = interpret_rpc_response(r, res.status);
-  if (err.empty())
-    success_msg_writer() << tr("Mining started in daemon");
-  else
-    fail_msg_writer() << tr("mining has NOT been started: ") << err;
-  return true;
-}
-//----------------------------------------------------------------------------------------------------
-bool simple_wallet::stop_mining(const std::vector<std::string>& args)
-{
-  if (!try_connect_to_daemon())
-    return true;
-
-  if (!m_wallet)
-  {
-    fail_msg_writer() << tr("wallet is null");
-    return true;
-  }
-
-  COMMAND_RPC_STOP_MINING::request req;
-  COMMAND_RPC_STOP_MINING::response res;
-  bool r = m_wallet->invoke_http_json("/stop_mining", req, res);
-  std::string err = interpret_rpc_response(r, res.status);
-  if (err.empty())
-    success_msg_writer() << tr("Mining stopped in daemon");
-  else
-    fail_msg_writer() << tr("mining has NOT been stopped: ") << err;
   return true;
 }
 //----------------------------------------------------------------------------------------------------
