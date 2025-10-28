@@ -113,22 +113,22 @@ t_command_server::t_command_server(
     , "is_key_image_spent <key_image>"
     , "Print whether a given key image is in the spent key images set."
     );
-  m_command_lookup.set_handler(
-      "start_mining"
-    , std::bind(&t_command_parser_executor::start_mining, &m_parser, p::_1)
-    , "start_mining <addr> [<threads>|auto] [do_background_mining] [ignore_battery]"
-    , "Start mining for specified address. Defaults to 1 thread and no background mining. Use \"auto\" to autodetect optimal number of threads."
-    );
-  m_command_lookup.set_handler(
-      "stop_mining"
-    , std::bind(&t_command_parser_executor::stop_mining, &m_parser, p::_1)
-    , "Stop mining."
-    );
-  m_command_lookup.set_handler(
-      "mining_status"
-    , std::bind(&t_command_parser_executor::mining_status, &m_parser, p::_1)
-    , "Show current mining status."
-    );
+//  m_command_lookup.set_handler(
+//      "start_mining"
+//    , std::bind(&t_command_parser_executor::start_mining, &m_parser, p::_1)
+//    , "start_mining <addr> [<threads>|auto] [do_background_mining] [ignore_battery]"
+//    , "Start mining for specified address. Defaults to 1 thread and no background mining. Use \"auto\" to autodetect optimal number of threads."
+//    );
+//  m_command_lookup.set_handler(
+//      "stop_mining"
+//    , std::bind(&t_command_parser_executor::stop_mining, &m_parser, p::_1)
+//    , "Stop mining."
+//    );
+//  m_command_lookup.set_handler(
+//      "mining_status"
+//    , std::bind(&t_command_parser_executor::mining_status, &m_parser, p::_1)
+//    , "Show current mining status."
+//    );
   m_command_lookup.set_handler(
       "print_pool"
     , std::bind(&t_command_parser_executor::print_transaction_pool_long, &m_parser, p::_1)
