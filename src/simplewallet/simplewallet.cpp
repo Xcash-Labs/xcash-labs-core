@@ -3636,7 +3636,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     INITIALIZE_NETWORK_DATA_NODES_LIST;
 
     const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
-    for (int count = 0; count < total_delegates; ++count) {
+    for (size_t count = 0; count < total_delegates; ++count) {
       if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(), block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
         seed_count++;
       }
@@ -3898,7 +3898,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         // Even if not closed, push merged; we'll flag unterminated quotes later.
         out.push_back(std::move(merged));
         if (!closed) {
-          MWARNING("Unterminated quote at token " + std::to_string(start_index));
+          MWARNING("delegate_register: Unterminated quote token");
         }
       }
       return out;
