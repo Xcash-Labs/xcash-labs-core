@@ -121,7 +121,7 @@ namespace cryptonote
 //    MINFO("Mining is disabled in this xcash fork.");
 //    return false;
 //  }
-  bool miner::stop() { return true; }
+//  bool miner::stop() { return true; }
   void miner::send_stop_signal() { /* no-op */ }
   bool miner::on_block_chain_update() { return true; }
   bool miner::request_block_template() { return false; }
