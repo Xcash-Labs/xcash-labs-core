@@ -71,11 +71,11 @@ class DaemonHandler : public RpcHandler
 
     void handle(const SendRawTxHex::Request& req, SendRawTxHex::Response& res);
 
-    void handle(const StartMining::Request& req, StartMining::Response& res);
+//    void handle(const StartMining::Request& req, StartMining::Response& res);
 
     void handle(const GetInfo::Request& req, GetInfo::Response& res);
 
-    void handle(const StopMining::Request& req, StopMining::Response& res);
+//    void handle(const StopMining::Request& req, StopMining::Response& res);
 
     void handle(const MiningStatus::Request& req, MiningStatus::Response& res);
 
