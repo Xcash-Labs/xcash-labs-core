@@ -481,21 +481,11 @@ bool t_rpc_command_executor::show_status() {
       tools::fail_msg_writer() << make_error(fail_message, hfres.status);
       return true;
     }
-    if (!m_rpc_server->on_mining_status(mreq, mres))
-    {
-      tools::fail_msg_writer() << fail_message.c_str();
-      return true;
-    }
 
-    if (mres.status == CORE_RPC_STATUS_BUSY)
-    {
-      mining_busy = true;
-    }
-    else if (mres.status != CORE_RPC_STATUS_OK)
-    {
-      tools::fail_msg_writer() << make_error(fail_message, mres.status);
-      return true;
-    }
+    // no mining
+    mining_busy = false;
+    mres.status = CORE_RPC_STATUS_OK;
+
   }
 
   std::time_t uptime = std::time(nullptr) - ires.start_time;
