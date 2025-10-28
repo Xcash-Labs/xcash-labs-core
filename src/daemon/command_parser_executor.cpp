@@ -366,6 +366,7 @@ bool t_command_parser_executor::print_transaction_pool_stats(const std::vector<s
   return m_executor.print_transaction_pool_stats();
 }
 
+/*
 bool t_command_parser_executor::start_mining(const std::vector<std::string>& args)
 {
   if(!args.size())
@@ -489,6 +490,7 @@ bool t_command_parser_executor::mining_status(const std::vector<std::string>& ar
 {
   return m_executor.mining_status();
 }
+*/
 
 bool t_command_parser_executor::stop_daemon(const std::vector<std::string>& args)
 {
