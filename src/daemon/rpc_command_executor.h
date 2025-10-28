@@ -106,12 +106,6 @@ public:
 
   bool print_transaction_pool_stats();
 
-//  bool start_mining(cryptonote::account_public_address address, uint64_t num_threads, cryptonote::network_type nettype, bool do_background_mining = false, bool ignore_battery = false);
-
-//  bool stop_mining();
-
-//  bool mining_status();
-
   bool stop_daemon();
 
   bool print_status();
