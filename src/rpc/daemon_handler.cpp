@@ -99,7 +99,7 @@ namespace rpc
       {u8"get_tx_global_output_indices", handle_message<GetTxGlobalOutputIndices>},
       {u8"hard_fork_info", handle_message<HardForkInfo>},
       {u8"key_images_spent", handle_message<KeyImagesSpent>},
-      {u8"mining_status", handle_message<MiningStatus>},
+//      {u8"mining_status", handle_message<MiningStatus>},
       {u8"save_bc", handle_message<SaveBC>},
       {u8"send_raw_tx", handle_message<SendRawTx>},
       {u8"send_raw_tx_hex", handle_message<SendRawTxHex>},
@@ -461,6 +461,7 @@ namespace rpc
     return;
   }
 
+  /*
   void DaemonHandler::handle(const StartMining::Request& req, StartMining::Response& res)
   {
     cryptonote::address_parse_info info;
@@ -508,7 +509,7 @@ namespace rpc
     res.error_details = "";
 
   }
-
+*/
   void DaemonHandler::handle(const GetInfo::Request& req, GetInfo::Response& res)
   {
     res.info.height = m_core.get_current_blockchain_height();
@@ -557,7 +558,7 @@ namespace rpc
     res.status = Message::STATUS_OK;
     res.error_details = "";
   }
-
+/*
   void DaemonHandler::handle(const StopMining::Request& req, StopMining::Response& res)
   {
     if(!m_core.get_miner().stop())
@@ -588,6 +589,7 @@ namespace rpc
     res.status = Message::STATUS_OK;
     res.error_details = "";
   }
+*/
 
   void DaemonHandler::handle(const SaveBC::Request& req, SaveBC::Response& res)
   {
