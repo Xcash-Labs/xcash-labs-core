@@ -1492,7 +1492,7 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
-*//
+*/
   //------------------------------------------------------------------------------------------------------------------------------
 /* jed
   bool core_rpc_server::on_stop_mining(const COMMAND_RPC_STOP_MINING::request& req, COMMAND_RPC_STOP_MINING::response& res, const connection_context *ctx)
