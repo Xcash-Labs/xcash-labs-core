@@ -544,7 +544,7 @@ bool t_rpc_command_executor::show_status() {
 
   return true;
 }
-
+/*
 bool t_rpc_command_executor::mining_status() {
   cryptonote::COMMAND_RPC_MINING_STATUS::request mreq;
   cryptonote::COMMAND_RPC_MINING_STATUS::response mres;
@@ -620,6 +620,7 @@ bool t_rpc_command_executor::mining_status() {
 
   return true;
 }
+*/
 
 bool t_rpc_command_executor::print_connections() {
   cryptonote::COMMAND_RPC_GET_CONNECTIONS::request req;
@@ -1358,6 +1359,7 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
   return true;
 }
 
+/*
 bool t_rpc_command_executor::start_mining(cryptonote::account_public_address address, uint64_t num_threads, cryptonote::network_type nettype, bool do_background_mining, bool ignore_battery) {
   cryptonote::COMMAND_RPC_START_MINING::request req;
   cryptonote::COMMAND_RPC_START_MINING::response res;
@@ -1412,6 +1414,7 @@ bool t_rpc_command_executor::stop_mining() {
   tools::success_msg_writer() << "Mining stopped";
   return true;
 }
+*/
 
 bool t_rpc_command_executor::stop_daemon()
 {
