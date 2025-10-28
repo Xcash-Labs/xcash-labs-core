@@ -116,12 +116,12 @@ namespace cryptonote
   bool miner::get_ignore_battery() const { return true; } // “don’t care”
 
   // --- No-ops / safe returns ---
-//  bool miner::start(const account_public_address&, size_t, bool, bool)
-//  {
-//    MINFO("Mining is disabled in this xcash fork.");
-//    return false;
-//  }
-//  bool miner::stop() { return true; }
+  bool miner::start(const account_public_address&, size_t, bool, bool)
+  {
+    MINFO("Mining is disabled in this xcash fork.");
+    return false;
+  }
+  bool miner::stop() { return true; }
   void miner::send_stop_signal() { /* no-op */ }
   bool miner::on_block_chain_update() { return true; }
   bool miner::request_block_template() { return false; }
@@ -131,7 +131,7 @@ namespace cryptonote
   void miner::update_autodetection() { /* no-op */ }
 
   // Background mining controls: accept but don’t enable
-  bool miner::set_is_background_mining_enabled(bool) { m_is_background_mining_enabled = false; return false; }
+  //bool miner::set_is_background_mining_enabled(bool) { m_is_background_mining_enabled = false; return false; }
   void miner::set_ignore_battery(bool) { /* no-op */ }
   uint64_t miner::get_min_idle_seconds() const { return 0; }
   bool miner::set_min_idle_seconds(uint64_t) { return false; }
