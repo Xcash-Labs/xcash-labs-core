@@ -1441,6 +1441,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  /*
   bool core_rpc_server::on_start_mining(const COMMAND_RPC_START_MINING::request& req, COMMAND_RPC_START_MINING::response& res, const connection_context *ctx)
   {
     RPC_TRACKER(start_mining);
@@ -1491,7 +1492,9 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
+*//
   //------------------------------------------------------------------------------------------------------------------------------
+/* jed
   bool core_rpc_server::on_stop_mining(const COMMAND_RPC_STOP_MINING::request& req, COMMAND_RPC_STOP_MINING::response& res, const connection_context *ctx)
   {
     RPC_TRACKER(stop_mining);
@@ -1511,7 +1514,9 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
+*/
   //------------------------------------------------------------------------------------------------------------------------------
+  /* jed
   bool core_rpc_server::on_mining_status(const COMMAND_RPC_MINING_STATUS::request& req, COMMAND_RPC_MINING_STATUS::response& res, const connection_context *ctx)
   {
     RPC_TRACKER(mining_status);
@@ -1552,6 +1557,7 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
+*/
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_save_bc(const COMMAND_RPC_SAVE_BC::request& req, COMMAND_RPC_SAVE_BC::response& res, const connection_context *ctx)
   {
