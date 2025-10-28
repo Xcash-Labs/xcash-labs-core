@@ -3517,8 +3517,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // ask for the password
     SCOPED_WALLET_UNLOCK();
 
-    uint64_t vote_amount = 0;
-
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
 
@@ -3899,6 +3897,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         }
         // Even if not closed, push merged; we'll flag unterminated quotes later.
         out.push_back(std::move(merged));
+        if (!closed) {
+          MWARNING("Unterminated quote at token " + std::to_string(start_index));
+        }
       }
       return out;
     };
