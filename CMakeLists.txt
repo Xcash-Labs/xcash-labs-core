@@ -385,8 +385,7 @@ endif()
 set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 
-# Turn back on once we hit the right block height 512 i think
-option(PER_BLOCK_CHECKPOINT "Enable per-block checkpoint" OFF)
+option(PER_BLOCK_CHECKPOINT "Enable per-block checkpoint" ON)
 if(PER_BLOCK_CHECKPOINT)
   add_definitions("-DPER_BLOCK_CHECKPOINT")
 endif()
