@@ -5175,7 +5175,7 @@ simple_wallet::simple_wallet()
                            tr("Registers a delegate in the DPOPS system"));
   m_cmd_binder.set_handler("delegate_update",
                            boost::bind(&simple_wallet::delegate_update, this, _1),
-                           tr("delegate_update [about|website|team|shared_delegate_status|delegate_fee|server_specs] <value>"),
+                           tr("delegate_update [about|website|team|shared_delegate_status|delegate_fee|server_specs]=\"<value>\""),
                            tr("Updates a registered delegates data in the DPOPS system"));
   m_cmd_binder.set_handler("vote_status",
                            boost::bind(&simple_wallet::vote_status, this, _1),
