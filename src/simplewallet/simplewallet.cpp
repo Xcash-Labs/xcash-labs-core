@@ -3681,7 +3681,6 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     // Also try local node (not counted in quorum but must be successful)
     bool local_ok = false;
-    sync_minutes_and_seconds(0, 50);  // wait since it must sync the delegates
     rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
