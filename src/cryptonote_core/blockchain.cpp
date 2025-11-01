@@ -4088,7 +4088,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     MWARNING("******* rbuffer: " << rbuffer);
     MWARNING("******* vrf_pubkey:" << pubkey_str);
     
-
     // Transport-layer errors come back as "0|REASON..."
     if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
       if (is_ban_code(rbuffer.substr(2))) {
@@ -4096,7 +4095,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
         return false;
       } else {
         msg = std::string("TRANSPORT:") + rbuffer.substr(2);
-        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS))
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
         continue;
       }
     }
