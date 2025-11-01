@@ -4080,31 +4080,32 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
     << "}";
 
-  std::string json = o.str();
-  std::string rbuffer = send_and_receive_data("127.0.0.1", json,
-                          SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+  const int WAIT_MS  = 3000;  // 3 seconds
+  for (;;) {
+    std::string json = o.str();
+    std::string rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
-  MINFO("******* rbuffer: " << rbuffer); 
-  MINFO("******* vrf_pubkey:" << pubkey_str);
-  MINFO("******* rbuffer: " << rbuffer);
-
-  // Transport-layer errors come back as "0|REASON..."
-  if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
-
-    if(is_ban_code(rbuffer.substr(2))) {
-      msg = std::string("FAILED:") + rbuffer.substr(2);
-    } else {
-      msg = std::string("TRANSPORT:") + rbuffer.substr(2);
-    }
+    MWARNING("******* rbuffer: " << rbuffer);
+    MWARNING("******* vrf_pubkey:" << pubkey_str);
     
-    MERROR("DPOPS transport error: " << msg);
-    return false;
 
+    // Transport-layer errors come back as "0|REASON..."
+    if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
+      if (is_ban_code(rbuffer.substr(2))) {
+        msg = std::string("FAILED:") + rbuffer.substr(2);
+        return false;
+      } else {
+        msg = std::string("TRANSPORT:") + rbuffer.substr(2);
+        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS))
+        continue;
+      }
+    }
+    break;
   }
 
-  if (rbuffer.empty()) { // shouldn’t happen with length-prefix, keep as belt+suspenders
+  if (rbuffer.empty()) { // shouldn’t happen with length-prefix, keep just in case
     msg = "TRANSPORT:BUG_EMPTY";
-    MERROR("Empty reply from DPOPS (unexpected)");
+    MWARNING("Empty reply from DPOPS (unexpected)");
     return false;
   }
 
@@ -4157,7 +4158,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     } else {
       msg = "TRANSPORT:" + status_text;
     }
-    MWARNING("DPOPS failed verification: " << status_text);
     return false;
   }
 }
