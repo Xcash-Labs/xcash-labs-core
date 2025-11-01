@@ -4085,17 +4085,15 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   std::string rbuffer;
   for (;;) {
     rbuffer = send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
-    MWARNING("******* rbuffer: " << rbuffer);
-    MWARNING("******* vrf_pubkey:" << pubkey_str);
-    
     // Transport-layer errors come back as "0|REASON..."
     if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
       if (is_ban_code(rbuffer.substr(2))) {
+        MWARNING("Error sending trans to DPOPS - buffer: " << rbuffer << " vrf_pubkey:" << pubkey_str);
         msg = std::string("FAILED:") + rbuffer.substr(2);
         return false;
       } else {
         msg = std::string("TRANSPORT:") + rbuffer.substr(2);
+        MWARNING("Network error, check DPOPS process... retrying");
         std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
         continue;
       }
