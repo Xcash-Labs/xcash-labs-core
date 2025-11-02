@@ -3932,12 +3932,12 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
 
       // Special-case: delegate_fee → integer basis points (×100), no decimals
       if (key == "delegate_fee") {
-          const uint32_t fee_bp = static_cast<uint32_t>(std::llround(fee * 100.0));
-          val = std::to_string(fee_bp);  // e.g., "5.50" -> "550"
+        const uint32_t fee_bp = static_cast<uint32_t>(std::llround(fee * 100.0));
+        val = std::to_string(fee_bp);  // e.g., "5.50" -> "550"
       }
 
       updates.emplace_back(std::move(key), std::move(val));
-}
+    }
 
     if (m_wallet->key_on_device()) {
       fail_msg_writer() << tr("Failed to update the delegate\nCommand not supported by HW wallet");
