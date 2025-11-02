@@ -3449,6 +3449,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       return true;
     }
 
+    sync_minutes_and_seconds(0, 50);
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
@@ -3651,7 +3652,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // Send to first online seed node and all online delegates
     bool seed_committed = false;  // flip true after the first seed replies OK
     bool is_seed = false;
-
+    sync_minutes_and_seconds(0, 50);
     for (size_t i = 0; i < total_delegates; ++i) {
       if (block_verifiers_IP_address[i].empty()) continue;
 
@@ -3662,9 +3663,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         ++reply_count;  // count assumed success
         continue;       // If a seed has already committed, we *count* other seeds as success without sending
       }
-
       // Otherwise send (all non-seeds always send; fail on seed node error)
-
       std::string rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       const bool ok = parse_dpops_response(rbuffer, status_text);
       if (ok) {
@@ -3673,7 +3672,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to register the delegate, unable to update seed node");
+          fail_msg_writer() << tr("Failed to register the delegate for seed nodes, please try again");
           return true;
         }
       }
@@ -4097,7 +4096,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to update the delegate, unable to update seed node");
+          fail_msg_writer() << tr("Failed to update the delegate for seed nodes, please try again")
           return true;
         }
       }
@@ -4458,7 +4457,6 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       }
     }
 
-    sync_minutes_and_seconds(0, 50);
     // Build unsigned JSON
     const std::string vote_amount_str = std::to_string(vote_amount);  // atomic units as string
     std::ostringstream o;
@@ -4526,6 +4524,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
 
+    sync_minutes_and_seconds(0, 50);
     rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
