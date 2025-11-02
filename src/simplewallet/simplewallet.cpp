@@ -4076,6 +4076,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     }
 
     // ---- Send: first seed must commit; other seeds assumed; non-seeds always send ----
+    sync_minutes_and_seconds(0, 50);
     bool seed_committed = false;
     for (size_t i = 0; i < total_delegates; ++i) {
       const std::string &host = block_verifiers_IP_address[i];
