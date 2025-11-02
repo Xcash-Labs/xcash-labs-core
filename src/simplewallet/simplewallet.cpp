@@ -4096,7 +4096,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       } else {
         fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
         if (is_seed) {
-          fail_msg_writer() << tr("Failed to update the delegate for seed nodes, please try again")
+          fail_msg_writer() << tr("Failed to update the delegate for seed nodes, please try again");
           return true;
         }
       }
