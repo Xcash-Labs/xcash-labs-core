@@ -4146,7 +4146,7 @@ std::string wallet_rpc_server::get_current_block_verifiers_list() {
     if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-    std::string response = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    std::string response = xcash_net::send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
     // ---- Validate response ----
     bool ok = true;
@@ -4450,7 +4450,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       return false;
     }
 
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
@@ -4532,7 +4532,7 @@ bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS
 
     bool ok = false;
     host = network_data_nodes_list[idx];
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
 
@@ -4718,7 +4718,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
       return false; 
     }
 
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (!ok) {
@@ -4848,7 +4848,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
       return false; 
     }
 
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {

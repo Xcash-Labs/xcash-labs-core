@@ -3171,7 +3171,7 @@ std::string cryptonote::simple_wallet::get_current_block_verifiers_list()
     if (idx < 0) break;
 
     const std::string& host = network_data_nodes_list.network_data_nodes_IP_address[idx];
-    std::string response = send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    std::string response = xcash_net::send_and_receive_data(host, senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     // ---- Validate response ----
     bool ok = true;
     size_t p = response.find_first_not_of(" \t\r\n");
@@ -3450,7 +3450,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     sync_minutes_and_seconds(0, 50);
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
@@ -3664,7 +3664,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
         continue;       // If a seed has already committed, we *count* other seeds as success without sending
       }
       // Otherwise send (all non-seeds always send; fail on seed node error)
-      std::string rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+      std::string rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       const bool ok = parse_dpops_response(rbuffer, status_text);
       if (ok) {
         ++reply_count;
@@ -3680,7 +3680,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
 
     // Also try local node (not counted in quorum but must be successful)
     bool local_ok = false;
-    rbuffer = send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net:send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
     if (!local_ok) {
@@ -4087,7 +4087,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         continue;
       }
 
-      std::string r = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+      std::string r = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
       status_text.clear();
       const bool ok = parse_dpops_response(r, status_text);
       if (ok) {
@@ -4181,7 +4181,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
 
     bool ok = false;
     host = network_data_nodes_list[idx];
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
 
@@ -4368,7 +4368,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
       return true;
     }
 
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (!ok) {
@@ -4525,7 +4525,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     sync_minutes_and_seconds(0, 50);
-    rbuffer = send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
