@@ -9,6 +9,8 @@
 #include "common/blocking_tcp_client.h"
 #include "send_and_receive_data.h"
 
+namespace xcash_net {
+
 static bool is_ipv4_literal(const std::string& s) {
   struct in_addr a{};
   return inet_pton(AF_INET, s.c_str(), &a) == 1;
@@ -209,4 +211,6 @@ std::string send_and_receive_data(std::string IP_address,
 
   ::close(sock);
   return response_string; // success
+}
+
 }
