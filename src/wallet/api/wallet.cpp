@@ -31,9 +31,6 @@
 #include "wallet.h"
 
 #include <boost/format.hpp>
-#include <sstream>
-#include <unordered_map>
-
 #include "address_book.h"
 #include "common/util.h"
 #include "common_defines.h"
@@ -2690,7 +2687,6 @@ std::string WalletImpl::vote(const std::string &value)
   std::string name_or_address_arg;
   std::string amount_arg;
   std::string host;
-  size_t reply_count = 0;
   size_t seed_count = 0;
   size_t total_delegates = 0;
   size_t total_delegates_valid_amount = 0;
@@ -2716,7 +2712,7 @@ std::string WalletImpl::vote(const std::string &value)
       return "Vote submission failed, Watch-only and multisig wallets cannot be used";
     }
 
-    if (!connectToDaemon()) { ... }
+    if (!connectToDaemon()) {
       return "Failed to send the vote, Failed to connect to the daemon";
     }
 
@@ -2855,8 +2851,6 @@ std::string WalletImpl::vote(const std::string &value)
     // Ensure enough seed delegates are online
     INITIALIZE_NETWORK_DATA_NODES_LIST;
 
-    const std::unordered_set<std::string> seed_set(network_data_nodes_list.begin(), network_data_nodes_list.end());
-
     for (size_t count = 0; count < total_delegates; ++count) {
       if (std::find(network_data_nodes_list.begin(), network_data_nodes_list.end(),
                     block_verifiers_IP_address[count]) != network_data_nodes_list.end()) {
@@ -2870,7 +2864,7 @@ std::string WalletImpl::vote(const std::string &value)
     }
 
     // Send to random online seed node
-    startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    int startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     chosen = -1;
     host.clear();
 
@@ -2896,7 +2890,7 @@ std::string WalletImpl::vote(const std::string &value)
 
     rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
-    ok = parse_dpops_response(rbuffer, status_text);
+    bool ok = parse_dpops_response(rbuffer, status_text);
     if (ok) {
       return "Vote has been sent successfully";
     } else {
@@ -2990,7 +2984,6 @@ std::string WalletImpl::revote() {
   uint64_t vote_amount = 0;
   std::string host;
   bool ok;
-  int startpt;
   int chosen;
   size_t seed_count = 0;
 
@@ -3093,7 +3086,7 @@ std::string WalletImpl::revote() {
     INITIALIZE_NETWORK_DATA_NODES_LIST;
 
     // Send to random online seed node
-    startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
+    int startpt = static_cast<int>(rand() % NETWORK_DATA_NODES_AMOUNT);
     chosen = -1;
 
     for (int k = 0; k < static_cast<int>(NETWORK_DATA_NODES_AMOUNT); ++k) {

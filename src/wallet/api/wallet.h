@@ -37,6 +37,11 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <algorithm>
+#include <cctype>
+#include <cmath>
+#include <cstdlib> 
+#include <sstream> 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition_variable.hpp>
