@@ -2977,7 +2977,6 @@ std::string WalletImpl::vote_status() {
 }
 
 std::string WalletImpl::revote() {
-{
   // Variables
   std::string public_address;
   std::string reserve_proof;
