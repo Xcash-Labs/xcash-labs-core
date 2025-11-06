@@ -2993,6 +2993,7 @@ std::string WalletImpl::revote() {
   bool ok;
   int startpt;
   int chosen;
+  size_t seed_count = 0;
 
   try {
 
@@ -3167,7 +3168,7 @@ std::string WalletImpl::revote() {
     }
 
     if (vote_total_atomic == vote_amount) {
-      return "No revote needed: Your current vote already covers the requested vote amount"
+      return "No revote needed: Your current vote already covers the requested vote amount";
     }
 
     // Build unsigned JSON
