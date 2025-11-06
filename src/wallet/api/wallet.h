@@ -35,6 +35,8 @@
 #include "wallet/wallet2.h"
 
 #include <string>
+#include <thread>
+#include <chrono>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/condition_variable.hpp>
@@ -251,6 +253,7 @@ private:
     void pendingTxPostProcess(PendingTransactionImpl * pending);
     bool doInit(const std::string &daemon_address, const std::string &proxy_address, uint64_t upper_transaction_size_limit = 0, bool ssl = false);
     bool checkBackgroundSync(const std::string &message) const;
+    std::string get_current_block_verifiers_list();
 
 private:
     friend class PendingTransactionImpl;

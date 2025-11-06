@@ -1631,8 +1631,8 @@ PendingTransaction *WalletImpl::createTransactionMultDest(const std::vector<stri
 }
 
 PendingTransaction *WalletImpl::createTransaction(const string &dst_addr, const string &payment_id, optional<uint64_t> amount, uint32_t mixin_count,
-                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, uint32_t privacy_settings) {
-  return createTransactionMultDest(std::vector<string>{dst_addr}, payment_id, amount ? (std::vector<uint64_t>{*amount}) : (optional<std::vector<uint64_t>>()), mixin_count, priority, subaddr_account, subaddr_indices, uint32_t privacy_settings);
+                                                  PendingTransaction::Priority priority, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, privacy_settings) {
+  return createTransactionMultDest(std::vector<string>{dst_addr}, payment_id, amount ? (std::vector<uint64_t>{*amount}) : (optional<std::vector<uint64_t>>()), mixin_count, priority, subaddr_account, subaddr_indices, privacy_settings);
 }
 
 PendingTransaction *WalletImpl::createSweepUnmixableTransaction()
@@ -2581,7 +2581,7 @@ void sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
   return;
 }
 
-std::string get_current_block_verifiers_list() {
+std::string WalletImpl::get_current_block_verifiers_list() {
   // The macro expects this exact struct + variable name
   sync_minutes_and_seconds(0, 50);
   struct network_data_nodes_list {
@@ -2715,7 +2715,8 @@ std::string WalletImpl::vote(const std::string &value)
     if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
       return "Vote submission failed, Watch-only and multisig wallets cannot be used";
     }
-    if (!try_connect_to_daemon()) {
+
+    if (!connectToDaemon()) { ... }
       return "Failed to send the vote, Failed to connect to the daemon";
     }
 
@@ -2725,13 +2726,12 @@ std::string WalletImpl::vote(const std::string &value)
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      return "You need at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA unlocked in account 0 to vote";
+      return std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA unlocked in account 0 to vote";
     }
 
     // normalize "all"
     auto tolower_str = [](std::string s) {
-      std::transform(s.begin(), s.end(), s.begin(),
-                     [](unsigned char c) { return (unsigned char)std::tolower(c); });
+      std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return (unsigned char)std::tolower(c); });
       return s;
     };
 
@@ -2740,7 +2740,7 @@ std::string WalletImpl::vote(const std::string &value)
 
       // Per-vote minimum
       if (vote_amount < MIN_VOTE_ATOMIC) {
-        return "Each vote must be at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA";
+        return std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA";
       }
     } else {
       uint64_t atomic = 0;
@@ -2755,7 +2755,7 @@ std::string WalletImpl::vote(const std::string &value)
       }
       // Per-vote minimum
       if (atomic < MIN_VOTE_ATOMIC) {
-        return "Each vote must be at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA";
+        return std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA";
       }
       vote_amount = atomic;
     }
@@ -3017,7 +3017,7 @@ std::string WalletImpl::revote() {
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      return "You need at least " << cryptonote::print_money(MIN_VOTE_ATOMIC) << " XCA unlocked in account 0 to vote";
+      return std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA unlocked in account 0 to vote";
     }
 
     vote_amount = unlocked0;
@@ -3075,7 +3075,7 @@ std::string WalletImpl::revote() {
 
     // create a reserve proof for the wallet's chosen amount (single call!)
     try {
-      reserve_proof = m_wallet->get_reserve_proof(boost::make_optional(std::make_pair(0u, vote_amount)), "";
+      reserve_proof = m_wallet->get_reserve_proof(boost::make_optional(std::make_pair(0u, vote_amount)), "");
     } catch (...) {
       return "Failed to create the reserve proof for the revote";
     }
@@ -3122,7 +3122,7 @@ std::string WalletImpl::revote() {
     status_text.clear();
     ok = parse_dpops_response(rbuffer, status_text);
     if (!ok) {
-      return "Failed to send revote, unable to contact seed node: " << status_text; 
+      return std::string("Failed to send revote, unable to contact seed node: ") + status_text;
     }
 
     if (status_text == "No Vote Found") {

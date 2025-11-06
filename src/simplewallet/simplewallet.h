@@ -50,6 +50,8 @@
 #include "common/i18n.h"
 #include "common/password.h"
 #include "crypto/crypto.h"  // for definition of crypto::secret_key
+#include <thread>
+#include <chrono>
 #include "common/send_and_receive_data.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
