@@ -3168,7 +3168,7 @@ std::string WalletImpl::revote() {
     }
 
     if (vote_total_atomic == vote_amount) {
-      message_writer(console_color_green, false) << tr("No revote needed: Your current vote already covers the requested vote amount";
+      return "No revote needed: Your current vote already covers the requested vote amount"
     }
 
     // Build unsigned JSON
