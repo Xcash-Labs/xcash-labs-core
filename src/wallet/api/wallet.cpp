@@ -2495,7 +2495,7 @@ static inline void rstrip_chars(std::string &s, const char *chars = " \r\n|") {
 
 // Accepts: "status|status_text" (trailing '|' / whitespace tolerated)
 // Returns true iff status == 1. Logs MERROR on any failure.
-bool parse_dpops_response(const std::string &rbuffer,
+bool WalletImpl::parse_dpops_response(const std::string &rbuffer,
                           std::string &out_status_text) {
   out_status_text.clear();
 
@@ -2543,7 +2543,7 @@ bool parse_dpops_response(const std::string &rbuffer,
 }
 
 // Always waits until the given MINUTES:SECONDS offset within the *next* block cycle
-void sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
+void WalletImpl::sync_minutes_and_seconds(const int MINUTES, const int SECONDS) {
   using namespace std::chrono;
 
   if (MINUTES >= BLOCK_TIME || SECONDS >= 60 || MINUTES < 0 || SECONDS < 0) {
@@ -2926,7 +2926,7 @@ std::string WalletImpl::vote_status() {
     if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
       return "Vote_status submission failed: This action requires a full-access wallet. Watch-only and multisig wallets cannot be used.";
     }
-    if (!try_connect_to_daemon()) {
+    if (!connectToDaemon()) {
       return "Failed to send vote_status, Could not connect to the daemon";
     }
 
@@ -2999,12 +2999,11 @@ std::string WalletImpl::revote() {
 
     if (m_wallet->key_on_device()) {
       return "Failed to send the revote: Command not supported by HW wallet";
-
     }
     if (m_wallet->watch_only() || m_wallet->get_multisig_status().multisig_is_active) {
       return "This action requires a full-access wallet: Watch-only and multisig wallets cannot be used";
     }
-    if (!try_connect_to_daemon()) {
+    if (!connectToDaemon()) {
       return "Failed to send the revote: Failed to connect to the daemon";
     }
 

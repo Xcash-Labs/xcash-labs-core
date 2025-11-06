@@ -254,6 +254,8 @@ private:
     bool doInit(const std::string &daemon_address, const std::string &proxy_address, uint64_t upper_transaction_size_limit = 0, bool ssl = false);
     bool checkBackgroundSync(const std::string &message) const;
     std::string get_current_block_verifiers_list();
+    bool parse_dpops_response(const std::string &rbuffer, std::string &out_status_text);
+    void sync_minutes_and_seconds(const int MINUTES, const int SECONDS);
 
 private:
     friend class PendingTransactionImpl;
