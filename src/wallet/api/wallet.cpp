@@ -2987,7 +2987,6 @@ std::string WalletImpl::revote() {
   std::string senddata;
   std::string rbuffer;
   std::string status_text;
-  size_t seed_count = 0;
   size_t total_delegates = 0;
   uint64_t vote_amount = 0;
   std::string host;
