@@ -2973,7 +2973,7 @@ std::string WalletImpl::vote_status() {
     return "Failed to send vote_status";
   }
 
-  return std::string "Failed to send vote_status";
+  return "Failed to send vote_status";
 }
 
 std::string WalletImpl::revote() {
@@ -3240,12 +3240,12 @@ std::string WalletImpl::revote() {
     if (ok) {
       return "Revote has been sent successfully";
     } else {
-      return "Failed to send revote, unable to update seed node: " << status_text;
+      return std::string("Failed to send revote, unable to update seed node: ") + status_text;
     }
 
   }
   catch (const std::exception& e) {
-    return "Failed to send revote: " << e.what();
+    return std::string("Failed to send revote: ") + e.what();
   }
   catch (...) {
     return "Failed to send revote";
