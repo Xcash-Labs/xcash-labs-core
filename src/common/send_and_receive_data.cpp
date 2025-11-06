@@ -1,13 +1,11 @@
-#include <boost/asio.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <iostream>
-#include <vector>
-#include <string>
-#include <memory>
+//#include <boost/asio.hpp>
+//#include <boost/asio/steady_timer.hpp>
+//#include <iostream>
+//#include <vector>
+//#include <memory>
 
 #include "common/send_and_receive_data.h"
 #include "common/blocking_tcp_client.h"
-#include "send_and_receive_data.h"
 
 namespace xcash_net {
 
