@@ -4086,10 +4086,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   // Transport-layer errors come back as "0|REASON..."
   if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
     if (is_ban_code(rbuffer.substr(2))) {
-      MWARNING("Error sending trans to DPOPS - buffer: " << rbuffer << " vrf_pubkey:" << pubkey_str);
       msg = std::string("FAILED:") + rbuffer.substr(2);
     } else {
-      MWARNING("Network error, check DPOPS process... retrying");
       msg = std::string("TRANSPORT:") + rbuffer.substr(2);
     }
     return false;
@@ -4215,7 +4213,7 @@ leave:
     goto leave;
   }
 
-  // === BEGIN CUSTOM VRF EXTRA CHECK === jed
+  // === BEGIN CUSTOM VRF EXTRA CHECK ===
   std::vector<cryptonote::tx_extra_field> extra_fields;
   if (!cryptonote::parse_tx_extra(bl.miner_tx.extra, extra_fields)) {
     MERROR_VER("Failed to parse tx_extra in block id: " << id);
@@ -4239,14 +4237,14 @@ leave:
           // Soft / transient issue: do NOT penalize the peer
           MWARNING("Soft / transient issue");
           MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
-          return_txs_to_pool();
+          bvc.m_missing_txs = true;
+          bvc.m_should_be_relayed = false;
           goto leave;
         } else {
           // Hard / semantic failure: mark verification failed
           MWARNING("Hard failure");
           MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
           bvc.m_verifivation_failed = true;
-          return_txs_to_pool();
           goto leave;
         }
       }
@@ -4259,7 +4257,6 @@ leave:
   if (!found_vrf) {
     MERROR_VER("Missing VRF signature in block id: " << id);
     bvc.m_verifivation_failed = true;
-    return_txs_to_pool();
     goto leave;
   }
   // === END CUSTOM VRF EXTRA CHECK ===
