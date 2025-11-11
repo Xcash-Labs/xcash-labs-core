@@ -4080,25 +4080,19 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     << "  \"prev_block_hash\": \"" << epee::string_tools::pod_to_hex(prev_hash) << "\"\r\n"
     << "}";
 
-  const int WAIT_MS  = 3000;  // 3 seconds
   std::string json = o.str();
   std::string rbuffer;
-  for (;;) {
-    rbuffer = xcash_net::send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-    // Transport-layer errors come back as "0|REASON..."
-    if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
-      if (is_ban_code(rbuffer.substr(2))) {
-        MWARNING("Error sending trans to DPOPS - buffer: " << rbuffer << " vrf_pubkey:" << pubkey_str);
-        msg = std::string("FAILED:") + rbuffer.substr(2);
-        return false;
-      } else {
-        msg = std::string("TRANSPORT:") + rbuffer.substr(2);
-        MWARNING("Network error, check DPOPS process... retrying");
-        std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_MS));
-        continue;
-      }
+  rbuffer = xcash_net::send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+  // Transport-layer errors come back as "0|REASON..."
+  if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
+    if (is_ban_code(rbuffer.substr(2))) {
+      MWARNING("Error sending trans to DPOPS - buffer: " << rbuffer << " vrf_pubkey:" << pubkey_str);
+      msg = std::string("FAILED:") + rbuffer.substr(2);
+    } else {
+      MWARNING("Network error, check DPOPS process... retrying");
+      msg = std::string("TRANSPORT:") + rbuffer.substr(2);
     }
-    break;
+    return false;
   }
 
   if (rbuffer.empty()) { // shouldn’t happen with length-prefix, keep just in case
@@ -4245,12 +4239,14 @@ leave:
           // Soft / transient issue: do NOT penalize the peer
           MWARNING("Soft / transient issue");
           MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
+          return_txs_to_pool();
           goto leave;
         } else {
           // Hard / semantic failure: mark verification failed
           MWARNING("Hard failure");
           MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
           bvc.m_verifivation_failed = true;
+          return_txs_to_pool();
           goto leave;
         }
       }
@@ -4263,6 +4259,7 @@ leave:
   if (!found_vrf) {
     MERROR_VER("Missing VRF signature in block id: " << id);
     bvc.m_verifivation_failed = true;
+    return_txs_to_pool();
     goto leave;
   }
   // === END CUSTOM VRF EXTRA CHECK ===
