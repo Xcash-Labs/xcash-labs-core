@@ -4084,9 +4084,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   std::string rbuffer;
   rbuffer = xcash_net::send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
-  MWARNING("************vrf_pubkey:" << pubkey_str);
-  MWARNING("****************rbuffer: " << rbuffer);
-
   // Transport-layer errors come back as "0|REASON..."
   if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
     if (is_ban_code(rbuffer.substr(2))) {
@@ -4095,6 +4092,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
       msg = std::string("TRANSPORT:") + rbuffer.substr(2);
     }
     MERROR("DPOPS transport error: " << msg);
+    MERROR(" vrf_pubkey:" << pubkey_str);
+    MERROR(" rbuffer: " << rbuffer);
     return false;
   }
 
@@ -4240,13 +4239,12 @@ leave:
       if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
         if (!vrf_msg.empty() && vrf_msg.rfind("TRANSPORT:", 0) == 0) {
           // Soft / transient issue: do NOT penalize the peer
-          MWARNING("Soft / transient issue");
-          MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
+          MWARNING("DPOPS VRF verification trans deferred due to transport/network error: " << vrf_msg << " (block id: " << id << ")");
           bvc.m_missing_txs = true;
           goto leave;
         } else {
-          // Hard / semantic failure: mark verification failed
-          MWARNING("Hard failure");
+          // Hard / failure: mark verification failed
+          MWARNING("DPOPS Transaction Failure");
           MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
           bvc.m_verifivation_failed = true;
           goto leave;
