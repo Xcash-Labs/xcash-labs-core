@@ -4238,7 +4238,6 @@ leave:
           MWARNING("Soft / transient issue");
           MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
           bvc.m_missing_txs = true;
-          bvc.m_should_be_relayed = false;
           goto leave;
         } else {
           // Hard / semantic failure: mark verification failed
