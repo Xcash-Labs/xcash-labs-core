@@ -6133,7 +6133,7 @@ WARNING: Do not reuse your Monero keys on another fork, UNLESS this fork has key
     </message>
     <message>
         <location filename="../src/wallet/wallet_rpc_server.cpp" line="4492"/>
-        <source>This is the RPC monero wallet. It needs to connect to a monero
+        <source>This is the RPC xcash wallet. It needs to connect to a monero
 daemon to work correctly.</source>
         <translation type="unfinished"></translation>
     </message>

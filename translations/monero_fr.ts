@@ -6160,7 +6160,7 @@ ATTENTION : Ne réutilisez pas vos clés Monero avec un autre fork, À MOINS QUE
     </message>
     <message>
         <location filename="../src/wallet/wallet_rpc_server.cpp" line="4492"/>
-        <source>This is the RPC monero wallet. It needs to connect to a monero
+        <source>This is the RPC xcash wallet. It needs to connect to a monero
 daemon to work correctly.</source>
         <translation>Ceci est le portefeuille monero par RPC. Il a besoin de se
 connecter à un démon monero pour fonctionner correctement.</translation>
