@@ -2689,6 +2689,7 @@ std::string WalletImpl::vote(const std::string &value)
   std::string host;
   size_t seed_count = 0;
   size_t total_delegates = 0;
+  //size_t total_delegates_valid_amount = 0;
   int chosen;
 
   try {
@@ -2797,9 +2798,9 @@ std::string WalletImpl::vote(const std::string &value)
     }
 
     // Quorum AFTER we know total_delegates
-    total_delegates_valid_amount = static_cast<size_t>(
-      std::ceil(static_cast<double>(total_delegates) *
-                static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
+    //total_delegates_valid_amount = static_cast<size_t>(
+    //  std::ceil(static_cast<double>(total_delegates) *
+    //            static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
     // get the wallet transfers (ensures wallet data is populated)
     m_wallet->get_transfers(transfers);
@@ -3245,27 +3246,22 @@ std::string WalletImpl::revote() {
   return "Failed to send revote";
 }
 
-bool WalletImpl::sweepAllToPrimary()
-{
+bool WalletImpl::sweepAllToPrimary() {
   clearStatus();
 
-  try
-  {
-    // Primary address = the wallet standard address
-    const cryptonote::account_public_address address = m_wallet->get_account().get_keys().m_account_address;
+  try {
+    const cryptonote::account_public_address address =
+        m_wallet->get_account().get_keys().m_account_address;
 
     const bool is_subaddress = false;
-    const size_t outputs = 0;                    // let wallet2 pick optimal output count
-    const size_t fake_outs_count = m_trustedDaemon ? 1 : m_wallet->default_mixin(); 
+    const size_t outputs = 0;
+    const size_t fake_outs_count = trustedDaemon() ? 1 : m_wallet->default_mixin();
     const uint32_t priority = m_wallet->get_default_priority();
-    const std::vector<uint8_t> extra;            // no extra fields
-    const uint32_t subaddr_account = 0;          // sweep from primary account
-    const std::set<uint32_t> subaddr_indices {}; // sweep all subaddresses
-
-    // “below” = 0 sweeps all available unlocked outputs
+    const std::vector<uint8_t> extra;
+    const uint32_t subaddr_account = 0;
+    const std::set<uint32_t> subaddr_indices{};
     const uint64_t below = 0;
 
-    // Create vector to hold results
     std::vector<tools::wallet2::pending_tx> ptx_vector =
         m_wallet->create_transactions_all(
             below,
@@ -3278,23 +3274,21 @@ bool WalletImpl::sweepAllToPrimary()
             subaddr_account,
             subaddr_indices);
 
-    if (ptx_vector.empty())
-    {
+    if (ptx_vector.empty()) {
       setStatusError(tr("Failed to create sweep-all transactions to primary address"));
       return false;
     }
 
-    // Commit them
-    if (!m_wallet->commit_tx(ptx_vector))
-    {
-      setStatusError(tr("Failed to commit sweep-all transactions to primary address"));
+    // commit_tx() returns void in your fork
+    try {
+      m_wallet->commit_tx(ptx_vector);
+    } catch (const std::exception& e) {
+      setStatusError(std::string("commit failed: ") + e.what());
       return false;
     }
 
     return true;
-  }
-  catch (const std::exception &e)
-  {
+  } catch (const std::exception& e) {
     setStatusError(std::string("sweepAllToPrimary exception: ") + e.what());
     return false;
   }
