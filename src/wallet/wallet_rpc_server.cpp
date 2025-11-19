@@ -4506,7 +4506,7 @@ bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS
     if (public_address.length() != XCASH_WALLET_LENGTH ||
       public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
       er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-      er.message = "C Invalid public address, Only XCA addresses are allowed";
+      er.message = "Invalid public address, Only XCA addresses are allowed";
       return false;
     }
 

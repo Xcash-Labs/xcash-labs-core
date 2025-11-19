@@ -1128,6 +1128,8 @@ struct Wallet
 
     virtual std::string revote()  = 0;
 
+    virtual bool sweepAllToPrimary() = 0;
+
     //! cold-device protocol key image sync
     virtual uint64_t coldKeyImageSync(uint64_t &spent, uint64_t &unspent) = 0;
 

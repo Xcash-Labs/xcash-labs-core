@@ -3246,6 +3246,97 @@ std::string WalletImpl::revote() {
   return "Failed to send revote";
 }
 
+bool WalletImpl::sweepAllToPrimary() {
+  clearStatus();
+
+  try {
+    if (!m_wallet) {
+      m_status = Status_Error;
+      m_errorString = tr("wallet not initialized");
+      return false;
+    }
+
+    const uint32_t account = 0;
+    const uint64_t below = 0;  // sweep everything
+
+    // Destination = our own primary address (subaddress 0,0)
+    std::string dst_str = m_wallet->get_subaddress_as_str({account, 0});
+
+    cryptonote::address_parse_info info;
+    if (!cryptonote::get_account_address_from_str(
+            info, m_wallet->nettype(), dst_str)) {
+      m_status = Status_Error;
+      m_errorString = tr("Failed to parse primary address");
+      return false;
+    }
+
+    // Use all subaddresses in account 0
+    std::set<uint32_t> subaddr_indices;
+    const uint32_t num_subs = m_wallet->get_num_subaddresses(account);
+    for (uint32_t i = 0; i < num_subs; ++i)
+      subaddr_indices.insert(i);
+
+    // Defaults for ring size / priority / extra / outputs
+    std::vector<uint8_t> extra;  // no payment id, no extras
+    size_t outputs = 1;          // single destination
+    size_t fake_outs_cnt = m_wallet->get_min_ring_size() - 1;
+    uint64_t mixin = m_wallet->adjust_mixin(fake_outs_cnt);
+    uint32_t priority = m_wallet->adjust_priority(0);  // default priority
+
+    // Same core call as used by sweep_main / sweep_all RPC
+    std::vector<wallet2::pending_tx> ptx_vector =
+        m_wallet->create_transactions_all(
+            below,
+            info.address,
+            info.is_subaddress,
+            outputs,
+            mixin,
+            priority,
+            extra,
+            account,
+            subaddr_indices);
+
+    if (ptx_vector.empty()) {
+      m_status = Status_Error;
+      m_errorString = tr("No outputs found, or daemon is not ready");
+      return false;
+    }
+
+    // Wrap in PendingTransactionImpl so we reuse the standard commit path
+    PendingTransactionImpl* ptx = new PendingTransactionImpl(m_wallet, m_listener);
+    ptx->setPendingTx(ptx_vector);
+
+    if (ptx->status() != PendingTransaction::Status_Ok) {
+      m_status = Status_Error;
+      m_errorString = ptx->errorString();
+      delete ptx;
+      return false;
+    }
+
+    // Commit all transactions now (no extra confirmation layer here)
+    if (!ptx->commit()) {
+      m_status = Status_Error;
+      m_errorString = ptx->errorString();
+      delete ptx;
+      return false;
+    }
+
+    delete ptx;
+
+    m_status = Status_Ok;
+    m_errorString.clear();
+    return true;
+  } catch (const std::exception& e) {
+    m_status = Status_Error;
+    m_errorString = e.what();
+    return false;
+  } catch (...) {
+    m_status = Status_Error;
+    m_errorString = tr("Unknown error");
+    return false;
+  }
+}
+
 void WalletImpl::deviceShowAddress(uint32_t accountIndex, uint32_t addressIndex, const std::string &paymentId) {
   boost::optional<crypto::hash8> payment_id_param = boost::none;
   if (!paymentId.empty()) {

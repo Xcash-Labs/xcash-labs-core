@@ -242,8 +242,9 @@ public:
     virtual uint64_t getBytesReceived() override;
     virtual uint64_t getBytesSent() override;
     virtual std::string vote(const  std::string &value) override;
-    virtual std::string vote_status()  override;
-    virtual std::string revote()  override;
+    virtual std::string vote_status() override;
+    virtual std::string revote() override;
+    virtual bool sweepAllToPrimary() override;
 
 private:
     void clearStatus() const;
