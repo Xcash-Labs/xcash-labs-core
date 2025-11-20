@@ -3253,7 +3253,7 @@ bool WalletImpl::sweepAllToPrimary() {
     const cryptonote::account_public_address address = m_wallet->get_account().get_keys().m_account_address;
     const bool is_subaddress = false;
     const size_t outputs = 1;
-    const size_t fake_outs_count = m_wallet->default_mixin() + 1;
+    const size_t fake_outs_count = m_wallet->get_min_ring_size() - 1,
     const uint32_t priority = m_wallet->get_default_priority();
     const std::vector<uint8_t> extra;
     const uint32_t subaddr_account = 0;
