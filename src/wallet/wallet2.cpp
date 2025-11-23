@@ -13140,15 +13140,15 @@ std::string wallet2::sign(const std::string &data, message_signature_type_t sign
     hash = get_message_hash(data,pkey_spend,pkey_view,mode);
   }
   crypto::generate_signature(hash, pkey, skey, signature);
-  return std::string("SigV2") + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
+  return std::string(XCASH_SIGN_DATA_PREFIX) + tools::base58::encode(std::string((const char *)&signature, sizeof(signature)));
 }
 
 tools::wallet2::message_signature_result_t wallet2::verify(const std::string &data, const cryptonote::account_public_address &address, const std::string &signature) const
 {
   static const size_t v1_header_len = strlen("SigV1");
-  static const size_t v2_header_len = strlen("SigV2");
+  static const size_t v2_header_len = strlen(XCASH_SIGN_DATA_PREFIX);
   const bool v1 = signature.size() >= v1_header_len && signature.substr(0, v1_header_len) == "SigV1";
-  const bool v2 = signature.size() >= v2_header_len && signature.substr(0, v2_header_len) == "SigV2";
+  const bool v2 = signature.size() >= v2_header_len && signature.substr(0, v2_header_len) == XCASH_SIGN_DATA_PREFIX;
   if (!v1 && !v2)
   {
     LOG_PRINT_L0("Signature header check error");
@@ -14965,7 +14965,7 @@ std::string wallet2::make_uri(const std::string &address, const std::string &pay
     return std::string();
   }
 
-  std::string uri = "monero:" + address;
+  std::string uri = "xcash:" + address;
   unsigned int n_fields = 0;
 
   if (!payment_id.empty())
@@ -14994,13 +14994,13 @@ std::string wallet2::make_uri(const std::string &address, const std::string &pay
 //----------------------------------------------------------------------------------------------------
 bool wallet2::parse_uri(const std::string &uri, std::string &address, std::string &payment_id, uint64_t &amount, std::string &tx_description, std::string &recipient_name, std::vector<std::string> &unknown_parameters, std::string &error)
 {
-  if (uri.substr(0, 7) != "monero:")
+  if (uri.substr(0, 6) != "xcash:")
   {
-    error = std::string("URI has wrong scheme (expected \"monero:\"): ") + uri;
+    error = std::string("URI has wrong scheme (expected \"xcash:\"): ") + uri;
     return false;
   }
 
-  std::string remainder = uri.substr(7);
+  std::string remainder = uri.substr(6);
   const char *ptr = strchr(remainder.c_str(), '?');
   address = ptr ? remainder.substr(0, ptr-remainder.c_str()) : remainder;
 
