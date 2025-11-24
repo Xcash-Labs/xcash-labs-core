@@ -2696,10 +2696,10 @@ std::string WalletImpl::vote(const std::string &value)
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCA * COIN;  // COIN = atomic units per XCA
 
-    // value format: "<delegate_or_address>|<All or amount>"
+    // value format: "<delegate_or_address>|<all or amount>"
     const size_t bar = value.find('|');
     if (bar == std::string::npos || bar == 0 || bar + 1 >= value.size()) {
-      return "Invalid format. Use: <delegate_or_address>|<All|amount>";
+      return "Invalid format. Use: <delegate_or_address>|<all|amount>";
     }
 
     name_or_address_arg = value.substr(0, bar);
