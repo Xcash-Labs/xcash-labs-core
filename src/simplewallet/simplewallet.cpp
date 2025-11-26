@@ -7911,7 +7911,7 @@ bool simple_wallet::transfer_main(const std::vector<std::string> &args_, bool ca
 
   // Minimal public-tx guard: exactly one recipient
   if (tx_privacy_settings == "public" && dsts.size() != 1) {
-    fail_msg_writer() << tr("Invalid public transaction: exactly one recipient is required.");
+    fail_msg_writer() << tr("Invalid public transaction: only one recipient is allowed.");
     return false;
   }
 

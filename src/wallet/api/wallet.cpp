@@ -1474,8 +1474,8 @@ PendingTransaction *WalletImpl::createTransactionMultDest(const std::vector<stri
     std::string extra_nonce;
     vector<cryptonote::tx_destination_entry> dsts;
 
-    if (tx_privacy_settings == "public" && amount && dsts.size() != 1) {
-      setStatusError(tr("Invalid public transaction: exactly one destination is required."));
+    if (tx_privacy_settings == "public" && amount && dst_addr.size( != 1) {
+      setStatusError(tr("Invalid public transaction: only one destination is allowed."));
       break;
     }
     if (!amount && dst_addr.size() > 1) {
