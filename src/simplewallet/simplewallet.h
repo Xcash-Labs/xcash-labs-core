@@ -50,8 +50,6 @@
 #include "common/i18n.h"
 #include "common/password.h"
 #include "crypto/crypto.h"  // for definition of crypto::secret_key
-#include <thread>
-#include <chrono>
 #include "common/send_and_receive_data.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
@@ -161,7 +159,7 @@ namespace cryptonote
     bool set_enable_multisig(const std::vector<std::string> &args = std::vector<std::string>());
     bool help(const std::vector<std::string> &args = std::vector<std::string>());
     bool apropos(const std::vector<std::string> &args);
-    bool scan_tx(const std::vector<std::string> &args);;
+    bool scan_tx(const std::vector<std::string> &args);
     bool set_daemon(const std::vector<std::string> &args);
     bool save_bc(const std::vector<std::string> &args);
     bool refresh(const std::vector<std::string> &args);
