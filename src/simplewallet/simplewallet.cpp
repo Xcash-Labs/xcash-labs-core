@@ -4128,7 +4128,9 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
   std::string rbuffer;
   std::string status_text;
 
-  rdln::suspend_readline rl_guard;
+  #ifdef HAVE_READLINE
+    rdln::suspend_readline rl_guard;
+  #endif
 
   try {
     if (args.size() > 0) {
