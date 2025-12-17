@@ -4102,6 +4102,10 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       }
     }
 
+    // Also try local node (The node you are updating might be offline since you have the wallet down)
+    rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+
     // ---- Decide success ----
     if (reply_count >= total_delegates_valid_amount) {
       message_writer(console_color_green, false) << "The delegate's information has been updated successfully";
