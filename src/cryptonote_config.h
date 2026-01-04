@@ -47,18 +47,13 @@
 #define CURRENT_BLOCK_MINOR_VERSION 0
 //#define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT 60 * 60 * 2
 #define CRYPTONOTE_BLOCK_FUTURE_TIME_LIMIT (DIFFICULTY_TARGET_V2 * 60) // ~1h @ 60s target
-//#define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE 10
 #define CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE 20
 
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW 60
+#define MONEY_SUPPLY ((uint64_t)(100000000000000))
 
-// MONEY_SUPPLY - total number coins to be generated
-// #define MONEY_SUPPLY                                    ((uint64_t)(-1))
-// #define EMISSION_SPEED_FACTOR_PER_MINUTE                (20)
-// #define FINAL_SUBSIDY_PER_MINUTE                        ((uint64_t)300000000000) // 3 * pow(10, 11)
-#define MONEY_SUPPLY ((uint64_t)(100000000000000000))
 #define EMISSION_SPEED_FACTOR_PER_MINUTE (30)
-#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)700000) // .7 XCASH per minute
+#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)700000) // .7 XLB per minute
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 60000   // size of block (bytes) after which reward for block calculated using block size
@@ -67,20 +62,19 @@
 #define CRYPTONOTE_LONG_TERM_BLOCK_WEIGHT_WINDOW_SIZE 100000 // size in blocks of the long term block weight median window
 #define CRYPTONOTE_SHORT_TERM_BLOCK_WEIGHT_SURGE_FACTOR 50
 #define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE 600
-// #define CRYPTONOTE_DISPLAY_DECIMAL_POINT                12
 #define CRYPTONOTE_DISPLAY_DECIMAL_POINT 6
 // COIN - number of smallest units in one coin
-// #define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
 #define COIN ((uint64_t)1000000) // pow(10, 6)
 // Policy floors (in atomic units, for 6 decimals)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XCA/kB
-#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XCA/kB
+#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XLB/kB
+#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XLB/kB
 #define FEE_PER_BYTE ((FEE_PER_KB + 1023) / 1024)       // -> 25 atomic/byte
 // Quantization: make rounding granular enough that small txs don’t round to zero
-#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XCA
+#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XLB
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
-#define MIN_VOTE_XCA 4000000ULL                            // minimum amout needed to vote
-#define MIN_PREFUND_XCA 2000000ULL                         // minimum amout needed to register
+jed
+#define MIN_VOTE_XLB 4000000ULL                            // minimum amout needed to vote
+#define MIN_PREFUND_XLB 2000000ULL                         // minimum amout needed to register
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 
 //#define DIFFICULTY_TARGET_V2 120 // seconds
@@ -94,8 +88,6 @@
 #define DIFFICULTY_BLOCKS_COUNT (DIFFICULTY_WINDOW + DIFFICULTY_LAG)
 
 // Mine amount equal to the current outstanding supply
-#define OUTSUPPLY_BLOCK_HEIGHT 1
-#define OUTSUPPLY_BLOCK_REWARD ((uint64_t)(60000000000000000))
 #define XCASH_SIGN_DATA_PREFIX "SigV2" // The prefix for  for the signed data for public transactions
 
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V1 DIFFICULTY_TARGET_V1 *CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS
@@ -204,7 +196,6 @@
 #define HF_VERSION_VIEW_TAGS 15
 #define HF_VERSION_2021_SCALING 15
 
-// #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
 #define PER_KB_FEE_QUANTIZATION_DECIMALS 6
 #define CRYPTONOTE_SCALING_2021_FEE_ROUNDING_PLACES 2
 
@@ -231,14 +222,13 @@
 // New constants are intended to go here
 namespace config
 {
-//  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 500; // Just a placeholder
-  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 2000;    // 0.002 XCA/kB fallback
+  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 2000;    // 0.002 XLB/kB fallback
   uint8_t const FEE_CALCULATION_MAX_RETRIES = 10;
-  //  uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)2000000000); // 2 * pow(10, 9)
-  //  uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)100000000); // pow(10, 8)
   uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)2000);     // 2 * pow(10, 6)
   uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)100); // pow(10, 2)
   uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x5c134;
+
+  
   uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x3fc134;
   uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 42;
   uint16_t const P2P_DEFAULT_PORT = 18280;
@@ -277,7 +267,7 @@ namespace config
   // Multisig
   const uint32_t MULTISIG_MAX_SIGNERS{16};
 
-  // XCASH DPOPS                                                      Need to verify what is no longer used
+  // XCASH LABS DPOPS                                                      Need to verify what is no longer used
   // Network data nodes
   #define NETWORK_DATA_NODES_AMOUNT 4 // The amount of network data nodes
 
@@ -311,8 +301,11 @@ namespace config
   #define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
 
   // Blockchain
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCA address
-  #define XCASH_WALLET_PREFIX "XCA" // The prefix of a XCA address
+  #define XCASH_WALLET_LENGTH 98 // The length of a XLB address
+  #define XCASH_WALLET_PREFIX "XLB" // The prefix of a XLB address
+
+
+
   #define BLOCK_VERIFIERS_TOTAL_AMOUNT 55 // The total amount of block verifiers
   #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
   #define BLOCK_VERIFIERS_MIN_AMOUNT 4 // The amount of block verifiers that need to vote true for the part of the round to be valid.
