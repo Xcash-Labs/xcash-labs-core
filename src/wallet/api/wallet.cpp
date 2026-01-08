@@ -2694,7 +2694,7 @@ std::string WalletImpl::vote(const std::string &value)
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XLB * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
 
     // value format: "<delegate_or_address>|<all or amount>"
     const size_t bar = value.find('|');
@@ -3000,7 +3000,7 @@ std::string WalletImpl::revote() {
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XLB * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
 
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);

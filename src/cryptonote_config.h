@@ -52,8 +52,8 @@
 #define BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW 60
 #define MONEY_SUPPLY ((uint64_t)(100000000000000))
 
-#define EMISSION_SPEED_FACTOR_PER_MINUTE (30)
-#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)700000) // .7 XLB per minute
+#define EMISSION_SPEED_FACTOR_PER_MINUTE (21)
+#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)700000) // .7 XCS per minute
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 60000   // size of block (bytes) after which reward for block calculated using block size
@@ -66,21 +66,18 @@
 // COIN - number of smallest units in one coin
 #define COIN ((uint64_t)1000000) // pow(10, 6)
 // Policy floors (in atomic units, for 6 decimals)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XLB/kB
-#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XLB/kB
+#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XCS/kB
+#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XCS/kB
 #define FEE_PER_BYTE ((FEE_PER_KB + 1023) / 1024)       // -> 25 atomic/byte
 // Quantization: make rounding granular enough that small txs don’t round to zero
-#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XLB
+#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XCS
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
-#define MIN_VOTE_XLB 4000000ULL                            // minimum amout needed to vote
-#define MIN_PREFUND_XLB 2000000ULL                         // minimum amout needed to register
+#define MIN_VOTE_XCS 4000000ULL                            // minimum amout needed to vote
+#define MIN_PREFUND_XCS 2000000ULL                         // minimum amout needed to register
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 
-//#define DIFFICULTY_TARGET_V2 120 // seconds
 #define DIFFICULTY_TARGET_V2 60  // for dpops
-
 #define DIFFICULTY_TARGET_V1 60  // seconds - before first fork
-//#define DIFFICULTY_WINDOW 720  // blocks
 #define DIFFICULTY_WINDOW 1440   // 1440 @ 60s ≈ 1 day of samples
 #define DIFFICULTY_LAG 15        // !!!
 #define DIFFICULTY_CUT 60        // timestamps to cut after sorting
@@ -93,7 +90,6 @@
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_SECONDS_V2 (DIFFICULTY_TARGET_V2 * CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS)
 #define CRYPTONOTE_LOCKED_TX_ALLOWED_DELTA_BLOCKS 1
 
-//#define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN DIFFICULTY_TARGET_V1 // just alias; used by tests
 #define DIFFICULTY_BLOCKS_ESTIMATE_TIMESPAN DIFFICULTY_TARGET_V2 // just alias; used by tests
 
 #define BLOCKS_IDS_SYNCHRONIZING_DEFAULT_COUNT 10000  // by default, blocks ids count in synchronizing
@@ -221,13 +217,13 @@
 // New constants are intended to go here
 namespace config
 {
-  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 2000;    // 0.002 XLB/kB fallback
+  uint64_t const DEFAULT_FEE_ATOMIC_XMR_PER_KB = 2000;    // 0.002 XCS/kB fallback
   uint8_t const FEE_CALCULATION_MAX_RETRIES = 10;
   uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)2000);     // 2 * pow(10, 6)
   uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)100); // pow(10, 2)
-  uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x2b35;  // XLB
-  uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x3235;  // XLi
-  uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 0x3435;  // XLs
+  uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x1784b4; // XCS
+  uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x3fc134; // XCB
+  uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 42;
   uint16_t const P2P_DEFAULT_PORT = 18280;
   uint16_t const RPC_DEFAULT_PORT = 18281;
   uint16_t const ZMQ_RPC_DEFAULT_PORT = 18282;
@@ -298,10 +294,8 @@ namespace config
   #define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
 
   // Blockchain
-  #define XCASH_WALLET_LENGTH 98 // The length of a XLB address
-  #define XCASH_WALLET_PREFIX "XLB" // The prefix of a XLB address
-
-
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCS address
+  #define XCASH_WALLET_PREFIX "XCS"
 
   #define BLOCK_VERIFIERS_TOTAL_AMOUNT 55 // The total amount of block verifiers
   #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round

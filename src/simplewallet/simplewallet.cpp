@@ -3247,7 +3247,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XLB * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
 
     std::string amount_arg = args[1];
     uint64_t vote_amount = 0;
@@ -3522,7 +3522,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XLB * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XCS * COIN;  // COIN = atomic units per XCA
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
@@ -4246,7 +4246,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XLB * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
 
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
