@@ -2694,7 +2694,7 @@ std::string WalletImpl::vote(const std::string &value)
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCS
 
     // value format: "<delegate_or_address>|<all or amount>"
     const size_t bar = value.find('|');
@@ -2722,7 +2722,7 @@ std::string WalletImpl::vote(const std::string &value)
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      return std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA unlocked in account 0 to vote";
+      return std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCS unlocked in account 0 to vote";
     }
 
     // normalize "all"
@@ -2736,7 +2736,7 @@ std::string WalletImpl::vote(const std::string &value)
 
       // Per-vote minimum
       if (vote_amount < MIN_VOTE_ATOMIC) {
-        return std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA";
+        return std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCS";
       }
     } else {
       uint64_t atomic = 0;
@@ -2751,7 +2751,7 @@ std::string WalletImpl::vote(const std::string &value)
       }
       // Per-vote minimum
       if (atomic < MIN_VOTE_ATOMIC) {
-        return std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA";
+        return std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCS";
       }
       vote_amount = atomic;
     }
@@ -2809,7 +2809,7 @@ std::string WalletImpl::vote(const std::string &value)
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      return "Failed to send the vote, Only XCA addresses are allowed";
+      return "Failed to send the vote, Only XCS addresses are allowed";
     }
 
     // create a reserve proof for the wallet's chosen amount (single call!)
@@ -2931,7 +2931,7 @@ std::string WalletImpl::vote_status() {
     std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      return "Failed to send vote_status, Invalid public address - Only XCA addresses are allowed";
+      return "Failed to send vote_status, Invalid public address - Only XCS addresses are allowed";
     }
 
     // Build unsigned JSON
@@ -3000,7 +3000,7 @@ std::string WalletImpl::revote() {
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCS
 
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
@@ -3008,7 +3008,7 @@ std::string WalletImpl::revote() {
 
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
-      return std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCA unlocked in account 0 to vote";
+      return std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + " XCS unlocked in account 0 to vote";
     }
 
     vote_amount = unlocked0;
@@ -3061,7 +3061,7 @@ std::string WalletImpl::revote() {
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      return "Failed to send the revote:Invalid public address. Only XCA addresses are allowed.";
+      return "Failed to send the revote:Invalid public address. Only XCS addresses are allowed.";
     }
 
     // create a reserve proof for the wallet's chosen amount (single call!)

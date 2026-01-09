@@ -4210,7 +4210,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCS
 
     // value format: "<delegate_or_address>|<All or amount>"
     const std::string& input = req.delegate_data;
@@ -4248,7 +4248,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_UNLOCKED_MONEY; 
-      er.message = std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCA unlocked in account 0 to vote");
+      er.message = std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCS unlocked in account 0 to vote");
       return false;
     }
 
@@ -4265,7 +4265,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       // Per-vote minimum
       if (vote_amount < MIN_VOTE_ATOMIC) {
         er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_UNLOCKED_MONEY; 
-        er.message = std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCA");
+        er.message = std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCS");
         return false;       
       }
     } else {
@@ -4288,7 +4288,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
       // Per-vote minimum
       if (atomic < MIN_VOTE_ATOMIC) {  
         er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_UNLOCKED_MONEY; 
-        er.message = std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCA");
+        er.message = std::string("Each vote must be at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCS");
         return false;         
       }
       vote_amount = atomic;
@@ -4355,7 +4355,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
       er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-      er.message = "Failed to send the vote, Only XCA addresses are allowed";
+      er.message = "Failed to send the vote, Only XCS addresses are allowed";
       return false; 
 
     }
@@ -4506,7 +4506,7 @@ bool wallet_rpc_server::on_vote_status(const wallet_rpc::COMMAND_RPC_VOTE_STATUS
     if (public_address.length() != XCASH_WALLET_LENGTH ||
       public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
       er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-      er.message = "Invalid public address, Only XCA addresses are allowed";
+      er.message = "Invalid public address, Only XCS addresses are allowed";
       return false;
     }
 
@@ -4587,7 +4587,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCA
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCS
 
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
@@ -4596,7 +4596,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
       er.code = WALLET_RPC_ERROR_CODE_NOT_ENOUGH_UNLOCKED_MONEY; 
-      er.message = std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCA unlocked in account 0 to revote");
+      er.message = std::string("You need at least ") + cryptonote::print_money(MIN_VOTE_ATOMIC) + std::string(" XCS unlocked in account 0 to revote");
       return false;
     }
 
@@ -4663,7 +4663,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
       er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
-      er.message = "Failed to send the revote, Only XCA addresses are allowed";
+      er.message = "Failed to send the revote, Only XCS addresses are allowed";
       return false;
     }
 
