@@ -3806,7 +3806,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     auto validate_pair = [&](const std::string &key, const std::string &val) -> bool {
       if (!kAllowedFields.count(key)) {
         fail_msg_writer() << tr("Failed to update the delegate\nInvalid item: ") << key
-                          << tr(". Valid: IP_address, about, website, team, shared_delegate_status, delegate_fee, server_specs", minimum_payout");
+                          << tr(". Valid: IP_address, about, website, team, shared_delegate_status, delegate_fee, server_specs, minimum_payout");
         return false;
       }
       if (key == "IP_address") {
