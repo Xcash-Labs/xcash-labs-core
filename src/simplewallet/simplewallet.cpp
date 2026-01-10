@@ -3756,6 +3756,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
   size_t total_delegates_valid_amount = 0;
   size_t reply_count = 0;
   size_t seed_count = 0;
+  int64_t minimum_payout = 0;
 
   try {
     // Require at least one field=value
@@ -3766,7 +3767,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
 
     // ---- Allowed fields ----
     static const std::unordered_set<std::string> kAllowedFields = {
-        "IP_address", "about", "website", "team", "shared_delegate_status", "delegate_fee", "server_specs"};
+        "IP_address", "about", "website", "team", "shared_delegate_status", "delegate_fee", "server_specs", "minimum_payout"};
 
     // ---- Helpers ----
     auto json_escape = [](const std::string &s) {
@@ -3805,7 +3806,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     auto validate_pair = [&](const std::string &key, const std::string &val) -> bool {
       if (!kAllowedFields.count(key)) {
         fail_msg_writer() << tr("Failed to update the delegate\nInvalid item: ") << key
-                          << tr(". Valid: IP_address, about, website, team, shared_delegate_status, delegate_fee, server_specs");
+                          << tr(". Valid: IP_address, about, website, team, shared_delegate_status, delegate_fee, server_specs", minimum_payout");
         return false;
       }
       if (key == "IP_address") {
@@ -3843,6 +3844,26 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           fail_msg_writer() << tr("Invalid 'server_specs'. Max length 255");
           return false;
         }
+      } else if (key == "minimum_payout") {
+        // Must be an integer 1..10000
+        // Disallow decimals, whitespace, etc.
+        minimum_payout = 0;
+        if (val.empty() || val.size() > 20) {
+          fail_msg_writer() << tr("Invalid 'minimum_payout'. Must be 1-10000");
+          return false;
+        }
+        char* endp = nullptr;
+        errno = 0;
+        long long tmp = std::strtoll(val.c_str(), &endp, 10);
+        if (errno != 0 || endp == val.c_str() || *endp != '\0') {
+          fail_msg_writer() << tr("Invalid 'minimum_payout'. Must be a whole number 1-10000");
+          return false;
+        }
+        if (tmp < 1 || tmp > 10000) {
+          fail_msg_writer() << tr("Invalid 'minimum_payout'. Must be 1-10000");
+          return false;
+        }
+        minimum_payout = (int64_t)tmp;
       }
       return true;
     };
@@ -3935,6 +3956,10 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         val = std::to_string(fee_bp);  // e.g., "5.50" -> "550"
       }
 
+      if (key == "minimum_payout") {
+        val = std::to_string(minimum_payout);
+      }
+
       updates.emplace_back(std::move(key), std::move(val));
     }
 
@@ -4025,12 +4050,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       const auto &v = updates[i].second;
 
       o << "    \"" << k << "\": ";
-      if (k == "delegate_fee") {
-        // Write as a JSON number (already scaled to integer, contains only digits)
-        o << v;
-      } else {
-        o << "\"" << json_escape(v) << "\"";
-      }
+      o << "\"" << json_escape(v) << "\"";
 
       if (i + 1 < updates.size()) o << ",";
       o << "\r\n";
