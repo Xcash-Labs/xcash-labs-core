@@ -3525,12 +3525,12 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XCS * COIN;  // COIN = atomic units per XCS
 
     // Wallet-level minimum gate
-    if (unlocked0 < MIN_VOTE_ATOMIC) {
-      fail_msg_writer() << tr("You need to prefund at least ")
-                        << cryptonote::print_money(MIN_VOTE_ATOMIC)
-                        << tr(" XCS unlocked in account 0 to register as a delegate");
-      return true;
-    }
+    //if (unlocked0 < MIN_VOTE_ATOMIC) {
+    //  fail_msg_writer() << tr("You need to prefund at least ")
+    //                    << cryptonote::print_money(MIN_VOTE_ATOMIC)
+    //                    << tr(" XCS unlocked in account 0 to register as a delegate");
+    //  return true;
+    //}
 
     // get the current block verifiers list
     response_json = get_current_block_verifiers_list();
