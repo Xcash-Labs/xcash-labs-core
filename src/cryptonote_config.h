@@ -53,7 +53,7 @@
 #define MONEY_SUPPLY ((uint64_t)(100000000000000))
 
 #define EMISSION_SPEED_FACTOR_PER_MINUTE (21)
-#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)700000) // .7 XCZ per minute
+#define FINAL_SUBSIDY_PER_MINUTE ((uint64_t)700000) // .7 XCK per minute
 
 #define CRYPTONOTE_REWARD_BLOCKS_WINDOW 100
 #define CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 60000   // size of block (bytes) after which reward for block calculated using block size
@@ -66,11 +66,11 @@
 // COIN - number of smallest units in one coin
 #define COIN ((uint64_t)1000000) // pow(10, 6)
 // Policy floors (in atomic units, for 6 decimals)
-#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XCZ/kB
-#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XCZ/kB
+#define DYNAMIC_FEE_PER_KB_BASE_FEE ((uint64_t)25000)   // 0.025 XCK/kB
+#define FEE_PER_KB   ((uint64_t)25000)                  // 0.025 XCK/kB
 #define FEE_PER_BYTE ((FEE_PER_KB + 1023) / 1024)       // -> 25 atomic/byte
 // Quantization: make rounding granular enough that small txs don’t round to zero
-#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XCZ
+#define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XCK
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
 
 // Need to adjust
@@ -222,7 +222,7 @@ namespace config
   uint8_t const FEE_CALCULATION_MAX_RETRIES = 10;
   uint64_t const DEFAULT_DUST_THRESHOLD = ((uint64_t)2000);     // 2 * pow(10, 6)
   uint64_t const BASE_REWARD_CLAMP_THRESHOLD = ((uint64_t)100); // pow(10, 2)
-  uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0x46b4; // XCZ
+  uint64_t const CRYPTONOTE_PUBLIC_ADDRESS_BASE58_PREFIX = 0xbc334; // XCK
   uint64_t const CRYPTONOTE_PUBLIC_INTEGRATED_ADDRESS_BASE58_PREFIX = 0x3fc134; // XCB
   uint64_t const CRYPTONOTE_PUBLIC_SUBADDRESS_BASE58_PREFIX = 42;
   uint16_t const P2P_DEFAULT_PORT = 18280;
@@ -295,8 +295,8 @@ namespace config
   #define SOCKET_CONNECTION_MAXIMUM_BUFFER_SETTINGS 10000 // The maximum time in milliseconds, to wait before sending the data at the start time interval, since not all servers will have the same time
 
   // Blockchain
-  #define XCASH_WALLET_LENGTH 98 // The length of a XCZ address
-  #define XCASH_WALLET_PREFIX "XCZ"
+  #define XCASH_WALLET_LENGTH 98 // The length of a XCK address
+  #define XCASH_WALLET_PREFIX "XCK"
 
   #define BLOCK_VERIFIERS_TOTAL_AMOUNT 55 // The total amount of block verifiers
   #define BLOCK_VERIFIERS_AMOUNT 50 // The amount of block verifiers in a round
