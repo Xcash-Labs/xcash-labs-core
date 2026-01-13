@@ -535,7 +535,7 @@ namespace cryptonote
 
       std::string msg;
       {
-        static const char* DOMAIN = "XCS-PUBLIC-TX-v1";
+        static const char* DOMAIN = "XCZ-PUBLIC-TX-v1";
         msg.append(DOMAIN, std::strlen(DOMAIN));
 
         // Bind to THIS tx via R (taken from tx, not payload)

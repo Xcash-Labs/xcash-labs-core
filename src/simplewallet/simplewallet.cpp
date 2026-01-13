@@ -3247,7 +3247,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCS
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCZ * COIN;  // COIN = atomic units per XCZ
 
     std::string amount_arg = args[1];
     uint64_t vote_amount = 0;
@@ -3259,7 +3259,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     if (unlocked0 < MIN_VOTE_ATOMIC) {
       fail_msg_writer() << tr("You need at least ")
                         << cryptonote::print_money(MIN_VOTE_ATOMIC)
-                        << tr(" XCS unlocked in account 0 to vote");
+                        << tr(" XCZ unlocked in account 0 to vote");
       return true;
     }
 
@@ -3277,7 +3277,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       if (vote_amount < MIN_VOTE_ATOMIC) {
         fail_msg_writer() << tr("Each vote must be at least ")
                         << cryptonote::print_money(MIN_VOTE_ATOMIC)
-                        << tr(" XCS");
+                        << tr(" XCZ");
         return true;
       }
     } else {
@@ -3298,7 +3298,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
       if (atomic < MIN_VOTE_ATOMIC) {
         fail_msg_writer() << tr("Each vote must be at least ")
                         << cryptonote::print_money(MIN_VOTE_ATOMIC)
-                        << tr(" XCS");
+                        << tr(" XCZ");
         return true;
       }
       vote_amount = atomic;
@@ -3359,7 +3359,7 @@ bool simple_wallet::vote(const std::vector<std::string>& args)
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCS addresses are allowed.");
+      fail_msg_writer() << tr("Failed to send the vote\nInvalid public address. Only XCZ addresses are allowed.");
       return true;
     }
 
@@ -3522,13 +3522,13 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XCS * COIN;  // COIN = atomic units per XCS
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XCZ * COIN;  // COIN = atomic units per XCZ
 
     // Wallet-level minimum gate
     //if (unlocked0 < MIN_VOTE_ATOMIC) {
     //  fail_msg_writer() << tr("You need to prefund at least ")
     //                    << cryptonote::print_money(MIN_VOTE_ATOMIC)
-    //                    << tr(" XCS unlocked in account 0 to register as a delegate");
+    //                    << tr(" XCZ unlocked in account 0 to register as a delegate");
     //  return true;
     //}
 
@@ -3598,7 +3598,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCS addresses are allowed.");
+      fail_msg_writer() << tr("Failed to register the delegate\nInvalid public address. Only XCZ addresses are allowed.");
       return true;
     }
 
@@ -4033,7 +4033,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to update the delegate\nInvalid public address. Only XCS addresses are allowed.");
+      fail_msg_writer() << tr("Failed to update the delegate\nInvalid public address. Only XCZ addresses are allowed.");
       return true;
     }
 
@@ -4182,7 +4182,7 @@ bool simple_wallet::vote_status(const std::vector<std::string> &args) {
     std::string public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address - Only XCS addresses are allowed");
+      fail_msg_writer() << tr("Failed to send vote_status\nInvalid public address - Only XCZ addresses are allowed");
       return true;
     }
 
@@ -4266,7 +4266,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCS * COIN;  // COIN = atomic units per XCS
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCZ * COIN;  // COIN = atomic units per XCZ
 
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
@@ -4275,7 +4275,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     if (unlocked0 < MIN_VOTE_ATOMIC) {
       fail_msg_writer() << tr("You need at least ")
                         << cryptonote::print_money(MIN_VOTE_ATOMIC)
-                        << tr(" XCS unlocked in account 0 to revote");
+                        << tr(" XCZ unlocked in account 0 to revote");
       return true;
       return true;
     }
@@ -4339,7 +4339,7 @@ bool simple_wallet::revote(const std::vector<std::string>& args)
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
-      fail_msg_writer() << tr("Failed to send the revote\nInvalid public address. Only XCS addresses are allowed.");
+      fail_msg_writer() << tr("Failed to send the revote\nInvalid public address. Only XCZ addresses are allowed.");
       return true;
     }
 
