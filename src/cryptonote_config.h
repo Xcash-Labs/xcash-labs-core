@@ -72,7 +72,11 @@
 // Quantization: make rounding granular enough that small txs don’t round to zero
 #define FEE_QUANTIZATION_MASK ((uint64_t)100)           // round to 0.000100 XCS
 #define DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT ((uint64_t)3000)
-#define MIN_PREFUND_XCS 100ULL                         // minimum amout needed to register
+
+// Need to adjust
+
+#define MIN_VOTE_XCS 100ULL                            // minimum amout needed to vote
+#define MIN_PREFUND_XCS 1000ULL                        // minimum amout needed to register
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 #define DIFFICULTY_TARGET_V2 60  // for dpops
 #define DIFFICULTY_TARGET_V1 60  // seconds - before first fork
