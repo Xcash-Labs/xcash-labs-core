@@ -3567,98 +3567,24 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     std::string ip_list = response_json.substr(start, end - start);
 
     // Split by '|'
-//    {
-//      std::istringstream ss(ip_list);
-//      std::string ip;
-//      total_delegates = 0;
-//      while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-//        if (!ip.empty()) {
-//          block_verifiers_IP_address[total_delegates++] = ip;
-//        }
-//      }
-//    }
-
-//    if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-//      total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
-//    }
-//    if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
-//      fail_msg_writer() << tr("Failed to register the delegate, minimum number of delegates not online");
-//      return true;
-//    }
-
-
-// Debug helper (use whatever logging macro you already have)
-auto DBG = [&](const std::string& s) {
-  std::cout << "[delegate-reg] " << s << std::endl;
-};
-
-DBG("BLOCK_VERIFIERS_TOTAL_AMOUNT=" + std::to_string(BLOCK_VERIFIERS_TOTAL_AMOUNT) +
-    " BLOCK_VERIFIERS_MIN_AMOUNT=" + std::to_string(BLOCK_VERIFIERS_MIN_AMOUNT));
-
-DBG("Raw ip_list: '" + ip_list + "'");
-DBG("Raw ip_list length: " + std::to_string(ip_list.size()));
-
-// Split by '|'
-{
-  std::istringstream ss(ip_list);
-  std::string ip;
-  total_delegates = 0;
-
-  int token_index = 0;
-  while (std::getline(ss, ip, '|')) {
-    DBG("Token[" + std::to_string(token_index++) + "] raw='" + ip +
-        "' (len=" + std::to_string(ip.size()) + ")");
-
-    if (total_delegates >= BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-      DBG("Reached BLOCK_VERIFIERS_TOTAL_AMOUNT cap, ignoring remaining tokens");
-      break;
+    {
+      std::istringstream ss(ip_list);
+      std::string ip;
+      total_delegates = 0;
+      while (std::getline(ss, ip, '|') && total_delegates < BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+        if (!ip.empty()) {
+          block_verifiers_IP_address[total_delegates++] = ip;
+        }
+      }
     }
 
-    if (ip.empty()) {
-      DBG("Skipping empty token");
-      continue;
+    if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
+      total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
     }
-
-    // Optional: trim spaces (common gotcha if list has "ip | ip")
-    // If you don't want trimming, remove this block.
-    auto is_ws = [](unsigned char c){ return std::isspace(c) != 0; };
-    while (!ip.empty() && is_ws((unsigned char)ip.front())) ip.erase(ip.begin());
-    while (!ip.empty() && is_ws((unsigned char)ip.back())) ip.pop_back();
-
-    if (ip.empty()) {
-      DBG("Skipping token that became empty after trim");
-      continue;
+    if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
+      fail_msg_writer() << tr("Failed to register the delegate, minimum number of delegates not online");
+      return true;
     }
-
-    // Optional: sanity check formatting (very light)
-    if (ip.find_first_not_of("0123456789.:abcdefABCDEF[]") != std::string::npos) {
-      DBG("WARNING: token contains unexpected characters: '" + ip + "'");
-    }
-
-    DBG("Accepting IP[" + std::to_string(total_delegates) + "]='" + ip + "'");
-    block_verifiers_IP_address[total_delegates++] = ip;
-  }
-
-  DBG("Finished parsing. total_delegates=" + std::to_string(total_delegates));
-}
-
-// This if is actually redundant because the while loop prevents overflow,
-// but keep it if you want belt-and-suspenders.
-if (total_delegates > BLOCK_VERIFIERS_TOTAL_AMOUNT) {
-  DBG("Clamping total_delegates from " + std::to_string(total_delegates) +
-      " to " + std::to_string(BLOCK_VERIFIERS_TOTAL_AMOUNT));
-  total_delegates = BLOCK_VERIFIERS_TOTAL_AMOUNT;
-}
-
-if (total_delegates < BLOCK_VERIFIERS_MIN_AMOUNT) {
-  DBG("FAIL: total_delegates(" + std::to_string(total_delegates) +
-      ") < BLOCK_VERIFIERS_MIN_AMOUNT(" + std::to_string(BLOCK_VERIFIERS_MIN_AMOUNT) + ")");
-  fail_msg_writer() << tr("Failed to register the delegate, minimum number of delegates not online");
-  return true;
-}
-
-DBG("PASS: total_delegates(" + std::to_string(total_delegates) + ") meets minimum.");
-
 
     // Quorum AFTER we know total_delegates
     total_delegates_valid_amount = static_cast<size_t>(
