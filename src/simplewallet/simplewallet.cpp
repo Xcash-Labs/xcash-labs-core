@@ -3744,7 +3744,6 @@ static bool parse_delegate_fee_0_100_2dp(const std::string& s, double& out) {
 }
 
 bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
-#define PARAMETER_AMOUNT 2
   std::string response_json;
   std::string senddata;
   std::string rbuffer;
@@ -3767,7 +3766,9 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
 
     // ---- Allowed fields ----
     static const std::unordered_set<std::string> kAllowedFields = {
-        "IP_address", "about", "website", "team", "shared_delegate_status", "delegate_fee", "server_specs", "minimum_payout"};
+      "IP_address", "about", "website", "team", "shared_delegate_status",
+      "solo_addresses", "delegate_fee", "server_specs", "minimum_payout"};
+
 
     // ---- Helpers ----
     auto json_escape = [](const std::string &s) {
@@ -3806,7 +3807,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
     auto validate_pair = [&](const std::string &key, const std::string &val) -> bool {
       if (!kAllowedFields.count(key)) {
         fail_msg_writer() << tr("Failed to update the delegate\nInvalid item: ") << key
-                          << tr(". Valid: IP_address, about, website, team, shared_delegate_status, delegate_fee, server_specs, minimum_payout");
+                          << tr(". Valid: IP_address, about, website, team, shared_delegate_status, solo_addresses, delegate_fee, server_specs, minimum_payout");
         return false;
       }
       if (key == "IP_address") {
@@ -3830,8 +3831,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
       } else if (key == "shared_delegate_status") {
-        if (!(val == "shared")) {
-          fail_msg_writer() << tr("Invalid shared_delegate_status. Must be: shared");
+        if ( !(val == "shared") && !(val == "solo") ) {
+          fail_msg_writer() << tr("Invalid shared_delegate_status. Must be: shared or solo");
           return false;
         }
       } else if (key == "delegate_fee") {
@@ -3864,7 +3865,29 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
           return false;
         }
         minimum_payout = (int64_t)tmp;
+      } else if (key == "solo_addresses") {
+        // blank ok
+        if (!val.empty()) {
+          if (val.size() > (10 * (XCASH_WALLET_LENGTH + 9))) {
+            fail_msg_writer() << tr("Invalid solo_addresses (too long).");
+            return false;
+          }
+          if (val.find_first_of(" \t\r\n") != std::string::npos) {
+            fail_msg_writer() << tr("Invalid solo_addresses. No spaces allowed.");
+            return false;
+          }
+          if (val.front() == ',' || val.back() == ',' || val.find(",,") != std::string::npos) {
+            fail_msg_writer() << tr("Invalid solo_addresses. Bad comma formatting.");
+            return false;
+          }
+          size_t commas = std::count(val.begin(), val.end(), ',');
+          if (commas + 1 > 10) {
+            fail_msg_writer() << tr("Invalid solo_addresses. Max 10 addresses.");
+            return false;
+          }
+        }
       }
+
       return true;
     };
 
@@ -4029,7 +4052,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
                   static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
     // ---- Wallet address ----
-    m_wallet->get_transfers(transfers);
+    // jed m_wallet->get_transfers(transfers);
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
@@ -4143,7 +4166,6 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
   }
 
   return true;
-#undef PARAMETER_AMOUNT
 }
 
 bool simple_wallet::vote_status(const std::vector<std::string> &args) {
