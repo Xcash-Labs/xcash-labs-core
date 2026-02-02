@@ -3868,7 +3868,8 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
       } else if (key == "solo_addresses") {
         // blank ok
         if (!val.empty()) {
-          if (val.size() > (10 * (XCASH_WALLET_LENGTH + 9))) {
+          const size_t max_csv = (10 * XCASH_WALLET_LENGTH) + 9;
+          if (val.size() > max_csv) {
             fail_msg_writer() << tr("Invalid solo_addresses (too long).");
             return false;
           }
@@ -3941,7 +3942,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
         // Even if not closed, push merged; we'll flag unterminated quotes later.
         out.push_back(std::move(merged));
         if (!closed) {
-          MWARNING("delegate_register: Unterminated quote token");
+          MWARNING("update_delegate: Unterminated quote token");
         }
       }
       return out;
@@ -4052,7 +4053,7 @@ bool simple_wallet::delegate_update(const std::vector<std::string> &args) {
                   static_cast<double>(BLOCK_VERIFIERS_VALID_AMOUNT_PERCENTAGE)));
 
     // ---- Wallet address ----
-    // jed m_wallet->get_transfers(transfers);
+    // m_wallet->get_transfers(transfers);
     public_address = m_wallet->get_subaddress_as_str({0, 0});
     if (public_address.length() != XCASH_WALLET_LENGTH ||
         public_address.substr(0, sizeof(XCASH_WALLET_PREFIX) - 1) != XCASH_WALLET_PREFIX) {
