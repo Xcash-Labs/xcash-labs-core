@@ -4210,7 +4210,7 @@ bool wallet_rpc_server::on_vote(const wallet_rpc::COMMAND_RPC_VOTE::request& req
 
   try {
   // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCZ * COIN;  // COIN = atomic units per XCK
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_COIN * COIN;  // COIN = atomic units per XCK
 
     // value format: "<delegate_or_address>|<All or amount>"
     const std::string& input = req.delegate_data;
@@ -4587,7 +4587,7 @@ bool wallet_rpc_server::on_revote(const wallet_rpc::COMMAND_RPC_REVOTE::request&
     }
 
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
-    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_XCZ * COIN;  // COIN = atomic units per XCK
+    static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_VOTE_COIN * COIN;  // COIN = atomic units per XCK
 
     // Cache unlocked balance (account 0, strict)
     const uint64_t unlocked0 = m_wallet->unlocked_balance(/*major=*/0, /*strict=*/true, nullptr, nullptr);
