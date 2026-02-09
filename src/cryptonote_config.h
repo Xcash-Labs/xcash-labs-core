@@ -75,7 +75,7 @@
 
 // Need to adjust
 
-#define MIN_VOTE_COIN 500ULL                           // minimum amout needed to vote
+#define MIN_VOTE_COIN 50ULL                           // minimum amout needed to vote
 #define MIN_PREFUND_XCZ 1000ULL                        // minimum amout needed to register
 #define ORPHANED_BLOCKS_MAX_COUNT 100
 #define DIFFICULTY_TARGET_V2 60  // for dpops
