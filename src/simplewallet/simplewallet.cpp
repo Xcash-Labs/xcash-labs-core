@@ -3524,7 +3524,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     // --- Voting amount parsing with wallet+per-vote minimums (account 0 only) ---
     static constexpr uint64_t MIN_VOTE_ATOMIC = MIN_PREFUND_XCZ * COIN;  // COIN = atomic units per XCK
 
-     Wallet-level minimum gate
+    // Wallet-level minimum gate
     if (unlocked0 < MIN_VOTE_ATOMIC) {
       fail_msg_writer() << tr("You need to prefund at least ")
                         << cryptonote::print_money(MIN_VOTE_ATOMIC)
