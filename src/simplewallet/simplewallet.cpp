@@ -3678,11 +3678,34 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
     }
 
-    if (reply_count >= total_delegates_valid_amount) {
+    // Also try local node, for some reason it does not alwayw work the first time
+    bool local_ok = false;
+    for (int attempt = 1; attempt <= 10; ++attempt) {
+      rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+
+      fail_msg_writer() << tr("[DEBUG] rbuffer:") << rbuffer;
+
+      status_text.clear();
+      local_ok = parse_dpops_response(rbuffer, status_text);
+      if (local_ok) {
+        break;
+      }
+
+      if (attempt < 10) {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+      }
+    }
+
+    if (!local_ok) {
+      fail_msg_writer() << tr("[ERR] local delegate failed after 10 attempts: ") << status_text;
+    }
+
+    if (reply_count >= total_delegates_valid_amount and local_ok) {
       message_writer(console_color_green, false) << "The delegate has been registered successfully";
     } else {
       fail_msg_writer() << tr("Delegate registration encountered errors");
       fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
+      fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
       return true;
     }
   }
