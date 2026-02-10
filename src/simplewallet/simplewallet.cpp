@@ -3683,7 +3683,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
     status_text.clear();
     local_ok = parse_dpops_response(rbuffer, status_text);
-  fail_msg_writer() << tr([DEBUG] ") << rbuffer;
+  fail_msg_writer() << tr("[DEBUG] ") << rbuffer;
     if (!local_ok) {
       fail_msg_writer() << tr("[ERR] local delegate ") << status_text;
     }
