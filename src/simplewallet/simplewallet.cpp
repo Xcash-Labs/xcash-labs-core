@@ -3678,52 +3678,15 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       }
     }
 
-//    // Also try local node (not counted in quorum but must be successful)
-//    bool local_ok = false;
-//    rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-//    status_text.clear();
-//    local_ok = parse_dpops_response(rbuffer, status_text);
-//    if (!local_ok) {
-//      fail_msg_writer() << tr("[ERR] local delegate ") << status_text;
-//    }
-
-// Also try local node (not counted in quorum but must be successful)
-bool local_ok = false;
-
-fail_msg_writer() << tr("[DBG] local delegate: sending request to 127.0.0.1 (timeout=")
-                  << SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS << tr(")");
-
-rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
-fail_msg_writer() << tr("[DBG] local delegate: request bytes=")
-                  << static_cast<unsigned long long>(senddata.size());
-
-if (rbuffer.empty()) {
-  fail_msg_writer() << tr("[ERR] local delegate: empty response (connect failed, timeout, or service returned nothing)");
-  // If you want to see what was sent (careful: might contain keys/signatures):
-  // fail_msg_writer() << tr("[DBG] local delegate: sent=") << senddata.substr(0, 300);
-} else {
-  fail_msg_writer() << tr("[DBG] local delegate: response bytes=")
-                    << static_cast<unsigned long long>(rbuffer.size());
-
-  // Print a safe preview of the response (first 300 chars)
-  std::string preview = rbuffer.substr(0, 300);
-  for (char& c : preview) {
-    // Replace control chars so logs don’t get messed up
-    if (static_cast<unsigned char>(c) < 0x20 && c != '\n' && c != '\r' && c != '\t') c = '.';
-  }
-  fail_msg_writer() << tr("[DBG] local delegate: response preview: ") << preview;
-}
-
-status_text.clear();
-local_ok = parse_dpops_response(rbuffer, status_text);
-
-fail_msg_writer() << tr("[DBG] local delegate: parse_ok=") << (local_ok ? tr("true") : tr("false"))
-                  << tr(", status='") << status_text << tr("'");
-
-if (!local_ok) {
-  fail_msg_writer() << tr("[ERR] local delegate ") << status_text;
-}
+    // Also try local node (not counted in quorum but must be successful)
+    bool local_ok = false;
+    rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+    status_text.clear();
+    local_ok = parse_dpops_response(rbuffer, status_text);
+  fail_msg_writer() << tr([DEBUG] ") << rbuffer;
+    if (!local_ok) {
+      fail_msg_writer() << tr("[ERR] local delegate ") << status_text;
+    }
 
     if (reply_count >= total_delegates_valid_amount and local_ok) {
       message_writer(console_color_green, false) << "The delegate has been registered successfully";
