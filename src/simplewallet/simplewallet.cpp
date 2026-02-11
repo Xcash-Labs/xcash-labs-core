@@ -3649,6 +3649,11 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       return true; 
     }
 
+    auto is_already_registered = [](const std::string& s) -> bool {
+      // match the exact text you see (case-insensitive optional)
+      return s.find("already registered") != std::string::npos ||
+             s.find("public address is already registered") != std::string::npos;
+    };
     // Send to first online seed node and all online delegates
     bool seed_committed = false;  // flip true after the first seed replies OK
     bool is_seed = false;
@@ -3656,58 +3661,78 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
     for (size_t i = 0; i < total_delegates; ++i) {
       if (block_verifiers_IP_address[i].empty()) continue;
 
-      const std::string &host = block_verifiers_IP_address[i];
+      const std::string& host = block_verifiers_IP_address[i];
       is_seed = (seed_set.count(host) != 0);
 
       if (is_seed && seed_committed) {
-        ++reply_count;  // count assumed success
-        continue;       // If a seed has already committed, we *count* other seeds as success without sending
+        ++reply_count; // seed success assumed (MongoDB replication)
+        continue;
       }
-      // Otherwise send (all non-seeds always send; fail on seed node error)
-      std::string rbuffer = xcash_net::send_and_receive_data(host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+
+      std::string rbuffer = xcash_net::send_and_receive_data(
+          host.c_str(), senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+
+      status_text.clear();
       const bool ok = parse_dpops_response(rbuffer, status_text);
+
       if (ok) {
         ++reply_count;
-        if (is_seed) seed_committed = true;  // seed found and success
-      } else {
-        fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
-        if (is_seed) {
-          fail_msg_writer() << tr("Failed to register the delegate for seed nodes, please try again");
-          return true;
-        }
+        if (is_seed) seed_committed = true;
+        continue;
+      }
+
+      // Non-seed: ignore "already registered" errors (treat as success or neutral)
+      if (!is_seed && is_already_registered(status_text)) {
+        ++reply_count;  // count as success since desired state is already true
+        continue;
+      }
+
+      // Otherwise: real error
+      fail_msg_writer() << tr("[ERR] delegate ") << host << " " << status_text;
+
+      if (is_seed) {
+        fail_msg_writer() << tr("Seed delegate registration failed. Please try again.");
+        return true;
       }
     }
 
-    // Also try local node, for some reason it does not alwayw work the first time
+    // Also try local node, for some reason it does not alwayd work the first time
     bool local_ok = false;
-    for (int attempt = 1; attempt <= 10; ++attempt) {
+    for (int attempt = 1; attempt <= 5; ++attempt) {
       rbuffer = xcash_net::send_and_receive_data("127.0.0.1", senddata, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
-
-      fail_msg_writer() << tr("[DEBUG] rbuffer:") << rbuffer;
-
       status_text.clear();
       local_ok = parse_dpops_response(rbuffer, status_text);
-      if (local_ok) {
+      if (local_ok || is_already_registered(status_text)) {
         break;
       }
 
-      if (attempt < 10) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+      if (attempt < 5) {
+        fail_msg_writer() << tr("[WARN] Local node registration failed. Waiting 50 seconds before retrying...");
+        sync_minutes_and_seconds(0, 50);
       }
     }
 
-    if (!local_ok) {
-      fail_msg_writer() << tr("[ERR] local delegate failed after 10 attempts: ") << status_text;
-    }
-
-    if (reply_count >= total_delegates_valid_amount and local_ok) {
-      message_writer(console_color_green, false) << "The delegate has been registered successfully";
+    if (reply_count >= total_delegates_valid_amount) {
+      message_writer(console_color_green, false)
+          << tr("Registration confirmed by the network (external delegates).");
     } else {
-      fail_msg_writer() << tr("Delegate registration encountered errors");
-      fail_msg_writer() << tr("Successful delegates: ") << reply_count << "/" << total_delegates;
-      fail_msg_writer() << tr("Local node success: ") << (local_ok ? tr("yes") : tr("no"));
+      fail_msg_writer() << tr("Registration was not confirmed by enough external delegates.");
+      fail_msg_writer() << tr("Confirmed delegates: ") << reply_count << "/" << total_delegates
+                        << tr(" (required: ") << total_delegates_valid_amount << tr(")");
+      fail_msg_writer() << tr("Please try again in a few minutes.");
       return true;
     }
+
+    if (local_ok) {
+      message_writer(console_color_green, false)
+          << tr("Delegate registration completed successfully.");
+    } else {
+      fail_msg_writer() << tr("Local node did not confirm registration yet.");
+      fail_msg_writer() << tr("This usually means the node is still syncing or starting up.");
+      fail_msg_writer() << tr("Wait a few minutes and try registering again.");
+      return true;
+    }
+
   }
   catch (const std::exception& e) {
     fail_msg_writer() << tr("Failed to register the delegate: ") << e.what();
