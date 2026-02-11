@@ -3703,6 +3703,7 @@ bool simple_wallet::delegate_register(const std::vector<std::string>& args)
       status_text.clear();
       local_ok = parse_dpops_response(rbuffer, status_text);
       if (local_ok || is_already_registered(status_text)) {
+        local_ok = true;
         break;
       }
 
