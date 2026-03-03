@@ -12951,20 +12951,40 @@ uint64_t wallet2::get_daemon_blockchain_target_height(string &err)
 
 uint64_t wallet2::get_approximate_blockchain_height() const
 {
-  // time of v2 fork
-  const time_t fork_time = m_nettype == TESTNET ? 1448285909 : m_nettype == STAGENET ? 1520937818 : 1458748658;
-  // v2 fork block
-  const uint64_t fork_block = m_nettype == TESTNET ? 624634 : m_nettype == STAGENET ? 32000 : 1009827;
-  // avg seconds per block
-  const int seconds_per_block = DIFFICULTY_TARGET_V2;
-  // Calculated blockchain height
-  uint64_t approx_blockchain_height = fork_block + (time(NULL) - fork_time)/seconds_per_block;
-  // testnet and stagenet got some huge rollbacks, so the estimation is way off
-  static const uint64_t approximate_rolled_back_blocks = m_nettype == TESTNET ? 342100 : m_nettype == STAGENET ? 60000 : 30000;
-  if ((m_nettype == TESTNET || m_nettype == STAGENET) && approx_blockchain_height > approximate_rolled_back_blocks)
-    approx_blockchain_height -= approximate_rolled_back_blocks;
-  LOG_PRINT_L2("Calculated blockchain height: " << approx_blockchain_height);
-  return approx_blockchain_height;
+  // XCash Klassic genesis times (UTC, seconds since epoch)
+  // Update TESTNET/STAGENET values if/when they differ.
+  static constexpr uint64_t MAINNET_GENESIS_TIME  = 1768082909ULL; // 2026-01-10 22:08:29 UTC
+  static constexpr uint64_t TESTNET_GENESIS_TIME  = 1768082909ULL;
+  static constexpr uint64_t STAGENET_GENESIS_TIME = 1768082909ULL;
+
+  const uint64_t genesis_time =
+    (m_nettype == TESTNET)  ? TESTNET_GENESIS_TIME :
+    (m_nettype == STAGENET) ? STAGENET_GENESIS_TIME :
+                              MAINNET_GENESIS_TIME;
+
+  // XCash Klassic block time
+  static constexpr uint64_t SECONDS_PER_BLOCK = 60ULL;
+
+  // 1-week safety buffer
+  static constexpr uint64_t BUFFER_BLOCKS =
+    (60ULL * 60ULL * 24ULL * 7ULL) / SECONDS_PER_BLOCK; // 10080
+
+  const uint64_t now = static_cast<uint64_t>(time(nullptr));
+
+  if (now <= genesis_time) {
+    LOG_PRINT_L2("Calculated blockchain height: 0 (now <= genesis)");
+    return 0;
+  }
+
+  uint64_t approx = (now - genesis_time) / SECONDS_PER_BLOCK;
+
+  if (approx > BUFFER_BLOCKS)
+    approx -= BUFFER_BLOCKS;
+  else
+    approx = 0;
+
+  LOG_PRINT_L2("Calculated blockchain height: " << approx);
+  return approx;
 }
 
 void wallet2::set_tx_note(const crypto::hash &txid, const std::string &note)
