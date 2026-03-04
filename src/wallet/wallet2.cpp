@@ -12963,11 +12963,12 @@ uint64_t wallet2::get_approximate_blockchain_height() const
                               MAINNET_GENESIS_TIME;
 
   // XCash Klassic block time
-  static constexpr uint64_t SECONDS_PER_BLOCK = 60ULL;
 
-  // 1-week safety buffer
+  static constexpr uint64_t SECONDS_PER_BLOCK = (uint64_t)DIFFICULTY_TARGET_V2;
+
+  // 1-month safety buffer
   static constexpr uint64_t BUFFER_BLOCKS =
-    (60ULL * 60ULL * 24ULL * 7ULL) / SECONDS_PER_BLOCK; // 10080
+    (60ULL * 60ULL * 24ULL * 30ULL) / SECONDS_PER_BLOCK; // 43,200
 
   const uint64_t now = static_cast<uint64_t>(time(nullptr));
 
