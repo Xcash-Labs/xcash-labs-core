@@ -5653,47 +5653,39 @@ crypto::secret_key wallet2::generate(const std::string& wallet_, const epee::wip
   return retval;
 }
 
- uint64_t wallet2::estimate_blockchain_height()
- {
-   // -1 month for fluctuations in block time and machine date/time setup.
-   // avg seconds per block
-   const int seconds_per_block = DIFFICULTY_TARGET_V2;
-   // ~num blocks per month
-   const uint64_t blocks_per_month = 60*60*24*30/seconds_per_block;
+uint64_t wallet2::estimate_blockchain_height()
+{
+  const uint64_t seconds_per_block = (uint64_t)DIFFICULTY_TARGET_V2;
+  const uint64_t blocks_per_buffer =
+    (60ULL * 60ULL * 24ULL * 21ULL) / seconds_per_block; // 21 days (30,240 @ 60s)
 
-   // try asking the daemon first
-   std::string err;
-   uint64_t height = 0;
+  std::string err;
+  uint64_t height = 0;
 
-   // we get the max of approximated height and local height.
-   // approximated height is the least of daemon target height
-   // (the max of what the other daemons are claiming is their
-   // height) and the theoretical height based on the local
-   // clock. This will be wrong only if both the local clock
-   // is bad *and* a peer daemon claims a highest height than
-   // the real chain.
-   // local height is the height the local daemon is currently
-   // synced to, it will be lower than the real chain height if
-   // the daemon is currently syncing.
-   // If we use the approximate height we subtract one month as
-   // a safety margin.
-   height = get_approximate_blockchain_height();
-   uint64_t target_height = get_daemon_blockchain_target_height(err);
-   if (err.empty()) {
-     if (target_height < height)
-       height = target_height;
-   } else {
-     // if we couldn't talk to the daemon, check safety margin.
-     if (height > blocks_per_month)
-       height -= blocks_per_month;
-     else
-       height = 0;
-   }
-   uint64_t local_height = get_daemon_blockchain_height(err);
-   if (err.empty() && local_height > height)
-     height = local_height;
-   return height;
- }
+  // raw time-based estimate (no buffer here)
+  height = get_approximate_blockchain_height();
+
+  // daemon target height
+  uint64_t target_height = get_daemon_blockchain_target_height(err);
+  if (err.empty()) {
+    if (target_height < height)
+      height = target_height;
+  } else {
+    // daemon unreachable => apply buffer once
+    if (height > blocks_per_buffer)
+      height -= blocks_per_buffer;
+    else
+      height = 0;
+  }
+
+  // daemon local height (reset err before call)
+  err.clear();
+  uint64_t local_height = get_daemon_blockchain_height(err);
+  if (err.empty() && local_height > height)
+    height = local_height;
+
+  return height;
+}
 
 /*!
 * \brief Creates a watch only wallet from a public address and a view secret key.
@@ -12951,9 +12943,7 @@ uint64_t wallet2::get_daemon_blockchain_target_height(string &err)
 
 uint64_t wallet2::get_approximate_blockchain_height() const
 {
-  // XCash Klassic genesis times (UTC, seconds since epoch)
-  // Update TESTNET/STAGENET values if/when they differ.
-  static constexpr uint64_t MAINNET_GENESIS_TIME  = 1768082909ULL; // 2026-01-10 22:08:29 UTC
+  static constexpr uint64_t MAINNET_GENESIS_TIME  = 1768082909ULL;
   static constexpr uint64_t TESTNET_GENESIS_TIME  = 1768082909ULL;
   static constexpr uint64_t STAGENET_GENESIS_TIME = 1768082909ULL;
 
@@ -12962,30 +12952,15 @@ uint64_t wallet2::get_approximate_blockchain_height() const
     (m_nettype == STAGENET) ? STAGENET_GENESIS_TIME :
                               MAINNET_GENESIS_TIME;
 
-  // XCash Klassic block time
-
   static constexpr uint64_t SECONDS_PER_BLOCK = (uint64_t)DIFFICULTY_TARGET_V2;
 
-  // 1-month safety buffer
-  static constexpr uint64_t BUFFER_BLOCKS =
-    (60ULL * 60ULL * 24ULL * 30ULL) / SECONDS_PER_BLOCK; // 43,200
-
   const uint64_t now = static_cast<uint64_t>(time(nullptr));
-
-  if (now <= genesis_time) {
-    LOG_PRINT_L2("Calculated blockchain height: 0 (now <= genesis)");
+  if (now <= genesis_time)
     return 0;
-  }
 
-  uint64_t approx = (now - genesis_time) / SECONDS_PER_BLOCK;
-
-  if (approx > BUFFER_BLOCKS)
-    approx -= BUFFER_BLOCKS;
-  else
-    approx = 0;
-
-  LOG_PRINT_L2("Calculated blockchain height: " << approx);
-  return approx;
+  const uint64_t raw = (now - genesis_time) / SECONDS_PER_BLOCK;
+  LOG_PRINT_L2("Calculated raw blockchain height: " << raw);
+  return raw;
 }
 
 void wallet2::set_tx_note(const crypto::hash &txid, const std::string &note)
