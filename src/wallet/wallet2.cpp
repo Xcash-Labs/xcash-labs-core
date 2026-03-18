@@ -15157,7 +15157,7 @@ uint64_t wallet2::get_blockchain_height_by_date(uint16_t year, uint8_t month, ui
       height_max = height_mid;
     else
       height_min = height_mid;
-    if (height_max - height_min <= 2 * 24 * 30)        // don't divide the height range finer than two days
+    if (height_max - height_min <= 2 * 24 * 60)        // don't divide the height range finer than two days (60 second block time)
     {
       return height_min;
     }
