@@ -4048,6 +4048,7 @@ static bool is_ban_code(const std::string& code) {
          code == "VERIFY_FAIL";
 }
 
+/*
 bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std::string& msg) const
 {
   msg.clear();
@@ -4154,6 +4155,98 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     }
     return false;
   }
+}
+// === END CUSTOM VRF EXTRA VALIDATION ===
+*/
+
+// === BEGIN CUSTOM VRF EXTRA VALIDATION ===
+bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std::string& msg) const
+{
+  msg.clear();
+
+  // Blob layout:
+  // [0..79]    vrf_proof   (80 bytes)
+  // [80..143]  vrf_beta    (64 bytes)
+  // [144..175] vrf_pubkey  (32 bytes)
+  // [176]      total_votes (1 byte)
+  // [177]      winning_votes (1 byte)
+  // [178..209] vote_hash   (32 bytes)
+  static constexpr size_t VRF_PROOF_SIZE   = 80;
+  static constexpr size_t VRF_BETA_SIZE    = 64;
+  static constexpr size_t VRF_PUBKEY_SIZE  = 32;
+  static constexpr size_t TOTAL_VOTES_SIZE = 1;
+  static constexpr size_t WINNING_VOTES_SIZE = 1;
+  static constexpr size_t VOTE_HASH_SIZE   = 32;
+  static constexpr size_t VRF_BLOB_SIZE =
+      VRF_PROOF_SIZE + VRF_BETA_SIZE + VRF_PUBKEY_SIZE +
+      TOTAL_VOTES_SIZE + WINNING_VOTES_SIZE + VOTE_HASH_SIZE; // 210
+
+  if (blob.size() < VRF_BLOB_SIZE)
+  {
+    msg = "FAILED:BLOB_TOO_SMALL";
+    MWARNING("VRF blob too small: got " << blob.size() << ", expected at least " << VRF_BLOB_SIZE);
+    return false;
+  }
+
+  const uint8_t* data = blob.data();
+  const unsigned char* vrf_proof  = reinterpret_cast<const unsigned char*>(data + 0);
+  const unsigned char* vrf_beta   = reinterpret_cast<const unsigned char*>(data + 80);
+  const unsigned char* vrf_pubkey = reinterpret_cast<const unsigned char*>(data + 144);
+  const uint8_t* total_votes      = data + 176;
+  const uint8_t* winning_votes    = data + 177;
+  const uint8_t* vote_hash        = data + 178;
+
+  (void)total_votes;
+  (void)winning_votes;
+  (void)vote_hash;
+
+  // Use local node context, not caller-supplied values.
+  // For normal tip-extension validation:
+  //   - height is the next block height
+  //   - prev_hash is the current chain tip hash
+  const uint64_t height = get_current_blockchain_height();
+  const crypto::hash prev_hash = get_tail_id();
+
+  unsigned char alpha_input[32 + 8 + crypto_vrf_PUBLICKEYBYTES] = {0};
+  unsigned char computed_beta[crypto_vrf_OUTPUTBYTES] = {0};
+
+  static_assert(sizeof(crypto::hash) == 32, "crypto::hash must be 32 bytes");
+
+  // alpha = prev_block_hash || height_le || vrf_pubkey
+  memcpy(alpha_input, &prev_hash, 32);
+
+  uint64_t height_le = htole64(height);
+  memcpy(alpha_input + 32, &height_le, sizeof(height_le));
+
+  memcpy(alpha_input + 40, vrf_pubkey, crypto_vrf_PUBLICKEYBYTES);
+
+  // Verify VRF proof and derived beta
+  if (crypto_vrf_verify(computed_beta,
+                        vrf_pubkey,
+                        vrf_proof,
+                        alpha_input,
+                        sizeof(alpha_input)) != 0)
+  {
+    msg = "FAILED:VERIFY_FAIL";
+    MERROR("VRF verification failed");
+    MERROR(" height: " << height);
+    MERROR(" prev_hash: " << epee::string_tools::pod_to_hex(prev_hash));
+    MERROR(" vrf_pubkey: " << to_hex(vrf_pubkey, VRF_PUBKEY_SIZE));
+    return false;
+  }
+
+  if (memcmp(computed_beta, vrf_beta, crypto_vrf_OUTPUTBYTES) != 0)
+  {
+    msg = "FAILED:BETA_MISMATCH";
+    MERROR("VRF beta mismatch");
+    MERROR(" expected beta: " << to_hex(vrf_beta, VRF_BETA_SIZE));
+    MERROR(" computed beta: " << to_hex(computed_beta, crypto_vrf_OUTPUTBYTES));
+    MERROR(" vrf_pubkey: " << to_hex(vrf_pubkey, VRF_PUBKEY_SIZE));
+    return false;
+  }
+
+  msg = "OK";
+  return true;
 }
 // === END CUSTOM VRF EXTRA VALIDATION ===
 
