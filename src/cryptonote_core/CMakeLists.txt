@@ -35,7 +35,6 @@ set(cryptonote_core_sources
   tx_verification_utils.cpp
   VRF_functions/convert.c
   VRF_functions/crypto_verify.c
-  VRF_functions/crypto_vrf.c
   VRF_functions/ed25519_ref10.c
   VRF_functions/sha512EL.c
   VRF_functions/verify.c

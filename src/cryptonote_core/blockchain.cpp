@@ -62,7 +62,7 @@
 #include "time_helper.h"
 
 extern "C" {
-#include "VRF_functions/crypto_vrf.h"
+#include "VRF_functions/vrf.h"
 }
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
@@ -4211,8 +4211,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   const uint64_t height = get_current_blockchain_height();
   const crypto::hash prev_hash = get_tail_id();
 
-  unsigned char alpha_input[32 + 8 + crypto_vrf_PUBLICKEYBYTES] = {0};
-  unsigned char computed_beta[crypto_vrf_OUTPUTBYTES] = {0};
+  unsigned char alpha_input[32 + 8 + crypto_vrf_ietfdraft03_PUBLICKEYBYTES] = {0};
+  unsigned char computed_beta[crypto_vrf_ietfdraft03_OUTPUTBYTES] = {0};
 
   static_assert(sizeof(crypto::hash) == 32, "crypto::hash must be 32 bytes");
 
@@ -4222,14 +4222,14 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   uint64_t height_le = htole64(height);
   memcpy(alpha_input + 32, &height_le, sizeof(height_le));
 
-  memcpy(alpha_input + 40, vrf_pubkey, crypto_vrf_PUBLICKEYBYTES);
+  memcpy(alpha_input + 40, vrf_pubkey, crypto_vrf_ietfdraft03_PUBLICKEYBYTES);
 
   // Verify VRF proof and derived beta
-  if (crypto_vrf_verify(computed_beta,
-                        vrf_pubkey,
-                        vrf_proof,
-                        alpha_input,
-                        sizeof(alpha_input)) != 0)
+  if (crypto_vrf_ietfdraft03_verify(computed_beta,
+                                    vrf_pubkey,
+                                    vrf_proof,
+                                    alpha_input,
+                                    sizeof(alpha_input)) != 0)
   {
     msg = "FAILED:VERIFY_FAIL";
     MERROR("VRF verification failed");
@@ -4244,7 +4244,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     msg = "FAILED:BETA_MISMATCH";
     MERROR("VRF beta mismatch");
     MERROR(" expected beta: " << to_hex(vrf_beta, VRF_BETA_SIZE));
-    MERROR(" computed beta: " << to_hex(computed_beta, crypto_vrf_OUTPUTBYTES));
+    MERROR(" computed beta: " << to_hex(computed_beta, crypto_vrf_ietfdraft03_OUTPUTBYTES));
     MERROR(" vrf_pubkey: " << to_hex(vrf_pubkey, VRF_PUBKEY_SIZE));
     return false;
   }
