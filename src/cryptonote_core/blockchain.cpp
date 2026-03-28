@@ -4188,7 +4188,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   if (blob.size() < VRF_BLOB_SIZE)
   {
     msg = "FAILED:BLOB_TOO_SMALL";
-    MWARNING("VRF blob too small: got " << blob.size() << ", expected at least " << VRF_BLOB_SIZE);
+     MERROR_VER("VRF blob too small: got " << blob.size() << ", expected at least " << VRF_BLOB_SIZE);
     return false;
   }
 
@@ -4325,13 +4325,33 @@ leave:
   bool found_vrf = false;
   for (const auto& field : extra_fields) {
     if (const cryptonote::tx_extra_vrf_signature* vrf = boost::get<cryptonote::tx_extra_vrf_signature>(&field)) {
+
       if (vrf->data.size() != 210) {
         MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 210");
         bvc.m_verifivation_failed = true;
         goto leave;
       }
 
-      // Call member function of Blockchain
+      std::string vrf_msg;
+      if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
+        MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
+        bvc.m_verifivation_failed = true;
+        goto leave;
+      }
+
+      found_vrf = true;
+      break;
+    }
+  }
+
+  if (!found_vrf) {
+    MERROR_VER("Missing VRF signature in block id: " << id);
+    bvc.m_verifivation_failed = true;
+    goto leave;
+  }
+  // === END CUSTOM VRF EXTRA CHECK ===
+
+  /*
       std::string vrf_msg;
       if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
         if (!vrf_msg.empty() && vrf_msg.rfind("TRANSPORT:", 0) == 0) {
@@ -4358,6 +4378,7 @@ leave:
     bvc.m_verifivation_failed = true;
     goto leave;
   }
+  */
   // === END CUSTOM VRF EXTRA CHECK ===
 
   TIME_MEASURE_FINISH(t2);
