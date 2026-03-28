@@ -4249,7 +4249,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     return false;
   }
 
-  msg = "Success";
   MERROR("VRF beta match, success.......");
   MERROR(" expected beta: " << to_hex(vrf_beta, VRF_BETA_SIZE));
   MERROR(" computed beta: " << to_hex(computed_beta, crypto_vrf_ietfdraft03_OUTPUTBYTES));
