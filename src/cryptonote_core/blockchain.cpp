@@ -4239,7 +4239,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     return false;
   }
 
-  if (memcmp(computed_beta, vrf_beta, crypto_vrf_OUTPUTBYTES) != 0)
+  if (memcmp(computed_beta, vrf_beta, crypto_vrf_ietfdraft03_OUTPUTBYTES) != 0)
   {
     msg = "FAILED:BETA_MISMATCH";
     MERROR("VRF beta mismatch");
