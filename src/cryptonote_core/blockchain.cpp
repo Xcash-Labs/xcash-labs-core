@@ -61,6 +61,10 @@
 #include "common/data_cache.h"
 #include "time_helper.h"
 
+extern "C" {
+#include "VRF_functions/crypto_vrf.h"
+}
+
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"
 
