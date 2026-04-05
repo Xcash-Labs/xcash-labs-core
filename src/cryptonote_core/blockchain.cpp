@@ -4138,9 +4138,12 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
 
   // if not a recent block we are done
   if (!recent) {
+    MERROR("Old Block... Skipping dpops check");
     msg = "OK";
     return true;
   }
+
+  MERROR("New Block... Sending to dpops for more verification");
 
   const std::string proof_str     = to_hex(vrf_proof, 80);
   const std::string beta_str      = to_hex(vrf_beta, 64);
