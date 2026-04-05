@@ -4090,7 +4090,6 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
 
   (void)total_votes;
   (void)winning_votes;
-  (void)vote_hash;
 
   // Use local node context, not caller-supplied values.
   // For normal tip-extension validation:
@@ -4142,6 +4141,11 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     msg = "OK";
     return true;
   }
+
+  const std::string proof_str     = to_hex(vrf_proof, 80);
+  const std::string beta_str      = to_hex(vrf_beta, 64);
+  const std::string pubkey_str    = to_hex(vrf_pubkey, 32);
+  const std::string vote_hash_str = to_hex(vote_hash, 32);
 
   std::ostringstream o;
   o << "{\r\n"
