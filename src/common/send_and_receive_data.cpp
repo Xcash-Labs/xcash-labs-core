@@ -23,12 +23,14 @@ static boost::system::error_code run_with_timeout(boost::asio::io_context& ioc,
   boost::system::error_code ec;
   boost::asio::steady_timer timer{ioc};
   std::atomic<bool> done{false};
+  bool timed_out = false;
 
   if (timeout.count() > 0) {
     timer.expires_after(timeout);
     timer.async_wait([&](const boost::system::error_code& tec){
       if (!tec && !done.load(std::memory_order_relaxed)) {
-        ioc.stop(); // cancel pending ops by stopping the context
+        timed_out = true;
+        ioc.stop();
       }
     });
   }
@@ -36,12 +38,18 @@ static boost::system::error_code run_with_timeout(boost::asio::io_context& ioc,
   initiate([&](const boost::system::error_code& e){
     ec = e;
     done.store(true, std::memory_order_relaxed);
-    timer.cancel(); // stop the timer if op finished first
+    boost::system::error_code ignored;
+    timer.cancel(ignored);
   });
 
   ioc.restart();
   ioc.run();
-  return ec; // default-constructed == success
+
+  if (timed_out && !done.load(std::memory_order_relaxed)) {
+    return boost::asio::error::operation_aborted;
+  }
+
+  return ec; // success if handler completed with no error
 }
 
 inline void trim_ascii_ws(std::string& s)

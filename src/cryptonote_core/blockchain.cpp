@@ -61,6 +61,10 @@
 #include "common/data_cache.h"
 #include "time_helper.h"
 
+extern "C" {
+#include "VRF_functions/vrf.h"
+}
+
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"
 
@@ -4026,7 +4030,7 @@ bool Blockchain::flush_txes_from_pool(const std::vector<crypto::hash> &txids)
   return res;
 }
 
-// === BEGIN CUSTOM VRF EXTRA VALIDATION === jed
+// === BEGIN CUSTOM VRF EXTRA VALIDATION ===
 // Helper to convert a byte array to hex string
 static std::string to_hex(const uint8_t* data, size_t length) {
   std::ostringstream oss;
@@ -4048,26 +4052,100 @@ static bool is_ban_code(const std::string& code) {
          code == "VERIFY_FAIL";
 }
 
-bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std::string& msg) const
+bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std::string& msg, bool recent) const
 {
   msg.clear();
+
+  // Blob layout:
+  // [0..79]    vrf_proof   (80 bytes)
+  // [80..143]  vrf_beta    (64 bytes)
+  // [144..175] vrf_pubkey  (32 bytes)
+  // [176]      total_votes (1 byte)
+  // [177]      winning_votes (1 byte)
+  // [178..209] vote_hash   (32 bytes)
+  static constexpr size_t VRF_PROOF_SIZE   = 80;
+  static constexpr size_t VRF_BETA_SIZE    = 64;
+  static constexpr size_t VRF_PUBKEY_SIZE  = 32;
+  static constexpr size_t TOTAL_VOTES_SIZE = 1;
+  static constexpr size_t WINNING_VOTES_SIZE = 1;
+  static constexpr size_t VOTE_HASH_SIZE   = 32;
+  static constexpr size_t VRF_BLOB_SIZE =
+      VRF_PROOF_SIZE + VRF_BETA_SIZE + VRF_PUBKEY_SIZE +
+      TOTAL_VOTES_SIZE + WINNING_VOTES_SIZE + VOTE_HASH_SIZE; // 210
+
+  if (blob.size() < VRF_BLOB_SIZE)
+  {
+    msg = "FAILED:BLOB_TOO_SMALL";
+     MERROR_VER("VRF blob too small: got " << blob.size() << ", expected at least " << VRF_BLOB_SIZE);
+    return false;
+  }
+
   const uint8_t* data = blob.data();
-  const uint8_t* vrf_proof   = data + 0;    // [0..79]  (80 bytes)
-  const uint8_t* vrf_beta    = data + 80;   // [80..143] (64 bytes)
-  const uint8_t* vrf_pubkey  = data + 144;  // [144..175] (32 bytes)
-  const uint8_t* total_votes = data + 176;  // [176]
-  const uint8_t* winning_votes = data + 177;// [177]
-  const uint8_t* vote_hash   = data + 178;  // [178..209] (32 bytes)
-  (void)total_votes; (void)winning_votes;
+  const unsigned char* vrf_proof  = reinterpret_cast<const unsigned char*>(data + 0);
+  const unsigned char* vrf_beta   = reinterpret_cast<const unsigned char*>(data + 80);
+  const unsigned char* vrf_pubkey = reinterpret_cast<const unsigned char*>(data + 144);
+  const uint8_t* total_votes      = data + 176;
+  const uint8_t* winning_votes    = data + 177;
+  const uint8_t* vote_hash        = data + 178;
 
-  std::string proof_str     = to_hex(vrf_proof, 80);
-  std::string beta_str      = to_hex(vrf_beta, 64);
-  std::string pubkey_str    = to_hex(vrf_pubkey, 32);
-  std::string vote_hash_str = to_hex(vote_hash, 32);
+  (void)total_votes;
+  (void)winning_votes;
 
-  // 2) Safe prev hash lookup
-  uint64_t height = get_current_blockchain_height();
-  crypto::hash prev_hash = height ? get_block_id_by_height(height - 1) : crypto::null_hash;
+  // Use local node context, not caller-supplied values.
+  // For normal tip-extension validation:
+  //   - height is the next block height
+  //   - prev_hash is the current chain tip hash
+  const uint64_t height = get_current_blockchain_height();
+  const crypto::hash prev_hash = get_tail_id();
+
+  unsigned char alpha_input[32 + 8 + crypto_vrf_ietfdraft03_PUBLICKEYBYTES] = {0};
+  unsigned char computed_beta[crypto_vrf_ietfdraft03_OUTPUTBYTES] = {0};
+
+  static_assert(sizeof(crypto::hash) == 32, "crypto::hash must be 32 bytes");
+
+  // alpha = prev_block_hash || height_le || vrf_pubkey
+  memcpy(alpha_input, &prev_hash, 32);
+
+  uint64_t height_le = htole64(height);
+  memcpy(alpha_input + 32, &height_le, sizeof(height_le));
+
+  memcpy(alpha_input + 40, vrf_pubkey, crypto_vrf_ietfdraft03_PUBLICKEYBYTES);
+
+  // Verify VRF proof and derived beta
+  if (crypto_vrf_ietfdraft03_verify(computed_beta,
+                                    vrf_pubkey,
+                                    vrf_proof,
+                                    alpha_input,
+                                    sizeof(alpha_input)) != 0)
+  {
+    msg = "FAILED:VERIFY_FAIL";
+    MERROR("VRF verification failed");
+    MERROR(" height: " << height);
+    MERROR(" prev_hash: " << epee::string_tools::pod_to_hex(prev_hash));
+    MERROR(" vrf_pubkey: " << to_hex(vrf_pubkey, VRF_PUBKEY_SIZE));
+    return false;
+  }
+
+  if (memcmp(computed_beta, vrf_beta, crypto_vrf_ietfdraft03_OUTPUTBYTES) != 0)
+  {
+    msg = "FAILED:BETA_MISMATCH";
+    MERROR("VRF beta mismatch");
+    MERROR(" expected beta: " << to_hex(vrf_beta, VRF_BETA_SIZE));
+    MERROR(" computed beta: " << to_hex(computed_beta, crypto_vrf_ietfdraft03_OUTPUTBYTES));
+    MERROR(" vrf_pubkey: " << to_hex(vrf_pubkey, VRF_PUBKEY_SIZE));
+    return false;
+  }
+
+  // if not a recent block we are done
+  if (!recent) {
+    msg = "OK";
+    return true;
+  }
+
+  const std::string proof_str     = to_hex(vrf_proof, 80);
+  const std::string beta_str      = to_hex(vrf_beta, 64);
+  const std::string pubkey_str    = to_hex(vrf_pubkey, 32);
+  const std::string vote_hash_str = to_hex(vote_hash, 32);
 
   std::ostringstream o;
   o << "{\r\n"
@@ -4081,8 +4159,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     << "}";
 
   std::string json = o.str();
-  std::string rbuffer;
-  rbuffer = xcash_net::send_and_receive_data("127.0.0.1", json, SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
+  std::string rbuffer = xcash_net::send_and_receive_data("127.0.0.1", json,
+                                              SEND_OR_RECEIVE_SOCKET_DATA_TIMEOUT_SETTINGS);
 
   // Transport-layer errors come back as "0|REASON..."
   if (rbuffer.size() >= 2 && rbuffer[0] == '0' && rbuffer[1] == '|') {
@@ -4091,15 +4169,14 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     } else {
       msg = std::string("TRANSPORT:") + rbuffer.substr(2);
     }
+
     MERROR("DPOPS transport error: " << msg);
-    MERROR(" vrf_pubkey:" << pubkey_str);
-    MERROR(" rbuffer: " << rbuffer);
     return false;
   }
 
-  if (rbuffer.empty()) { // shouldn’t happen with length-prefix, keep just in case
+  if (rbuffer.empty()) {  // shouldn’t happen with length-prefix
     msg = "TRANSPORT:BUG_EMPTY";
-    MWARNING("Empty reply from DPOPS (unexpected)");
+    MERROR("Empty reply from DPOPS (unexpected)");
     return false;
   }
 
@@ -4127,15 +4204,18 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   }
 
   // 3) Optional tiny trim to avoid CR/LF surprises
-  auto trim = [](std::string& s){
-    while (!s.empty() && (s.back()=='\r' || s.back()=='\n' || s.back()==' ' || s.back()=='\t')) s.pop_back();
-    size_t i = 0; while (i < s.size() && (s[i]=='\r'||s[i]=='\n'||s[i]==' '||s[i]=='\t')) ++i;
+  auto trim = [](std::string& s) {
+    while (!s.empty() && (s.back() == '\r' || s.back() == '\n' || s.back() == ' ' || s.back() == '\t')) s.pop_back();
+    size_t i = 0;
+    while (i < s.size() && (s[i] == '\r' || s[i] == '\n' || s[i] == ' ' || s[i] == '\t')) ++i;
     if (i) s.erase(0, i);
   };
 
-  status_text = parts[1]; trim(status_text);
+  status_text = parts[1];
+  trim(status_text);
   if (parts.size() >= 3) {
-    vote_hash_text = parts[2]; trim(vote_hash_text);
+    vote_hash_text = parts[2];
+    trim(vote_hash_text);
     if (!vote_hash_str.empty() && !vote_hash_text.empty() && vote_hash_text != vote_hash_str) {
       msg = "FAILED:VOTE_HASH_MISMATCH";
       MERROR("Vote hash mismatch! Sent: " << vote_hash_str << ", Received: " << vote_hash_text);
@@ -4152,8 +4232,10 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     } else {
       msg = "TRANSPORT:" + status_text;
     }
+    MWARNING("DPOPS failed verification: " << status_text);
     return false;
   }
+
 }
 // === END CUSTOM VRF EXTRA VALIDATION ===
 
@@ -4228,23 +4310,26 @@ leave:
   bool found_vrf = false;
   for (const auto& field : extra_fields) {
     if (const cryptonote::tx_extra_vrf_signature* vrf = boost::get<cryptonote::tx_extra_vrf_signature>(&field)) {
+
       if (vrf->data.size() != 210) {
         MERROR_VER("Invalid VRF data length: " << vrf->data.size() << ", expected 210");
         bvc.m_verifivation_failed = true;
         goto leave;
       }
 
-      // Call member function of Blockchain
       std::string vrf_msg;
-      if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg)) {
+      const uint64_t now = static_cast<uint64_t>(time(nullptr));
+      const bool recent = (bl.timestamp <= now) && ((now - bl.timestamp) <= 120);
+
+      if (!this->verify_vrf_signature_blob(vrf->data, vrf_msg, recent)) {
         if (!vrf_msg.empty() && vrf_msg.rfind("TRANSPORT:", 0) == 0) {
           // Soft / transient issue: do NOT penalize the peer
-          MWARNING("DPOPS VRF verification trans deferred due to transport/network error: " << vrf_msg << " (block id: " << id << ")");
-          bvc.m_missing_txs = true;
+          MWARNING("Soft / transient issue");
+          MWARNING("VRF verification deferred due to transport error: " << vrf_msg << " (block id: " << id << ")");
           goto leave;
         } else {
-          // Hard / failure: mark verification failed
-          MWARNING("DPOPS Transaction Failure");
+          // Hard failure: mark verification failed
+          MWARNING("Hard failure");
           MERROR_VER("Invalid VRF signature in block id: " << id << " (" << (vrf_msg.empty() ? "UNKNOWN_ERROR" : vrf_msg) << ")");
           bvc.m_verifivation_failed = true;
           goto leave;
@@ -4264,9 +4349,9 @@ leave:
   // === END CUSTOM VRF EXTRA CHECK ===
 
   TIME_MEASURE_FINISH(t2);
-  //check proof of work
   TIME_MEASURE_START(target_calculating_time);
 
+  // To do: difficulty not use for dpops
   // get the target difficulty for the block.
   // the calculation can overflow, among other failure cases,
   // so we need to check the return type.
