@@ -4106,7 +4106,7 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
   // alpha = prev_block_hash || height_le || vrf_pubkey
   memcpy(alpha_input, &prev_hash, 32);
 
-  uint64_t height_le = htole64(height);
+  uint64_t height_le = SWAP64LE(height);
   memcpy(alpha_input + 32, &height_le, sizeof(height_le));
 
   memcpy(alpha_input + 40, vrf_pubkey, crypto_vrf_ietfdraft03_PUBLICKEYBYTES);
