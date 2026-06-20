@@ -135,6 +135,12 @@ namespace daemon_args
   const command_line::arg_descriptor<bool> arg_zmq_rpc_disabled = {
     "no-zmq"
   , "Disable ZMQ RPC server"
+  }
+  
+  const command_line::arg_descriptor<bool> arg_no_dpops = {
+    "no-dpops",
+    "Disable DPoPS consensus / block verifier functionality",
+    false
   };
 
 }  // namespace daemon_args

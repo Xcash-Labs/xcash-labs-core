@@ -56,6 +56,8 @@ using namespace epee;
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon"
 
+bool g_no_dpops = false;
+
 namespace daemonize {
 
 struct zmq_internals
@@ -86,6 +88,12 @@ public:
     , p2p{vm, protocol}
     , zmq{nullptr}
   {
+    g_no_dpops = command_line::get_arg(vm, daemon_args::arg_no_dpops);
+    if (g_no_dpops)
+    {
+      MINFO("DPoPS disabled by --no-dpops");
+    }
+
     // Handle circular dependencies
     protocol.set_p2p_endpoint(p2p.get());
     core.set_protocol(protocol.get());
@@ -151,6 +159,7 @@ void t_daemon::init_options(boost::program_options::options_description & option
   t_core::init_options(option_spec);
   t_p2p::init_options(option_spec);
   t_rpc::init_options(option_spec);
+  command_line::add_arg(option_spec, daemon_args::arg_no_dpops);
 }
 
 t_daemon::t_daemon(

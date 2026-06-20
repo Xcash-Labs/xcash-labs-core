@@ -60,6 +60,8 @@ using namespace epee;
 #include "p2p/net_node.h"
 #include "version.h"
 
+extern bool g_no_dpops;
+
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
 
@@ -2127,9 +2129,15 @@ namespace cryptonote
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_submitblock(const COMMAND_RPC_SUBMITBLOCK::request& req, COMMAND_RPC_SUBMITBLOCK::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
-  {
+  { 
     RPC_TRACKER(submitblock);
     {
+      if (g_no_dpops)
+      {
+        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+        error_resp.message = "submit_block disabled by --no-dpops";
+        return false;
+      }
       boost::shared_lock<boost::shared_mutex> lock(m_bootstrap_daemon_mutex);
       if (m_should_use_bootstrap_daemon)
       {

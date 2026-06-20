@@ -81,6 +81,7 @@ using namespace crypto;
  */
 
 using namespace cryptonote;
+extern bool g_no_dpops;
 using epee::string_tools::pod_to_hex;
 extern "C" void slow_hash_allocate_state();
 extern "C" void slow_hash_free_state();
@@ -3934,7 +3935,7 @@ uint64_t Blockchain::get_adjusted_time(uint64_t height) const
   }
   std::vector<uint64_t> timestamps;
 
-  // need most recent 60 blocks, get index of first of those
+  // need mostrecent  60 blocks, get index of first of those
   size_t offset = height - BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW;
   timestamps.reserve(height - offset);
   for(;offset < height; ++offset)
@@ -4136,8 +4137,8 @@ bool Blockchain::verify_vrf_signature_blob(const std::vector<uint8_t>& blob, std
     return false;
   }
 
-  // if not a recent block we are done
-  if (!recent) {
+  // if not a recent block or not a DPOPS node, we are done
+  if (!recent || g_no_dpops) {
     msg = "OK";
     return true;
   }
