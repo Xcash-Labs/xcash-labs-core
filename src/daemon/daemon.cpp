@@ -48,6 +48,7 @@
 #include "daemon/command_line_args.h"
 #include "net/net_ssl.h"
 #include "version.h"
+#include "common/dpops_globals.h"
 
 using namespace epee;
 
@@ -55,8 +56,6 @@ using namespace epee;
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon"
-
-bool g_no_dpops = false;
 
 namespace daemonize {
 

@@ -60,6 +60,7 @@
 #include "common/pruning.h"
 #include "common/data_cache.h"
 #include "time_helper.h"
+#include "common/dpops_globals.h"
 
 extern "C" {
 #include "VRF_functions/vrf.h"
@@ -81,7 +82,6 @@ using namespace crypto;
  */
 
 using namespace cryptonote;
-extern bool g_no_dpops;
 using epee::string_tools::pod_to_hex;
 extern "C" void slow_hash_allocate_state();
 extern "C" void slow_hash_free_state();
